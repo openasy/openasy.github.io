@@ -5,6 +5,7 @@ import { GOALS } from "../data/goals";
 import { PRINCIPLES } from "../data/principles";
 import { ButtonLink, CodeBlock, Section } from "../components/site";
 import { GoalCard, ProductCard } from "../components/cards";
+import { BreachCoverage } from "../components/breach";
 
 export function meta() {
   return [
@@ -93,6 +94,20 @@ export default function Home() {
             <GoalCard key={g.id} goal={g} />
           ))}
         </ul>
+      </Section>
+
+      <Section className="py-8" labelledBy="breach">
+        <h2 id="breach" className="m-0 text-2xl font-semibold">
+          Would you catch a breach?
+        </h2>
+        <p className="mt-1 max-w-3xl text-fg-muted">
+          An attack moves through twelve stages, from scanning to impact. Each stage needs at least one product that notices it. Pick what you run and see where an attacker
+          would pass unseen.
+        </p>
+        <div className="mt-4">
+          <BreachCoverage />
+        </div>
+        <p className="mt-3 text-xs text-fg-subtle">Products other than the VPN are in preview: their screens are designed in Storybook and their images are not released yet.</p>
       </Section>
 
       <Section className="py-8" labelledBy="why">

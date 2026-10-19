@@ -8,6 +8,7 @@ import { PRINCIPLES } from "./data/principles";
 import { storyUrl } from "./data/storybook";
 import { composeFor } from "./components/cards";
 import { SiteFooter, SiteHeader } from "./components/site";
+import { BREACH_STORY, PRESETS, coverage } from "./components/breach";
 import Home from "./routes/home";
 import Goals from "./routes/goals";
 import GoalPage from "./routes/goal";
@@ -95,6 +96,21 @@ describe("pages", () => {
     open("/products/backups");
     expect(h1()).toHaveTextContent("Backups");
     expect(screen.getByRole("link", { name: "Notice data loss" })).toHaveAttribute("href", "/goals/data-loss");
+  });
+
+  it("home shows breach coverage that follows what you run", async () => {
+    open("/");
+    const stages = screen.getByRole("list", { name: "ATT&CK stages" });
+    expect(stages.children).toHaveLength(12);
+    const count = (text: string) => screen.getByText((_, el) => el?.tagName === "P" && el.textContent?.startsWith(text) === true);
+    expect(count(`${coverage(PRESETS.starter.products).covered} of 12`)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "VPN only" }));
+    expect(count("1 of 12")).toBeInTheDocument();
+    expect(screen.getByRole("listitem", { name: /Initial access: covered by VPN/ })).toBeInTheDocument();
+    expect(screen.getByRole("listitem", { name: "Execution: not covered" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "Everything" }));
+    expect(count("12 of 12")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Replay the attack step by step" })).toHaveAttribute("href", BREACH_STORY);
   });
 
   it("the VPN API reference lists every operation from openapi.json", () => {
