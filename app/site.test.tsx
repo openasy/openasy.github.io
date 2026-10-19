@@ -1,14 +1,15 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
-import { PRODUCT_IDS, type ProductId } from "@openasy/ui";
+import { PRODUCT_IDS, PRODUCTS, type ProductId } from "@openasy/ui";
 import { GOALS } from "./data/goals";
 import { PRINCIPLES } from "./data/principles";
 import { storyUrl } from "./data/storybook";
+import { STATUS } from "./data/status";
 import { composeFor } from "./components/cards";
 import { SiteFooter, SiteHeader } from "./components/site";
-import { BREACH_STORY, PRESETS, coverage } from "./components/breach";
+import { BREACH_STORY } from "./components/breach";
 import Home from "./routes/home";
 import Goals from "./routes/goals";
 import GoalPage from "./routes/goal";
@@ -19,6 +20,7 @@ import { APIS } from "./data/apis";
 import Principles from "./routes/principles";
 import Support from "./routes/support";
 import { PLANS, SUPPORT_EMAIL } from "./data/support";
+import { readiness } from "./data/status";
 
 const Stub = createRoutesStub([
   { path: "/", Component: Home },
@@ -44,6 +46,13 @@ describe("data", () => {
     for (const g of GOALS) expect(g.required.length).toBeGreaterThan(0);
   });
 
+  it("status entries name real products, and released ones have a version", () => {
+    for (const [id, s] of Object.entries(STATUS)) {
+      expect(PRODUCT_IDS).toContain(id as ProductId);
+      if (s!.status === "Preview") expect(s!.version).toMatch(/^\d+\.\d+\.\d+$/);
+    }
+  });
+
   it("links each product to its Storybook screens", () => {
     expect(storyUrl("Network IDS")).toBe("https://openasy.github.io/ui/?path=/story/products-network-ids--alerts");
     expect(storyUrl("SAST")).toContain("--pull-requests");
@@ -51,8 +60,9 @@ describe("data", () => {
 
   it("builds one service and one volume per product", () => {
     const yaml = composeFor(["vpn", "logs"]);
-    expect(yaml).toContain("image: ghcr.io/openasy/vpn-manager:1");
-    expect(yaml).toContain("image: ghcr.io/openasy/vpn-server:1");
+    expect(yaml).toContain("image: ghcr.io/openasy/vpn-manager:0.2.0");
+    expect(yaml).toContain("image: ghcr.io/openasy/vpn-server:0.2.0");
+    expect(yaml).toContain("net.ipv4.ip_forward: 1");
     expect(yaml).toContain('"1194:1194/udp"');
     expect(yaml).toContain("logs-data:/data");
   });
@@ -63,7 +73,8 @@ describe("pages", () => {
     open("/");
     expect(h1()).toHaveTextContent("Run and secure your infrastructure");
     for (const g of GOALS) expect(screen.getAllByRole("link", { name: new RegExp(g.title) }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: /OpenVPN server/ })).toHaveLength(1);
+    for (const id of PRODUCT_IDS) expect(screen.getAllByRole("link", { name: PRODUCTS[id].name }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("list", { name: "Released and in progress products" })).toHaveTextContent("Vulnerabilities");
   });
 
   it("goals page links to each guide", () => {
@@ -80,8 +91,10 @@ describe("pages", () => {
 
   it("the VPN guide needs only the VPN", () => {
     open("/goals/vpn");
-    expect(screen.getByLabelText(/Code for step 1/)).toHaveTextContent("image: ghcr.io/openasy/vpn-manager:1");
-    expect(screen.getByLabelText(/Code for step 1/)).not.toHaveTextContent("openasy/identity");
+    expect(screen.getByLabelText(/Code for step 1/)).toHaveTextContent("VPN_PUBLIC_HOST");
+    expect(screen.getByLabelText(/Code for step 1/)).toHaveTextContent("docker compose up -d");
+    expect(screen.getByText("Ready to try")).toBeInTheDocument();
+    expect(screen.queryByText("Create the owner account")).not.toBeInTheDocument();
   });
 
   it("products page filters by group", async () => {
@@ -90,6 +103,17 @@ describe("pages", () => {
     expect(list().children).toHaveLength(PRODUCT_IDS.length);
     await userEvent.click(screen.getByRole("radio", { name: "Identity" }));
     expect(list().children).toHaveLength(1);
+    await userEvent.click(screen.getByRole("radio", { name: "All groups" }));
+    await userEvent.click(screen.getByRole("radio", { name: /^In progress/ }));
+    expect(list().children).toHaveLength(1);
+    expect(list()).toHaveTextContent("Vulnerabilities");
+  });
+
+  it("goals page puts the goals you can run today on top", () => {
+    open("/goals");
+    const ready = GOALS.filter((g) => readiness(g.required) === "Ready to try");
+    expect(screen.getByRole("list", { name: "Goals you can run today" }).children).toHaveLength(ready.length);
+    expect(screen.getByRole("list", { name: "More goals" }).children).toHaveLength(GOALS.length - ready.length);
   });
 
   it("product page shows its goals", () => {
@@ -98,19 +122,12 @@ describe("pages", () => {
     expect(screen.getByRole("link", { name: "Notice data loss" })).toHaveAttribute("href", "/goals/data-loss");
   });
 
-  it("home shows breach coverage that follows what you run", async () => {
+  it("home shows which attack stages released products watch today", () => {
     open("/");
-    const stages = screen.getByRole("list", { name: "ATT&CK stages" });
-    expect(stages.children).toHaveLength(12);
-    const count = (text: string) => screen.getByText((_, el) => el?.tagName === "P" && el.textContent?.startsWith(text) === true);
-    expect(count(`${coverage(PRESETS.starter.products).covered} of 12`)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("radio", { name: "VPN only" }));
-    expect(count("1 of 12")).toBeInTheDocument();
-    expect(screen.getByRole("listitem", { name: /Initial access: covered by VPN/ })).toBeInTheDocument();
-    expect(screen.getByRole("listitem", { name: "Execution: not covered" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("radio", { name: "Everything" }));
-    expect(count("12 of 12")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Replay the attack step by step" })).toHaveAttribute("href", BREACH_STORY);
+    expect(screen.getByRole("list", { name: "ATT&CK stages" }).children).toHaveLength(12);
+    expect(screen.getByRole("listitem", { name: /Initial access: covered today by VPN/ })).toBeInTheDocument();
+    expect(screen.getByRole("listitem", { name: /Execution: covered once/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Replay a phishing/ })).toHaveAttribute("href", BREACH_STORY);
   });
 
   it("the VPN API reference lists every operation from openapi.json", () => {
@@ -128,6 +145,31 @@ describe("pages", () => {
     expect(screen.getByRole("link", { name: "API reference" })).toHaveAttribute("href", "/products/vpn/api");
   });
 
+  it("the VPN product page shows what works, what it is built on and how to connect", () => {
+    open("/products/vpn");
+    expect(screen.getByText("Preview 0.2.0")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Features" })).toHaveTextContent("Command line tool (not yet)");
+    expect(screen.getByRole("link", { name: "OpenVPN" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Connect a device" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "OpenVPN Connect" }).length).toBeGreaterThanOrEqual(4);
+    expect(screen.getByLabelText("compose.yaml for VPN")).toHaveTextContent("vpn-manager:0.2.0");
+  });
+
+  it("a planned product shows no install steps", () => {
+    open("/products/dast");
+    expect(screen.getByText("Designed")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Not built yet" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Run it" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Will build on" })).toBeInTheDocument();
+    expect(screen.queryByText(/docker compose up/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See the design" })).toBeInTheDocument();
+  });
+
+  it("products page lists released products first", () => {
+    open("/products");
+    expect(screen.getByRole("list", { name: "Product list" }).children[0]).toHaveTextContent("VPN");
+  });
+
   it("the header leaves Support to the footer", () => {
     const Stub = createRoutesStub([{ path: "/", Component: () => (<><SiteHeader theme="system" onThemeChange={() => {}} /><SiteFooter /></>) }]);
     render(<Stub initialEntries={["/"]} />);
@@ -139,7 +181,8 @@ describe("pages", () => {
     open("/principles");
     expect(screen.getAllByRole("link", { name: /^Read the record:/ })).toHaveLength(PRINCIPLES.length);
     const accepted = PRINCIPLES.filter((p) => p.decision === "Accepted").length;
-    expect(screen.getByRole("list", { name: "Accepted decisions" }).children).toHaveLength(accepted);
+    const table = screen.getByRole("table", { name: /Accepted decisions/ });
+    expect(within(table).getAllByRole("row")).toHaveLength(accepted + 1);
     expect(screen.getByRole("list", { name: "Proposed decisions" }).children).toHaveLength(PRINCIPLES.length - accepted);
   });
 
@@ -162,8 +205,8 @@ describe("pages", () => {
     expect(screen.getByRole("table", { name: "Response times by severity and plan" })).toBeInTheDocument();
   });
 
-  it("home and every guide point to support", () => {
+  it("home leaves support to the footer", () => {
     open("/");
-    expect(screen.getByRole("link", { name: "See support plans" })).toHaveAttribute("href", "/support");
+    expect(screen.queryByRole("link", { name: "See support plans" })).not.toBeInTheDocument();
   });
 });

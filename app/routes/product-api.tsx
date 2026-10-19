@@ -31,6 +31,7 @@ function Text({ children }: { children?: string }) {
 const METHOD_TONE = { get: "info", post: "success", put: "warning", patch: "warning", delete: "danger" } as const;
 
 const typeOf = (s: Schema): string => {
+  if (s.oneOf) return s.oneOf.map((o) => (o.$ref ? o.$ref.split("/").pop() : typeOf(o))).join(" | ");
   if (s.const !== undefined) return JSON.stringify(s.const);
   if (s.enum) return s.enum.map((v) => JSON.stringify(v)).join(" | ");
   const t = Array.isArray(s.type) ? s.type.join(" | ") : (s.type ?? "any");
@@ -53,7 +54,11 @@ function SchemaView({ spec, schema, depth = 0 }: { spec: OpenApi; schema: Schema
     <ul className={depth ? "mt-1 list-none border-l border-line pl-3" : "m-0 list-none p-0"}>
       {Object.entries(s.properties).map(([name, raw]) => {
         const prop = resolve(spec, raw);
-        const nested = prop.properties ? prop : prop.items && resolve(spec, prop.items).properties ? resolve(spec, prop.items) : undefined;
+        const nested = prop.properties
+          ? prop
+          : prop.items && resolve(spec, prop.items).properties
+            ? resolve(spec, prop.items)
+            : prop.oneOf?.map((o) => resolve(spec, o)).find((o) => o.properties);
         return (
           <li key={name} className="py-1 text-xs">
             <span className="font-mono font-semibold text-fg">{name}</span>

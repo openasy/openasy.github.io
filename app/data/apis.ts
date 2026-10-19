@@ -1,9 +1,10 @@
 /**
  * OpenAPI descriptions of the products that have one, read at build time from the product
- * repositories checked out next to this one (../vpn-manager), like @openasy/ui.
+ * repositories checked out next to this one (../vpn-manager, ../vulns), like @openasy/ui.
  */
 import type { ProductId } from "@openasy/ui";
 import vpn from "../../../vpn-manager/openapi.json" with { type: "json" };
+import vulns from "../../../vulns/openapi.json" with { type: "json" };
 
 export interface Schema {
   $ref?: string;
@@ -17,6 +18,8 @@ export interface Schema {
   required?: string[];
   properties?: Record<string, Schema>;
   items?: Schema;
+  /** One of these shapes, such as null or an object. */
+  oneOf?: Schema[];
   minimum?: number;
   maximum?: number;
 }
@@ -36,7 +39,8 @@ export interface Operation {
   tags?: string[];
   summary?: string;
   description?: string;
-  security?: Array<Record<string, string[]>>;
+  /** Alternatives: any one of these schemes, such as the ingest token or the admin token. */
+  security?: Array<Record<string, string[] | undefined>>;
   requestBody?: { required?: boolean; content: Record<string, Media> };
   responses: Record<string, Response>;
 }
@@ -61,6 +65,7 @@ export interface ApiInfo {
 
 export const APIS: Partial<Record<ProductId, ApiInfo>> = {
   vpn: { spec: vpn as OpenApi, repo: "openasy/vpn-manager" },
+  vulnerabilities: { spec: vulns as OpenApi, repo: "openasy/vulns" },
 };
 
 export const apiFor = (id: string): ApiInfo | undefined => APIS[id as ProductId];

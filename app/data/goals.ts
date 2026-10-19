@@ -24,6 +24,8 @@ export interface Goal {
   recommended: Array<{ id: string; why: string }>;
   /** Goal-specific steps after the products are running and the owner has signed in. */
   steps: GoalStep[];
+  /** The whole install, for a goal whose products are released: replaces the generic steps around `steps`. */
+  install?: GoalStep[];
   timeToValue: string;
 }
 
@@ -32,12 +34,12 @@ export const GOALS: Goal[] = [
     id: "vpn",
     title: "Secure remote access",
     ask: "I only need a VPN for my team.",
-    summary: "One container gives you an OpenVPN server with a web UI: people, groups, split tunnelling and a log of every connection.",
+    summary: "A manager and an OpenVPN server in two containers: each device gets its own file, and each group reaches only the networks you allow.",
     outcomes: [
-      "Invite people by email; each downloads their own profile from My VPN.",
-      "Limit groups to the networks they need with IP groups and split tunnelling.",
-      "See who is connected now, from where, and end any session.",
-      "Keep a searchable history of every connection.",
+      "One .ovpn file per device, with its own certificate and fixed address.",
+      "Groups that reach only the networks and ports you allow. Everything else is dropped.",
+      "Who is connected right now, and a way to end any session.",
+      "Revoke a lost laptop and it is disconnected within 15 seconds.",
     ],
     required: ["vpn"],
     recommended: [
@@ -45,10 +47,47 @@ export const GOALS: Goal[] = [
       { id: "logs", why: "Keep connection logs longer and search them with everything else." },
       { id: "backups", why: "Off-site copies of the VPN database and certificates." },
     ],
-    steps: [
-      { title: "Open the VPN port", body: "Allow UDP 1194 on your firewall to the host running the container. The web UI stays on 8443 and can be kept internal." },
-      { title: "Create IP groups", body: "In IP groups, add the networks people may reach, for example the office LAN and the Kubernetes API. Anything not listed is not routed." },
-      { title: "Invite people", body: "In People, invite by email and pick their groups. Each person signs in and downloads a profile from My VPN.", code: "openasy-vpn people invite dana.kim@example.com --group engineering" },
+    steps: [],
+    install: [
+      {
+        title: "Start the VPN",
+        body: "On a host with Docker, create two tokens and set the name or IP people connect to. Then start the manager and one OpenVPN server.",
+        code: [
+          "export VPN_SERVER_TOKEN=$(openssl rand -hex 32)",
+          "export VPN_ADMIN_TOKEN=$(openssl rand -hex 32)",
+          "export VPN_PUBLIC_HOST=vpn.example.com",
+          "",
+          "curl -O https://raw.githubusercontent.com/openasy/vpn-manager/main/compose.yaml",
+          "docker compose up -d",
+        ].join("\n"),
+      },
+      {
+        title: "Open the VPN port",
+        body: "Allow UDP 1194 to the host. TCP 443 is a second server for networks that allow only HTTPS. The UI and API stay on 127.0.0.1:8080; put a TLS proxy in front to reach them from elsewhere.",
+      },
+      {
+        title: "Say who may reach what",
+        body: "Create a group, then an IP group with the networks and ports it may use. Anything not listed is not routed.",
+        code: [
+          'API=http://127.0.0.1:8080/api/v1; AUTH="Authorization: Bearer $VPN_ADMIN_TOKEN"',
+          `curl -sH "$AUTH" $API/groups -d '{"name":"Backend engineers"}'`,
+          `curl -sH "$AUTH" $API/ip-groups -d '{"name":"Production databases",`,
+          `  "networks":[{"cidr":"172.16.20.0/24","ports":"tcp/5432"}],`,
+          `  "allowedGroups":["Backend engineers"]}'`,
+        ].join("\n"),
+      },
+      {
+        title: "Add a person and their device",
+        body: "Each device gets its own .ovpn file. It holds the private key and is shown only once, so send it straight to the person.",
+        code: [
+          `curl -sH "$AUTH" $API/people -d '{"name":"Dana Kim","email":"dana@example.com","groups":["Backend engineers"]}'`,
+          `curl -sH "$AUTH" $API/people/<person id>/devices -d '{"name":"Laptop"}' | jq -r .ovpn > dana-laptop.ovpn`,
+        ].join("\n"),
+      },
+      {
+        title: "They connect",
+        body: "Dana imports the file into OpenVPN Connect (Windows, macOS, iOS, Android), Tunnelblick or NetworkManager, and connects. If the first try is refused, wait 15 seconds.",
+      },
     ],
     timeToValue: "About 10 minutes",
   },

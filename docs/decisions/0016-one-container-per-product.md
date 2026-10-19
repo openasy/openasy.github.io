@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn-manager` 0.1.0 is signed, has an SBOM and SLSA level 3 provenance. The Helm chart is not built yet.
+- **Where:** `vpn-manager` 0.1.0 is signed, has an SBOM and SLSA level 3 provenance. `vulns` has a Helm chart, published as a signed OCI artifact and tested on a kind cluster in CI; `vpn-manager` has none yet.
 - **Area:** Operations
 
 ## Context

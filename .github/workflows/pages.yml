@@ -31,11 +31,18 @@ jobs:
           repository: openasy/ui
           path: ui
 
-      # Product API descriptions are read from ../vpn-manager/openapi.json at build time.
+      # Product API descriptions are read from ../vpn-manager/openapi.json and ../vulns/openapi.json at build time.
       - uses: actions/checkout@v5
         with:
           repository: openasy/vpn-manager
           path: vpn-manager
+          sparse-checkout: openapi.json
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/checkout@v5
+        with:
+          repository: openasy/vulns
+          path: vulns
           sparse-checkout: openapi.json
           sparse-checkout-cone-mode: false
 
