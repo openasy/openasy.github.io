@@ -1,25 +1,10 @@
-import { useSyncExternalStore, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router";
 import { Code } from "lucide-react";
-import { cn } from "@openasy/ui";
+import { cn, ThemeToggle, type ThemePreference } from "@openasy/ui";
 import { STORYBOOK } from "../data/storybook";
 
 export const GITHUB = "https://github.com/openasy";
-
-const query = "(prefers-color-scheme: dark)";
-
-/** Follows the operating system's light or dark setting. Prerendered HTML starts light. */
-export function useSystemTheme(): "light" | "dark" {
-  return useSyncExternalStore(
-    (onChange) => {
-      const m = window.matchMedia(query);
-      m.addEventListener("change", onChange);
-      return () => m.removeEventListener("change", onChange);
-    },
-    () => (window.matchMedia(query).matches ? "dark" : "light"),
-    () => "light",
-  );
-}
 
 const btn = {
   base: "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border font-medium whitespace-nowrap no-underline transition-colors [&_svg]:size-4",
@@ -62,9 +47,9 @@ const NAV = [
   { to: "/support", label: "Support" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ theme, onThemeChange }: { theme: ThemePreference; onThemeChange: (next: ThemePreference) => void }) {
   return (
-    <header className="border-b border-line bg-surface">
+    <header className="z-20 border-b sm:sticky sm:top-0 border-line bg-surface/85 backdrop-blur supports-[not(backdrop-filter:blur(0))]:bg-surface">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 text-base font-semibold text-fg no-underline">
           <LogoMark />
@@ -80,10 +65,13 @@ export function SiteHeader() {
             Storybook
           </a>
         </nav>
-        <a href={GITHUB} className="inline-flex items-center gap-1.5 text-sm text-fg-muted no-underline hover:text-fg">
-          <Code aria-hidden className="size-4" />
-          GitHub
-        </a>
+        <div className="flex items-center gap-4">
+          <a href={GITHUB} className="inline-flex items-center gap-1.5 text-sm text-fg-muted no-underline hover:text-fg">
+            <Code aria-hidden className="size-4" />
+            GitHub
+          </a>
+          <ThemeToggle value={theme} onChange={onThemeChange} />
+        </div>
       </div>
     </header>
   );
@@ -93,7 +81,7 @@ export function SiteFooter() {
   return (
     <footer className="mt-12 border-t border-line bg-surface">
       <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-4 px-4 py-6 text-xs text-fg-muted">
-        <p className="m-0">OpenAsy is open source under the Apache-2.0 licence. No telemetry, no lock-in. Support plans fund the work.</p>
+        <p className="m-0">OpenAsy is open source: products under AGPL-3.0, the component library under Apache-2.0. No telemetry, no lock-in. Support plans fund the work.</p>
         <nav aria-label="Footer" className="flex flex-wrap gap-4">
           <a href="/support" className="text-fg-muted">
             Support
@@ -104,7 +92,7 @@ export function SiteFooter() {
           <a href={STORYBOOK} className="text-fg-muted">
             Component library
           </a>
-          <a href={`${GITHUB}/ui/blob/main/LICENSE`} className="text-fg-muted">
+          <a href={`${GITHUB}/ui/blob/main/docs/decisions/0008-open-source.md`} className="text-fg-muted">
             Licence
           </a>
         </nav>
@@ -122,9 +110,9 @@ export function Section({ children, className, labelledBy }: { children: ReactNo
   );
 }
 
-export function CodeBlock({ code, label }: { code: string; label: string }) {
+export function CodeBlock({ code, label, className }: { code: string; label: string; className?: string }) {
   return (
-    <pre tabIndex={0} aria-label={label} className="m-0 overflow-x-auto rounded-md border border-line bg-subtle p-3 font-mono text-xs leading-5 text-fg">
+    <pre tabIndex={0} aria-label={label} className={cn("m-0 overflow-x-auto rounded-md border border-line bg-subtle p-3 font-mono text-xs leading-5 text-fg", className)}>
       <code>{code}</code>
     </pre>
   );

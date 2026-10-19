@@ -1,16 +1,18 @@
 import type { ReactNode } from "react";
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from "react-router";
-import { BrandProvider } from "@openasy/ui";
-import { SiteFooter, SiteHeader, useSystemTheme } from "./components/site";
+import { BrandProvider, themeScript, useThemePreference } from "@openasy/ui";
+import { SiteFooter, SiteHeader } from "./components/site";
 import "./app.css";
 
 export function Layout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="light dark" />
+        {/* Applies the remembered theme before the first paint, so dark pages never flash light. */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript() }} />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <Meta />
@@ -26,13 +28,13 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 function Shell({ children }: { children: ReactNode }) {
-  const theme = useSystemTheme();
+  const [theme, setTheme] = useThemePreference();
   return (
-    <BrandProvider theme={theme} brand={{ name: "OpenAsy", hidePoweredBy: true }} className="flex min-h-screen flex-col">
+    <BrandProvider theme={theme} root brand={{ name: "OpenAsy", hidePoweredBy: true }} className="flex min-h-screen flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:rounded focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
-      <SiteHeader />
+      <SiteHeader theme={theme} onThemeChange={setTheme} />
       <main id="main" className="flex-1">
         {children}
       </main>

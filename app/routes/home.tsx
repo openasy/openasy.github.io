@@ -1,8 +1,9 @@
+import { Link } from "react-router";
 import { ArrowRight, Boxes, DatabaseBackup, Eye, Lock, Plug, Unlock } from "lucide-react";
 import { PRODUCT_IDS, PRODUCTS, type ProductGroup } from "@openasy/ui";
 import { GOALS } from "../data/goals";
 import { PRINCIPLES } from "../data/principles";
-import { ButtonLink, Section } from "../components/site";
+import { ButtonLink, CodeBlock, Section } from "../components/site";
 import { GoalCard, ProductCard } from "../components/cards";
 
 export function meta() {
@@ -19,35 +20,67 @@ export const GROUPS: Array<{ id: ProductGroup; name: string; text: string }> = [
   { id: "platform", name: "Platform", text: "Automate and ask questions across all of it." },
 ];
 
+// Kept short for the hero; the full file with backups and comments is on the product page.
+const HERO_COMPOSE = `services:
+  vpn:
+    image: ghcr.io/openasy/vpn-manager:1
+    ports: ["8443:8443"]
+    volumes: [vpn-data:/data]
+  vpn-server:
+    image: ghcr.io/openasy/vpn-server:1
+    cap_add: [NET_ADMIN]
+    devices: [/dev/net/tun]
+    ports: ["1194:1194/udp"]
+volumes:
+  vpn-data:
+
+$ docker compose up -d`;
+
 const WHY = [
   { icon: Boxes, title: "Start with one", text: "Every product runs on its own in one container. Add others when you need them." },
   { icon: Plug, title: "Work together", text: "Linked products share hosts, users and IPs, and open each other's screens." },
   { icon: Unlock, title: "Fit your tools", text: "OIDC, SAML, OpenTelemetry, Prometheus, Syslog, Sigma and webhooks, both ways." },
   { icon: Lock, title: "Secure by default", text: "TLS, MFA, least privilege and an audit log of every admin action." },
   { icon: DatabaseBackup, title: "Simple to run", text: "SQLite by default, daily backups, restore to a point in time." },
-  { icon: Eye, title: "Open source", text: "Apache-2.0, no telemetry, runs air-gapped. Read every line." },
+  { icon: Eye, title: "Open source", text: "AGPL-3.0, no telemetry, runs air-gapped. Read every line." },
 ];
 
 export default function Home() {
   return (
     <>
-      <Section className="py-14 sm:py-20" labelledBy="hero">
-        <p className="m-0 text-sm font-semibold text-accent-text">Open source · self-hosted</p>
-        <h1 id="hero" className="mt-2 mb-0 max-w-3xl text-4xl leading-tight font-semibold tracking-tight sm:text-5xl">
-          Run and secure your infrastructure with tools you own.
-        </h1>
-        <p className="mt-4 max-w-2xl text-base text-fg-muted">
-          {PRODUCT_IDS.length} products for operations and security that work alone, together, or next to the tools you already have. Operations get easier, security stays at its highest, and your data
-          never leaves your network.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          <ButtonLink to="/goals" variant="primary" size="lg">
-            Start from a goal <ArrowRight aria-hidden />
-          </ButtonLink>
-          <ButtonLink to="/products" size="lg">
-            See all products
-          </ButtonLink>
+      <Section className="grid items-center gap-10 py-14 sm:py-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]" labelledBy="hero">
+        <div className="min-w-0">
+          <p className="m-0 text-sm font-semibold text-accent-text">Open source · self-hosted</p>
+          <h1 id="hero" className="mt-2 mb-0 max-w-3xl text-4xl leading-tight font-semibold tracking-tight sm:text-5xl">
+            Run and secure your infrastructure with tools you own.
+          </h1>
+          <p className="mt-4 max-w-2xl text-base text-fg-muted">
+            {PRODUCT_IDS.length} products for operations and security that work alone, together, or next to the tools you already have. Operations get easier, security stays at its highest, and your data
+            never leaves your network.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <ButtonLink to="/goals" variant="primary" size="lg">
+              Start from a goal <ArrowRight aria-hidden />
+            </ButtonLink>
+            <ButtonLink to="/products" size="lg">
+              See all products
+            </ButtonLink>
+          </div>
         </div>
+        <figure className="m-0 min-w-0">
+          <div className="overflow-hidden rounded-lg border border-line bg-surface shadow-overlay">
+            <div className="flex items-center gap-1.5 border-b border-line px-3 py-2">
+              <span aria-hidden className="size-2.5 rounded-full bg-line-strong" />
+              <span aria-hidden className="size-2.5 rounded-full bg-line-strong" />
+              <span aria-hidden className="size-2.5 rounded-full bg-line-strong" />
+              <span className="ml-2 font-mono text-2xs text-fg-muted">compose.yaml</span>
+            </div>
+            <CodeBlock code={HERO_COMPOSE} label="compose.yaml for the VPN" className="rounded-none border-0 bg-surface" />
+          </div>
+          <figcaption className="mt-2 text-xs text-fg-muted">
+            The VPN in one file. Every product installs the same way. <Link to="/products/vpn">See the full file</Link>
+          </figcaption>
+        </figure>
       </Section>
 
       <Section className="py-8" labelledBy="goals">

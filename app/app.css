@@ -50,6 +50,11 @@ body {
   background: var(--oa-canvas);
 }
 
+/* Anchors and "Skip to content" land below the sticky header (sticky from 640px up). */
+html {
+  scroll-padding-top: 5rem;
+}
+
 /* Text links use the accent; cards and buttons set their own colour with utilities. */
 @layer base {
   .oa-root a {
