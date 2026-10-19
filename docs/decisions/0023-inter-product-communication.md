@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn-server` pulls its config from `vpn-manager` with `ETag`, a 10 second timeout, and keeps the last good config when the manager is unreachable. Per-agent identities and `Idempotency-Key` are not built yet; agents share `VPN_SERVER_TOKEN`.
+- **Where:** `vpn-server` pulls its config from `vpn-manager` with `ETag` and a 10 second timeout, keeps the last good config when the manager is unreachable, and takes disconnect requests in the heartbeat answer. Per-agent identities and `Idempotency-Key` are not built yet; agents share `VPN_SERVER_TOKEN`.
 - **Area:** Architecture
 
 ## Context

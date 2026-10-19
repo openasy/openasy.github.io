@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn-manager` runs as non-root in a distroless image. `vpn-server` gets only `NET_ADMIN` and `/dev/net/tun`, pulls its config, validates it against a fixed shape before writing, and runs OpenVPN as `nobody` after start. The read-only filesystem and `no-new-privileges` are not set yet.
+- **Where:** `vpn-manager` runs as non-root in a distroless image. `vpn-server` gets only `NET_ADMIN` and `/dev/net/tun`, pulls its config, validates it against a fixed shape before writing, runs OpenVPN as `nobody` after start, and firewalls each device to the networks and ports its groups allow. The read-only filesystem and `no-new-privileges` are not set yet.
 - **Area:** Security
 
 ## Context
