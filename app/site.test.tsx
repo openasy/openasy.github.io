@@ -46,7 +46,8 @@ describe("data", () => {
 
   it("builds one service and one volume per product", () => {
     const yaml = composeFor(["vpn", "logs"]);
-    expect(yaml).toContain("image: openasy/vpn:1");
+    expect(yaml).toContain("image: ghcr.io/openasy/vpn-manager:1");
+    expect(yaml).toContain("image: ghcr.io/openasy/vpn-server:1");
     expect(yaml).toContain('"1194:1194/udp"');
     expect(yaml).toContain("logs-data:/data");
   });
@@ -74,7 +75,7 @@ describe("pages", () => {
 
   it("the VPN guide needs only the VPN", () => {
     open("/goals/vpn");
-    expect(screen.getByLabelText(/Code for step 1/)).toHaveTextContent("image: openasy/vpn:1");
+    expect(screen.getByLabelText(/Code for step 1/)).toHaveTextContent("image: ghcr.io/openasy/vpn-manager:1");
     expect(screen.getByLabelText(/Code for step 1/)).not.toHaveTextContent("openasy/identity");
   });
 

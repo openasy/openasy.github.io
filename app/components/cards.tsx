@@ -41,14 +41,29 @@ export function ProductCard({ id }: { id: string }) {
   );
 }
 
-/** docker compose file for a set of products: one container and one SQLite volume each. */
+/** docker compose file for a set of products: one container and one SQLite volume each, plus host agents. */
 export function composeFor(ids: string[]): string {
   const lines = ["services:"];
   ids.forEach((id, i) => {
     const p = product(id);
     lines.push(`  ${id}:`, `    image: ${p.image}:1`, "    restart: unless-stopped", "    ports:", `      - "${8443 + i}:8443"`);
-    if (id === "vpn") lines.push(`      - "1194:1194/udp"`);
     lines.push("    volumes:", `      - ${id}-data:/data   # SQLite database and settings`, "    environment:", `      OPENASY_BACKUP: daily   # snapshot at 02:00, kept 7 daily / 4 weekly / 12 monthly`);
+    if (id === "vpn" && p.agentImage) {
+      lines.push(
+        "  vpn-server:",
+        `    image: ${p.agentImage}:1   # always the same version as ${id}`,
+        "    restart: unless-stopped",
+        "    cap_add: [NET_ADMIN]",
+        "    devices: [/dev/net/tun]",
+        "    ports:",
+        `      - "1194:1194/udp"   # add a second vpn-server with OPENVPN_PROTO: tcp and OPENVPN_PORT: "443" for TCP 443`,
+        "    volumes:",
+        "      - ./openvpn:/etc/openvpn:ro",
+        "    environment:",
+        `      VPN_MANAGER_URL: https://${id}:8443`,
+        "      VPN_SERVER_TOKEN: ${VPN_SERVER_TOKEN}",
+      );
+    }
   });
   lines.push("volumes:", ...ids.map((id) => `  ${id}-data:`));
   return lines.join("\n");
