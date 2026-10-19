@@ -7,11 +7,14 @@ import { GOALS } from "./data/goals";
 import { PRINCIPLES } from "./data/principles";
 import { storyUrl } from "./data/storybook";
 import { composeFor } from "./components/cards";
+import { SiteFooter, SiteHeader } from "./components/site";
 import Home from "./routes/home";
 import Goals from "./routes/goals";
 import GoalPage from "./routes/goal";
 import Products from "./routes/products";
 import ProductPage from "./routes/product";
+import ProductApi from "./routes/product-api";
+import { APIS } from "./data/apis";
 import Principles from "./routes/principles";
 import Support from "./routes/support";
 import { PLANS, SUPPORT_EMAIL } from "./data/support";
@@ -22,6 +25,7 @@ const Stub = createRoutesStub([
   { path: "/goals/:id", Component: GoalPage },
   { path: "/products", Component: Products },
   { path: "/products/:id", Component: ProductPage },
+  { path: "/products/:id/api", Component: ProductApi },
   { path: "/principles", Component: Principles },
   { path: "/support", Component: Support },
 ]);
@@ -91,6 +95,28 @@ describe("pages", () => {
     open("/products/backups");
     expect(h1()).toHaveTextContent("Backups");
     expect(screen.getByRole("link", { name: "Notice data loss" })).toHaveAttribute("href", "/goals/data-loss");
+  });
+
+  it("the VPN API reference lists every operation from openapi.json", () => {
+    open("/products/vpn/api");
+    expect(h1()).toHaveTextContent("VPN API");
+    const spec = APIS.vpn!.spec;
+    const count = Object.values(spec.paths).reduce((n, ops) => n + Object.keys(ops).length, 0);
+    expect(screen.getByRole("navigation", { name: "Operations" }).querySelectorAll("li")).toHaveLength(count);
+    expect(screen.getByText("/api/v1/servers/heartbeat", { selector: "code" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Errors" })).toBeInTheDocument();
+  });
+
+  it("the VPN product page links to its API reference", () => {
+    open("/products/vpn");
+    expect(screen.getByRole("link", { name: "API reference" })).toHaveAttribute("href", "/products/vpn/api");
+  });
+
+  it("the header leaves Support to the footer", () => {
+    const Stub = createRoutesStub([{ path: "/", Component: () => (<><SiteHeader theme="system" onThemeChange={() => {}} /><SiteFooter /></>) }]);
+    render(<Stub initialEntries={["/"]} />);
+    expect(screen.getByRole("navigation", { name: "Main" })).not.toHaveTextContent("Support");
+    expect(screen.getByRole("navigation", { name: "Footer" })).toHaveTextContent("Support");
   });
 
   it("principles link to their records, accepted and proposed apart", () => {

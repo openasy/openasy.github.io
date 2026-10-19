@@ -36,7 +36,7 @@ Each record has two statuses:
 | 0021 | [Secrets and key management](./0021-secrets-and-keys.md) | Security | Proposed · Critical | Not started |
 | 0022 | [Privilege separation](./0022-privilege-separation.md) | Security | Proposed · Critical | In progress |
 | 0023 | [Communication between products and agents](./0023-inter-product-communication.md) | Architecture | Proposed · Critical | Not started |
-| 0024 | [API design and compatibility](./0024-api-compatibility.md) | Architecture | Proposed · High | Not started |
+| 0024 | [API design and compatibility](./0024-api-compatibility.md) | Architecture | Accepted | In progress |
 | 0025 | [Disaster recovery](./0025-disaster-recovery.md) | Operations | Proposed · Critical | Not started |
 | 0026 | [Network exposure and TLS](./0026-network-exposure-and-tls.md) | Security | Proposed · Critical | Not started |
 | 0027 | [Build integrity and supply chain](./0027-reproducible-builds.md) | Engineering | Proposed · High | In progress |

@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn-manager` has a REST API. The OpenAPI description and the CLI are not built yet.
+- **Where:** `vpn-manager` has a REST API described with OpenAPI, with a reference at `/api/docs/`. The CLI is not built yet.
 - **Area:** Architecture
 
 ## Context

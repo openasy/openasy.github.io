@@ -10,6 +10,7 @@ Published at https://openasy.github.io/. The component library's Storybook stays
 | `/` | Landing page |
 | `/goals`, `/goals/:id` | Guides by goal ("I only need a VPN", "Pass an audit", "Notice data loss", …): the fewest products needed, optional add-ons and install steps |
 | `/products`, `/products/:id` | Every product, the goals it serves and how to run it alone |
+| `/products/:id/api` | API reference built from the product's `openapi.json` (VPN today) |
 | `/principles` | The design decisions in [`docs/decisions`](./docs/decisions/README.md), accepted and proposed, with how far each is built |
 
 Content lives in `app/data/`. Product names, icons, images and summaries come from `@openasy/ui` (`PRODUCTS`), so the
@@ -22,6 +23,7 @@ next to this repository and build it once:
 
 ```bash
 git clone git@github.com:openasy/ui.git ../ui && (cd ../ui && npm ci && npm run build)
+git clone git@github.com:openasy/vpn-manager.git ../vpn-manager   # API reference at /products/vpn/api
 npm ci
 npm run dev        # http://localhost:5173
 npm test           # data checks and page tests

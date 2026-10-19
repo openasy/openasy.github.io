@@ -6,6 +6,7 @@ export default [
   route("goals/:id", "routes/goal.tsx"),
   route("products", "routes/products.tsx"),
   route("products/:id", "routes/product.tsx"),
+  route("products/:id/api", "routes/product-api.tsx"),
   route("principles", "routes/principles.tsx"),
   route("support", "routes/support.tsx"),
 ] satisfies RouteConfig;

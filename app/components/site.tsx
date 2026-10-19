@@ -44,7 +44,6 @@ const NAV = [
   { to: "/goals", label: "Goals" },
   { to: "/products", label: "Products" },
   { to: "/principles", label: "Principles" },
-  { to: "/support", label: "Support" },
 ];
 
 export function SiteHeader({ theme, onThemeChange }: { theme: ThemePreference; onThemeChange: (next: ThemePreference) => void }) {

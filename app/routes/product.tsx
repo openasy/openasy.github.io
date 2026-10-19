@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router";
 import { PRODUCT_IDS, type ProductId } from "@openasy/ui";
+import { apiFor } from "../data/apis";
 import { goalsForProduct } from "../data/goals";
 import { storyUrl } from "../data/storybook";
 import { ButtonLink, CodeBlock, Section } from "../components/site";
@@ -15,6 +16,7 @@ export default function ProductPage() {
   if (!PRODUCT_IDS.includes(id as ProductId)) throw new Response("Not found", { status: 404 });
   const p = product(id);
   const goals = goalsForProduct(id);
+  const api = apiFor(id);
   return (
     <Section className="py-10" labelledBy="title">
       <p className="m-0 text-sm">
@@ -33,7 +35,8 @@ export default function ProductPage() {
         <ButtonLink to={storyUrl(p.name)} variant="primary" external>
           See every screen
         </ButtonLink>
-        <ButtonLink to={`https://github.com/openasy/${id}`} external>
+        {api && <ButtonLink to={`/products/${id}/api`}>API reference</ButtonLink>}
+        <ButtonLink to={`https://github.com/${api?.repo ?? `openasy/${id}`}`} external>
           Source code
         </ButtonLink>
       </div>
