@@ -23,23 +23,24 @@ export default function GoalPage() {
   ];
   return (
     <>
-      <Section className="pt-10 pb-4" labelledBy="title">
-        <p className="m-0 text-sm">
-          <Link to="/goals">Goals</Link> <span className="text-fg-muted">/</span>
-        </p>
-        <h1 id="title" className="mt-1 mb-0 text-3xl font-semibold">
-          {g.title}
-        </h1>
-        <p className="mt-1 text-base text-fg-muted">“{g.ask}”</p>
-        <p className="mt-3 max-w-3xl">{g.summary}</p>
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
-          <StatusBadge tone="info">Preview</StatusBadge>
-          Time to first value: {g.timeToValue}
-        </p>
-      </Section>
-
-      <Section className="grid gap-6 py-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      {/* The side column starts level with the title and stays in view below the sticky header. */}
+      <Section className="grid gap-6 pt-10 pb-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]" labelledBy="title">
         <div className="flex min-w-0 flex-col gap-6">
+          <header>
+            <p className="m-0 text-sm">
+              <Link to="/goals">Goals</Link> <span className="text-fg-muted">/</span>
+            </p>
+            <h1 id="title" className="mt-1 mb-0 text-3xl font-semibold">
+              {g.title}
+            </h1>
+            <p className="mt-1 text-base text-fg-muted">“{g.ask}”</p>
+            <p className="mt-3 max-w-3xl">{g.summary}</p>
+            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
+              <StatusBadge tone="info">Preview</StatusBadge>
+              Time to first value: {g.timeToValue}
+            </p>
+          </header>
+
           <section aria-labelledby="outcomes">
             <h2 id="outcomes" className="m-0 text-xl font-semibold">
               What you get
@@ -75,7 +76,7 @@ export default function GoalPage() {
           </section>
         </div>
 
-        <aside className="flex min-w-0 flex-col gap-4" aria-label="Products for this goal">
+        <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto" aria-label="Products for this goal">
           <section aria-labelledby="needed" className="rounded-lg border border-line bg-surface p-4">
             <h2 id="needed" className="m-0 text-base font-semibold">
               You need
