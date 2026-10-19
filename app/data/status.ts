@@ -79,8 +79,8 @@ const DESIGNED: ProductState = { status: "Designed", features: [], upstream: [] 
 
 export const STATUS: Partial<Record<string, ProductState>> = {
   vulnerabilities: {
-    // On release: status "Preview" and version "0.1.0", once ghcr.io/openasy/vulns, vulns-agent and the chart are published.
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
     note: "For testing only. There is no sign-in yet: the API and UI use one shared admin token. Sign-in comes in the next release.",
     helm: {
       chart: "oci://ghcr.io/openasy/charts/vulns",

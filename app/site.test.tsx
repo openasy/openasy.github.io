@@ -104,8 +104,9 @@ describe("pages", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Identity" }));
     expect(list().children).toHaveLength(1);
     await userEvent.click(screen.getByRole("radio", { name: "All groups" }));
-    await userEvent.click(screen.getByRole("radio", { name: /^In progress/ }));
-    expect(list().children).toHaveLength(1);
+    await userEvent.click(screen.getByRole("radio", { name: /^Ready to try/ }));
+    expect(list().children).toHaveLength(2);
+    expect(list()).toHaveTextContent("VPN");
     expect(list()).toHaveTextContent("Vulnerabilities");
   });
 
