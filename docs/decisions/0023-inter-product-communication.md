@@ -1,8 +1,8 @@
 # 0023. Communication between products and agents
 
-- **Decision:** Proposed
-- **Implementation:** Not started
-- **Priority:** Critical
+- **Decision:** Accepted
+- **Implementation:** In progress
+- **Where:** `vpn-server` pulls its config from `vpn-manager` with `ETag`, a 10 second timeout, and keeps the last good config when the manager is unreachable. Per-agent identities and `Idempotency-Key` are not built yet; agents share `VPN_SERVER_TOKEN`.
 - **Area:** Architecture
 
 ## Context

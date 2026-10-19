@@ -1,9 +1,8 @@
 # 0029. Testing and quality gates
 
-- **Decision:** Proposed
+- **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** Type checks, unit tests, accessibility tests (`@openasy/ui`) and container smoke tests run on every pull request. Migration, upgrade, restore and end-to-end tests are not built yet.
-- **Priority:** High
+- **Where:** Type checks, unit and contract tests, accessibility tests (`@openasy/ui`), container smoke tests, and an end-to-end VPN test in CI: a real OpenVPN client connects over UDP and TCP, reaches a network behind the server, and a revoked device is refused. Migration, upgrade and restore tests are not built yet.
 - **Area:** Quality
 
 ## Context

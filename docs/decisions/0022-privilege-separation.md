@@ -1,9 +1,8 @@
 # 0022. Privilege separation
 
-- **Decision:** Proposed
+- **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn-manager` runs as non-root in a distroless image; `vpn-server` gets only `NET_ADMIN` and `/dev/net/tun`. Desired-state pull and the read-only filesystem are not built yet.
-- **Priority:** Critical
+- **Where:** `vpn-manager` runs as non-root in a distroless image. `vpn-server` gets only `NET_ADMIN` and `/dev/net/tun`, pulls its config, validates it against a fixed shape before writing, and runs OpenVPN as `nobody` after start. The read-only filesystem and `no-new-privileges` are not set yet.
 - **Area:** Security
 
 ## Context

@@ -1,7 +1,8 @@
 # 0021. Secrets and key management
 
 - **Decision:** Proposed
-- **Implementation:** Not started
+- **Implementation:** In progress
+- **Where:** Device private keys are returned once and never stored; the API never returns them again. The CA key is still stored unencrypted, and the key-encryption key is not built yet.
 - **Priority:** Critical
 - **Area:** Security
 

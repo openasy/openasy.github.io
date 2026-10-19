@@ -33,15 +33,15 @@ Each record has two statuses:
 | 0018 | [One application per product; agents on hosts are separate](./0018-one-application-per-product.md) | Architecture | Accepted | Implemented |
 | 0019 | [Versioning: independent SemVer per product, monthly releases](./0019-versioning-and-releases.md) | Engineering | Accepted | In progress |
 | 0020 | [Long-term support for Enterprise customers](./0020-long-term-support.md) | Engineering | Accepted | Not started |
-| 0021 | [Secrets and key management](./0021-secrets-and-keys.md) | Security | Proposed · Critical | Not started |
-| 0022 | [Privilege separation](./0022-privilege-separation.md) | Security | Proposed · Critical | In progress |
-| 0023 | [Communication between products and agents](./0023-inter-product-communication.md) | Architecture | Proposed · Critical | Not started |
+| 0021 | [Secrets and key management](./0021-secrets-and-keys.md) | Security | Proposed · Critical | In progress |
+| 0022 | [Privilege separation](./0022-privilege-separation.md) | Security | Accepted | In progress |
+| 0023 | [Communication between products and agents](./0023-inter-product-communication.md) | Architecture | Accepted | In progress |
 | 0024 | [API design and compatibility](./0024-api-compatibility.md) | Architecture | Accepted | In progress |
 | 0025 | [Disaster recovery](./0025-disaster-recovery.md) | Operations | Proposed · Critical | Not started |
 | 0026 | [Network exposure and TLS](./0026-network-exposure-and-tls.md) | Security | Proposed · Critical | Not started |
 | 0027 | [Build integrity and supply chain](./0027-reproducible-builds.md) | Engineering | Proposed · High | In progress |
 | 0028 | [Resource budgets](./0028-resource-budgets.md) | Operations | Proposed · Medium | In progress |
-| 0029 | [Testing and quality gates](./0029-testing-and-quality-gates.md) | Quality | Proposed · High | In progress |
+| 0029 | [Testing and quality gates](./0029-testing-and-quality-gates.md) | Quality | Accepted | In progress |
 | 0030 | [Open-source governance](./0030-open-source-governance.md) | Project | Proposed · High | Not started |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.
