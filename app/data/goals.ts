@@ -1,0 +1,233 @@
+/**
+ * Goal-based guides. Product ids match `PRODUCT_IDS` in @openasy/ui; a test keeps them in sync.
+ * This file must not import React or @openasy/ui: react-router.config.ts reads it at build time.
+ */
+
+export interface GoalStep {
+  title: string;
+  body: string;
+  /** Shell commands or config shown as a code block. */
+  code?: string;
+}
+
+export interface Goal {
+  id: string;
+  title: string;
+  /** How a person would say it. */
+  ask: string;
+  summary: string;
+  /** What you can do once it is running. */
+  outcomes: string[];
+  /** The smallest set of products that reaches the goal. */
+  required: string[];
+  /** Products that make it better; each works without them. */
+  recommended: Array<{ id: string; why: string }>;
+  /** Goal-specific steps after the products are running and the owner has signed in. */
+  steps: GoalStep[];
+  timeToValue: string;
+}
+
+export const GOALS: Goal[] = [
+  {
+    id: "vpn",
+    title: "Secure remote access",
+    ask: "I only need a VPN for my team.",
+    summary: "One container gives you an OpenVPN server with a web UI: people, groups, split tunnelling and a log of every connection.",
+    outcomes: [
+      "Invite people by email; each downloads their own profile from My VPN.",
+      "Limit groups to the networks they need with IP groups and split tunnelling.",
+      "See who is connected now, from where, and end any session.",
+      "Keep a searchable history of every connection.",
+    ],
+    required: ["vpn"],
+    recommended: [
+      { id: "identity", why: "Sign in with your company accounts and require MFA." },
+      { id: "logs", why: "Keep connection logs longer and search them with everything else." },
+      { id: "backups", why: "Off-site copies of the VPN database and certificates." },
+    ],
+    steps: [
+      { title: "Open the VPN port", body: "Allow UDP 1194 on your firewall to the host running the container. The web UI stays on 8443 and can be kept internal." },
+      { title: "Create IP groups", body: "In IP groups, add the networks people may reach, for example the office LAN and the Kubernetes API. Anything not listed is not routed." },
+      { title: "Invite people", body: "In People, invite by email and pick their groups. Each person signs in and downloads a profile from My VPN.", code: "openasy-vpn people invite dana.kim@example.com --group engineering" },
+    ],
+    timeToValue: "About 10 minutes",
+  },
+  {
+    id: "compliance",
+    title: "Pass an audit",
+    ask: "We need ISO 27001, SOC 2 or GDPR evidence without spreadsheets.",
+    summary: "Compliance maps controls to evidence collected automatically from the other products, so the audit is a report, not a project.",
+    outcomes: [
+      "See every control of ISO 27001, SOC 2 and GDPR with its status and owner.",
+      "Evidence is attached automatically: access reviews, backups and restore tests, training records, vulnerability fixes.",
+      "Export an evidence pack per framework for your auditor.",
+      "Track risks and their treatments in a register.",
+    ],
+    required: ["compliance"],
+    recommended: [
+      { id: "access", why: "Just-in-time access and access reviews (ISO 27001 A.5.18, SOC 2 CC6)." },
+      { id: "backups", why: "Backup and restore-test evidence (A.8.13, SOC 2 A1.2)." },
+      { id: "awareness", why: "Phishing simulations and training records (A.6.3, CC2.2)." },
+      { id: "risk", why: "Risk register and vendor reviews (A.5.19, CC3)." },
+      { id: "vulnerabilities", why: "Proof that vulnerabilities are fixed in time (A.8.8)." },
+      { id: "identity", why: "MFA and joiner-mover-leaver evidence (A.5.16)." },
+    ],
+    steps: [
+      { title: "Pick frameworks", body: "In Compliance → Frameworks, enable the ones you are audited against. Controls shared between frameworks are only answered once." },
+      { title: "Link the evidence sources", body: "In Integrations, link the OpenAsy products you run. Each one starts sending evidence for the controls it covers." },
+      { title: "Assign owners", body: "Give every control an owner. Owners get a reminder when evidence is missing or about to expire." },
+    ],
+    timeToValue: "A day to set up; evidence builds up from then on",
+  },
+  {
+    id: "data-loss",
+    title: "Notice data loss",
+    ask: "If data leaves or disappears, I want to know — and get it back.",
+    summary: "Backups make data recoverable; Network IDS, Deception and Secrets tell you when it is being taken.",
+    outcomes: [
+      "Daily backups with tested restores, and restore to any point in time.",
+      "Alerts on exfiltration: DNS tunnels, large uploads, unusual egress.",
+      "Canary files, keys and database users that only an intruder would touch.",
+      "Leaked credentials found in code, images and public pastes.",
+    ],
+    required: ["backups", "network-ids"],
+    recommended: [
+      { id: "deception", why: "Tripwires that fire only in a real breach." },
+      { id: "secrets", why: "Find credentials before someone else does." },
+      { id: "cost", why: "Egress cost anomalies are often the first sign of exfiltration." },
+      { id: "incidents", why: "Run the response, including the GDPR 72-hour notification clock." },
+    ],
+    steps: [
+      { title: "Choose what to back up", body: "In Backups → Jobs, add databases, volumes and buckets. Pick a schedule and retention (default 7 daily, 4 weekly, 12 monthly)." },
+      { title: "Turn on restore tests", body: "Restore tests start a copy of each backup weekly and check it. A backup that was never restored is a hope, not a backup." },
+      { title: "Mirror traffic to Network IDS", body: "Send a span port or VPC traffic mirror to the sensor. Exfiltration and DNS-tunnel rules are on by default." },
+    ],
+    timeToValue: "About an hour",
+  },
+  {
+    id: "who-did-what",
+    title: "Know who did what, now and in the past",
+    ask: "Who is on our systems right now, and what did they do last Tuesday?",
+    summary: "Access records every privileged session, Identity records every sign-in, and SIEM ties them to what happened on the hosts.",
+    outcomes: [
+      "See every live SSH, database and RDP session and end it.",
+      "Replay any session and search recordings by command.",
+      "A timeline per person across sign-ins, VPN, access grants and alerts.",
+      "No standing admin accounts: privileged access is requested, approved and expires.",
+    ],
+    required: ["access", "identity"],
+    recommended: [
+      { id: "siem", why: "Correlate people with what happened on hosts." },
+      { id: "logs", why: "Keep the raw events for 400 days." },
+      { id: "vpn", why: "Who connected from where." },
+      { id: "endpoints", why: "Which laptop they used and whether it was compliant." },
+    ],
+    steps: [
+      { title: "Connect your identity provider", body: "In Identity → Providers, connect Google Workspace, Microsoft Entra ID, Okta or LDAP, or use local accounts with MFA." },
+      { title: "Add resources to Access", body: "Register hosts, databases and clusters. Access holds the credentials; people never see them." },
+      { title: "Set approval policies", body: "Decide who can request what, who approves, and for how long. Production defaults to one approver and four hours." },
+    ],
+    timeToValue: "About 30 minutes",
+  },
+  {
+    id: "breach",
+    title: "Detect a breach",
+    ask: "Would we notice an attacker, and how fast?",
+    summary: "Detection at every stage of an attack, and Attack Simulation to keep proving it works.",
+    outcomes: [
+      "Sigma rules over all security events, correlated into signals.",
+      "Process, network and file activity on every host and container.",
+      "Decoys and canaries that catch lateral movement.",
+      "Nightly safe attack simulations that show which stages you would miss.",
+    ],
+    required: ["siem", "runtime"],
+    recommended: [
+      { id: "network-ids", why: "Scans, C2 beacons and exfiltration on the wire." },
+      { id: "deception", why: "High-signal tripwires." },
+      { id: "attack-simulation", why: "Prove coverage every night with Atomic Red Team style tests." },
+      { id: "incidents", why: "Turn signals into a managed response." },
+      { id: "threat-intel", why: "Known-bad IPs, domains and hashes." },
+    ],
+    steps: [
+      { title: "Install the Runtime sensor", body: "Run the eBPF sensor as a DaemonSet or a systemd service on each host.", code: "kubectl apply -f https://openasy.github.io/install/runtime-sensor.yaml" },
+      { title: "Send events to SIEM", body: "Point Syslog, OpenTelemetry or the other products at SIEM. Detection rules for common attacks are enabled by default." },
+      { title: "Route signals to people", body: "In SIEM → Routing, send critical signals to on-call. A detection nobody sees is not a detection." },
+    ],
+    timeToValue: "About an hour",
+  },
+  {
+    id: "uptime",
+    title: "Keep services up",
+    ask: "We want to know about outages before our customers do.",
+    summary: "Uptime checks from outside, metrics and logs from inside, alerts to the right person and a status page.",
+    outcomes: [
+      "HTTP, TCP, DNS and certificate checks from several regions.",
+      "Dashboards and PromQL over all your metrics.",
+      "Alert rules, routing and on-call schedules.",
+      "Incidents with a timeline, postmortems and a public status page.",
+    ],
+    required: ["uptime", "alerts"],
+    recommended: [
+      { id: "metrics", why: "See the cause, not only the symptom." },
+      { id: "logs", why: "Search what happened around the alert." },
+      { id: "traces", why: "Find the slow service in a request." },
+      { id: "incidents", why: "Coordinate the response and keep customers informed." },
+    ],
+    steps: [
+      { title: "Add checks", body: "In Uptime, add the URLs and ports customers depend on. Certificates are checked automatically." },
+      { title: "Set up on-call", body: "In Alerts → On-call, add a rotation and connect email, Slack, Teams or a phone provider." },
+    ],
+    timeToValue: "About 15 minutes",
+  },
+  {
+    id: "secure-code",
+    title: "Ship secure code",
+    ask: "Stop vulnerabilities and secrets before they reach production.",
+    summary: "Checks on every pull request, every dependency and every image, with admission control so only verified images run.",
+    outcomes: [
+      "Static analysis and secret scanning on every pull request.",
+      "Dependency advisories for npm, pip, Go, Cargo and Composer.",
+      "Signed images with SBOMs and provenance, verified at admission.",
+      "Dynamic scans of running applications.",
+    ],
+    required: ["sast", "secrets"],
+    recommended: [
+      { id: "audit", why: "Vulnerable dependencies, with fix versions." },
+      { id: "supply-chain", why: "Only signed images from your builds may run." },
+      { id: "dast", why: "Find what only shows up at runtime." },
+      { id: "waf", why: "Virtual patches until the code is fixed." },
+    ],
+    steps: [
+      { title: "Install the GitHub or GitLab app", body: "Pick the repositories to protect. Findings appear as pull request comments; push protection blocks verified secrets." },
+      { title: "Add the CI step", body: "Sign images and attach SBOMs in your release workflow.", code: "- uses: openasy/supply-chain-action@v1\n  with:\n    image: ghcr.io/acme/api:${{ github.ref_name }}" },
+    ],
+    timeToValue: "About 20 minutes",
+  },
+  {
+    id: "cost",
+    title: "Control cloud spend",
+    ask: "Why did the bill go up, and what can we cut?",
+    summary: "Spend by team, budgets with forecasts, anomaly alerts and rightsizing recommendations.",
+    outcomes: [
+      "Daily spend by service, team tag and account.",
+      "Budgets per team with forecast alerts.",
+      "Anomalies explained down to the resource that caused them.",
+      "Savings recommendations from real utilisation.",
+    ],
+    required: ["cost"],
+    recommended: [
+      { id: "metrics", why: "Utilisation data for better rightsizing." },
+      { id: "infrastructure", why: "Map spend to hosts and clusters." },
+    ],
+    steps: [
+      { title: "Connect billing exports", body: "Give Cost read-only access to the AWS, Azure or GCP billing export. Nothing else is needed." },
+      { title: "Tag by team", body: "Cost groups spend by the team tag. Untagged spend is listed so it can be chased down." },
+    ],
+    timeToValue: "Data appears within a day",
+  },
+];
+
+export const goalById = (id: string | undefined) => GOALS.find((g) => g.id === id);
+
+/** Goals in which a product is required or recommended. */
+export const goalsForProduct = (id: string) => GOALS.filter((g) => g.required.includes(id) || g.recommended.some((r) => r.id === id));

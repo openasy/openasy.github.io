@@ -1,0 +1,59 @@
+/* Components, tokens (light and dark) and base styles come from the library. */
+@import "@openasy/ui/styles.css";
+
+/* Site layout utilities on the same tokens. Preflight already comes with the library CSS. */
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities);
+@source "./";
+
+/* Same token mapping as @openasy/ui src/styles/index.css. */
+@theme inline {
+  --font-sans: var(--oa-font-sans);
+  --font-mono: var(--oa-font-mono);
+  --color-canvas: var(--oa-canvas);
+  --color-surface: var(--oa-surface);
+  --color-subtle: var(--oa-subtle);
+  --color-line: var(--oa-line);
+  --color-line-strong: var(--oa-line-strong);
+  --color-fg: var(--oa-fg);
+  --color-fg-muted: var(--oa-fg-muted);
+  --color-fg-subtle: var(--oa-fg-subtle);
+  --color-accent: var(--oa-accent);
+  --color-accent-hover: var(--oa-accent-hover);
+  --color-accent-soft: var(--oa-accent-soft);
+  --color-accent-text: var(--oa-accent-text);
+  --color-accent-contrast: var(--oa-accent-contrast);
+  --color-success: var(--oa-success);
+  --color-success-soft: var(--oa-success-soft);
+  --color-warning: var(--oa-warning);
+  --color-warning-text: var(--oa-warning-text);
+  --color-warning-soft: var(--oa-warning-soft);
+  --color-danger: var(--oa-danger);
+  --color-danger-text: var(--oa-danger-text);
+  --color-danger-soft: var(--oa-danger-soft);
+  --color-critical: var(--oa-critical);
+  --shadow-raised: var(--oa-shadow-1);
+  --shadow-overlay: var(--oa-shadow-2);
+  --text-2xs: 11px;
+  --text-2xs--line-height: 14px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-base: 14px;
+  --text-base--line-height: 20px;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--oa-canvas);
+}
+
+/* Text links use the accent; cards and buttons set their own colour with utilities. */
+@layer base {
+  .oa-root a {
+    color: var(--oa-accent-text);
+    text-underline-offset: 2px;
+  }
+}
