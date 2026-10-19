@@ -10,7 +10,7 @@ Published at https://openasy.github.io/. The component library's Storybook stays
 | `/` | Landing page |
 | `/goals`, `/goals/:id` | Guides by goal ("I only need a VPN", "Pass an audit", "Notice data loss", …): the fewest products needed, optional add-ons and install steps |
 | `/products`, `/products/:id` | Every product, the goals it serves and how to run it alone |
-| `/principles` | Short form of the design decisions in [openasy/ui `docs/decisions`](https://github.com/openasy/ui/tree/main/docs/decisions) |
+| `/principles` | The design decisions in [`docs/decisions`](./docs/decisions/README.md), accepted and proposed, with how far each is built |
 
 Content lives in `app/data/`. Product names, icons, images and summaries come from `@openasy/ui` (`PRODUCTS`), so the
 catalog always matches the library.

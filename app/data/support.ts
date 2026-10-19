@@ -43,6 +43,7 @@ export const PLANS: Plan[] = [
       "24/7 for critical issues",
       "A named engineer and a private Slack or Teams channel",
       "Upgrade planning and assisted upgrades",
+      "Long-term support lines with 12 months of security fixes",
       "Security advisories before public release",
       "Help preparing evidence for ISO 27001 and SOC 2 audits",
     ],

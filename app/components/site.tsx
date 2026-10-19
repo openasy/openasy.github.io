@@ -92,7 +92,7 @@ export function SiteFooter() {
           <a href={STORYBOOK} className="text-fg-muted">
             Component library
           </a>
-          <a href={`${GITHUB}/ui/blob/main/docs/decisions/0008-open-source.md`} className="text-fg-muted">
+          <a href={`${GITHUB}/openasy.github.io/blob/main/docs/decisions/0008-open-source.md`} className="text-fg-muted">
             Licence
           </a>
         </nav>

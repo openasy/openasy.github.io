@@ -93,9 +93,23 @@ describe("pages", () => {
     expect(screen.getByRole("link", { name: "Notice data loss" })).toHaveAttribute("href", "/goals/data-loss");
   });
 
-  it("principles link to their records", () => {
+  it("principles link to their records, accepted and proposed apart", () => {
     open("/principles");
     expect(screen.getAllByRole("link", { name: /^Read the record:/ })).toHaveLength(PRINCIPLES.length);
+    const accepted = PRINCIPLES.filter((p) => p.decision === "Accepted").length;
+    expect(screen.getByRole("list", { name: "Accepted decisions" }).children).toHaveLength(accepted);
+    expect(screen.getByRole("list", { name: "Proposed decisions" }).children).toHaveLength(PRINCIPLES.length - accepted);
+  });
+
+  it("every decision record has a valid decision and implementation status", () => {
+    expect(PRINCIPLES.length).toBeGreaterThanOrEqual(30);
+    expect(new Set(PRINCIPLES.map((p) => p.n)).size).toBe(PRINCIPLES.length);
+    for (const p of PRINCIPLES) {
+      expect(p.decision).toMatch(/^(Proposed|Accepted|Superseded by \d{4})$/);
+      expect(["Not started", "In progress", "Implemented"]).toContain(p.implementation);
+      if (p.decision === "Proposed") expect(["Critical", "High", "Medium"]).toContain(p.priority);
+      expect(p.file.startsWith(p.n)).toBe(true);
+    }
   });
 
   it("support page shows the plans and a way to buy them", () => {

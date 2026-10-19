@@ -111,7 +111,7 @@ export default function Home() {
           ))}
         </ul>
         <p className="mt-3 text-sm">
-          <a href="/principles">All {PRINCIPLES.length} design principles →</a>
+          <a href="/principles">All {PRINCIPLES.filter((p) => p.decision === "Accepted").length} design principles →</a>
         </p>
       </Section>
 
