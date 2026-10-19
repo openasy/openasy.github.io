@@ -97,6 +97,15 @@ export default function GoalPage() {
               })}
             </ul>
           </section>
+          <section aria-labelledby="help" className="rounded-lg border border-line bg-surface p-4">
+            <h2 id="help" className="m-0 text-base font-semibold">
+              Want help with this?
+            </h2>
+            <p className="mt-1 mb-2 text-xs text-fg-muted">Our engineers can set it up with you and stay on call afterwards.</p>
+            <Link to="/support" className="text-sm font-medium">
+              See support plans
+            </Link>
+          </section>
           {g.recommended.length > 0 && (
             <section aria-labelledby="addons" className="rounded-lg border border-line bg-surface p-4">
               <h2 id="addons" className="m-0 text-base font-semibold">

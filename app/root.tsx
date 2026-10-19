@@ -11,6 +11,8 @@ export function Layout({ children }: { children: ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="light dark" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <Meta />
         <Links />
       </head>
@@ -26,12 +28,14 @@ export function Layout({ children }: { children: ReactNode }) {
 function Shell({ children }: { children: ReactNode }) {
   const theme = useSystemTheme();
   return (
-    <BrandProvider theme={theme} brand={{ name: "OpenAsy", hidePoweredBy: true }} style={{ minHeight: "100vh" }}>
+    <BrandProvider theme={theme} brand={{ name: "OpenAsy", hidePoweredBy: true }} className="flex min-h-screen flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:rounded focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
       <SiteHeader />
-      <main id="main">{children}</main>
+      <main id="main" className="flex-1">
+        {children}
+      </main>
       <SiteFooter />
     </BrandProvider>
   );

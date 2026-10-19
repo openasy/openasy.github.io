@@ -44,10 +44,22 @@ export function ButtonLink({ to, children, variant = "secondary", size = "md", e
   );
 }
 
+/** The OpenAsy mark: an open ring, and a product joining through the gap. Same drawing as public/logo-mark.svg. */
+export function LogoMark({ size = 24 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 32 32" width={size} height={size} aria-hidden>
+      <rect width="32" height="32" rx="8" fill="#1f4fd8" />
+      <path d="M24 16A8 8 0 1 1 16 8" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" />
+      <circle cx="21.66" cy="10.34" r="2.1" fill="#fff" />
+    </svg>
+  );
+}
+
 const NAV = [
   { to: "/goals", label: "Goals" },
   { to: "/products", label: "Products" },
   { to: "/principles", label: "Principles" },
+  { to: "/support", label: "Support" },
 ];
 
 export function SiteHeader() {
@@ -55,9 +67,7 @@ export function SiteHeader() {
     <header className="border-b border-line bg-surface">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 text-base font-semibold text-fg no-underline">
-          <span aria-hidden className="grid size-6 place-items-center rounded-md bg-accent text-xs font-bold text-accent-contrast">
-            O
-          </span>
+          <LogoMark />
           OpenAsy
         </Link>
         <nav aria-label="Main" className="flex grow flex-wrap items-center gap-4 text-sm">
@@ -83,8 +93,11 @@ export function SiteFooter() {
   return (
     <footer className="mt-12 border-t border-line bg-surface">
       <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-4 px-4 py-6 text-xs text-fg-muted">
-        <p className="m-0">OpenAsy is open source under the Apache-2.0 licence. No telemetry, no lock-in.</p>
+        <p className="m-0">OpenAsy is open source under the Apache-2.0 licence. No telemetry, no lock-in. Support plans fund the work.</p>
         <nav aria-label="Footer" className="flex flex-wrap gap-4">
+          <a href="/support" className="text-fg-muted">
+            Support
+          </a>
           <a href={GITHUB} className="text-fg-muted">
             Source code
           </a>

@@ -1,0 +1,65 @@
+/** Support plans. Prices are agreed per customer, so the site only shows scope. */
+
+/** Where "Contact us" goes. Replace with the real support address before launch. */
+export const SUPPORT_EMAIL = "support@example.com";
+
+export const contactUrl = (plan: string) => `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`OpenAsy ${plan} support`)}`;
+
+export interface Plan {
+  id: "community" | "standard" | "enterprise";
+  name: string;
+  price: string;
+  pitch: string;
+  features: string[];
+  cta: { label: string; href: string };
+  highlight?: boolean;
+}
+
+export const PLANS: Plan[] = [
+  {
+    id: "community",
+    name: "Community",
+    price: "Free",
+    pitch: "For trying things out and for teams that like to fix things themselves.",
+    features: ["All products, all features", "GitHub issues and discussions", "Install guides and documentation", "Security fixes in the latest release"],
+    cta: { label: "Go to GitHub", href: "https://github.com/openasy" },
+  },
+  {
+    id: "standard",
+    name: "Standard",
+    price: "Contact us",
+    pitch: "For companies running OpenAsy in production.",
+    features: ["Email support in business hours", "Guaranteed response times", "Help with installation and configuration", "Help with every upgrade", "Covers all products you run"],
+    cta: { label: "Contact us", href: contactUrl("Standard") },
+    highlight: true,
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    price: "Contact us",
+    pitch: "For teams where OpenAsy is critical to operations or security.",
+    features: [
+      "Everything in Standard",
+      "24/7 for critical issues",
+      "A named engineer and a private Slack or Teams channel",
+      "Upgrade planning and assisted upgrades",
+      "Security advisories before public release",
+      "Help preparing evidence for ISO 27001 and SOC 2 audits",
+    ],
+    cta: { label: "Contact us", href: contactUrl("Enterprise") },
+  },
+];
+
+export const RESPONSE_TIMES: Array<{ severity: string; meaning: string; standard: string; enterprise: string }> = [
+  { severity: "Critical", meaning: "Production is down or a security incident is in progress", standard: "4 business hours", enterprise: "1 hour, 24/7" },
+  { severity: "High", meaning: "A major feature does not work and there is no workaround", standard: "1 business day", enterprise: "4 hours" },
+  { severity: "Normal", meaning: "Questions, configuration help, minor problems", standard: "2 business days", enterprise: "1 business day" },
+];
+
+export const FAQ: Array<{ q: string; a: string }> = [
+  { q: "Do I need a support plan to use OpenAsy?", a: "No. Every product is free and open source under Apache-2.0, and works the same with or without support." },
+  { q: "Does paying unlock features?", a: "No. There is no enterprise edition and no licence key. You pay for people who know the products, not for code." },
+  { q: "How much does it cost?", a: "It depends on how many products and hosts you run and the plan you need. Tell us what you run and we will send a quote." },
+  { q: "Can you install it for us?", a: "Yes. Standard and Enterprise include help with installation, and we can do the first setup together on a call." },
+  { q: "Who answers?", a: "The engineers who build the products." },
+];

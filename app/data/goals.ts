@@ -82,7 +82,7 @@ export const GOALS: Goal[] = [
   {
     id: "data-loss",
     title: "Notice data loss",
-    ask: "If data leaves or disappears, I want to know — and get it back.",
+    ask: "If data leaves or disappears, I want to know and get it back.",
     summary: "Backups make data recoverable; Network IDS, Deception and Secrets tell you when it is being taken.",
     outcomes: [
       "Daily backups with tested restores, and restore to any point in time.",

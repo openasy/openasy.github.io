@@ -13,6 +13,8 @@ import GoalPage from "./routes/goal";
 import Products from "./routes/products";
 import ProductPage from "./routes/product";
 import Principles from "./routes/principles";
+import Support from "./routes/support";
+import { PLANS, SUPPORT_EMAIL } from "./data/support";
 
 const Stub = createRoutesStub([
   { path: "/", Component: Home },
@@ -21,6 +23,7 @@ const Stub = createRoutesStub([
   { path: "/products", Component: Products },
   { path: "/products/:id", Component: ProductPage },
   { path: "/principles", Component: Principles },
+  { path: "/support", Component: Support },
 ]);
 
 const open = (url: string) => render(<Stub initialEntries={[url]} />);
@@ -92,5 +95,18 @@ describe("pages", () => {
   it("principles link to their records", () => {
     open("/principles");
     expect(screen.getAllByRole("link", { name: /^Read the record:/ })).toHaveLength(PRINCIPLES.length);
+  });
+
+  it("support page shows the plans and a way to buy them", () => {
+    open("/support");
+    expect(h1()).toHaveTextContent("Support");
+    expect(screen.getByRole("list", { name: "Support plans" }).children).toHaveLength(PLANS.length);
+    for (const link of screen.getAllByRole("link", { name: /Contact us/ })) expect(link.getAttribute("href")).toMatch(new RegExp(`^mailto:${SUPPORT_EMAIL}`));
+    expect(screen.getByRole("table", { name: "Response times by severity and plan" })).toBeInTheDocument();
+  });
+
+  it("home and every guide point to support", () => {
+    open("/");
+    expect(screen.getByRole("link", { name: "See support plans" })).toHaveAttribute("href", "/support");
   });
 });

@@ -37,8 +37,8 @@ export default function Home() {
           Run and secure your infrastructure with tools you own.
         </h1>
         <p className="mt-4 max-w-2xl text-base text-fg-muted">
-          {PRODUCT_IDS.length} products for operations and security that work alone, together, or next to the tools you already have. Make operations easier and keep security at its highest — without
-          sending your data anywhere.
+          {PRODUCT_IDS.length} products for operations and security that work alone, together, or next to the tools you already have. Operations get easier, security stays at its highest, and your data
+          never leaves your network.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
           <ButtonLink to="/goals" variant="primary" size="lg">
@@ -88,7 +88,7 @@ export default function Home() {
             Together, they cover a whole breach
           </h2>
           <p className="mt-2 max-w-3xl text-fg-muted">
-            Every stage of an attack — from reconnaissance to impact — is watched by at least one product, and Attack Simulation replays safe tests every night to prove it. Switch products off in the
+            Every stage of an attack, from reconnaissance to impact, is watched by at least one product, and Attack Simulation replays safe tests every night to prove it. Switch products off in the
             breach coverage view to see what you would miss.
           </p>
           <div className="mt-3">
@@ -96,6 +96,23 @@ export default function Home() {
               Open breach coverage
             </ButtonLink>
           </div>
+        </div>
+      </Section>
+
+      <Section className="py-8" labelledBy="support">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-accent bg-accent-soft p-5">
+          <div className="max-w-2xl">
+            <h2 id="support" className="m-0 text-2xl font-semibold">
+              Free to use. Supported when you need it.
+            </h2>
+            <p className="mt-2 mb-0 text-fg-muted">
+              The code is the same for everyone. If OpenAsy runs something you depend on, a support plan gives you guaranteed response times, help with installs and upgrades, and 24/7 cover for
+              critical issues.
+            </p>
+          </div>
+          <ButtonLink to="/support" variant="primary">
+            See support plans
+          </ButtonLink>
         </div>
       </Section>
 
