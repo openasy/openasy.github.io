@@ -43,7 +43,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0015": { title: "Your data stays yours", text: "No telemetry, air-gapped installs, GDPR export and delete, retention you control." },
   "0016": { title: "One signed container", text: "docker compose up or Helm. Images are signed, ship an SBOM and carry SLSA provenance." },
   "0017": { title: "Observable", text: "/healthz, /readyz and /metrics on every product, structured logs on stdout." },
-  "0018": { title: "One app per product", text: "API and web UI ship together in one container with one version. Only host agents such as the VPN server and sensors are separate." },
+  "0018": { title: "One app per product", text: "API and web UI ship together in one container with one version. Agents are separate: on a host only where the work must run there, otherwise installed once to read many hosts." },
   "0019": { title: "Versions you can trust", text: "Each product has its own SemVer and a monthly release. Products declare which versions they work with and refuse to link to an incompatible one." },
   "0020": { title: "Long-term support", text: "For Enterprise customers: one long-term line per year with 12 months of high and critical security fixes." },
   "0021": { title: "Secrets and keys", text: "Envelope encryption with a key kept outside the database, keys that stay where they are used, rotation and a recovery key." },
@@ -56,6 +56,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0028": { title: "Runs on a small server", text: "Memory, CPU and image size budgets, amd64 and arm64, no required external services." },
   "0029": { title: "Proof, not percentages", text: "Tests for what matters: migrations, upgrades, restores, accessibility and the main flow of each product." },
   "0030": { title: "How the project is run", text: "Contributions, maintainers, licence checks, security reports, and what happens if the project ends." },
+  "0031": { title: "Hosts stay clean", text: "One agent per network reads hosts over SSH with 5-minute certificates and keeps the keys; the product holds none. Nothing is installed on your hosts." },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });

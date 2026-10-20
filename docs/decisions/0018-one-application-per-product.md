@@ -1,8 +1,8 @@
-# 0018. One application per product; agents on hosts are separate
+# 0018. One application per product; agents are separate
 
 - **Decision:** Accepted
 - **Implementation:** Implemented
-- **Where:** `vpn-manager` and `vpn-server`.
+- **Where:** `vpn-manager` and `vpn-server` (an agent on the host), `vulns` and `vulns-agent`, `infra` and `infra-agent` (an agent in one place that reads many hosts).
 - **Area:** Architecture
 
 ## Context
@@ -16,9 +16,12 @@ Each product has an API and a web UI, and some also need software on hosts (the 
 - The web UI is an ordinary client of the public API (ADR 0014). The product can run headless, with the UI switched off.
 - One process owns the product's SQLite database. Nothing else opens the file.
 - Products integrate only through their public APIs, signed webhooks and OIDC. No product reads another product's database.
-- Components that must run on hosts or need special privileges are separate agents: the VPN server, Runtime and Network IDS sensors, the backup agent. They have no database of their own, talk only to their product's API, and are versioned with it.
+- Everything that collects data or acts on hosts is a separate agent, outside the product. An agent runs in one of two ways:
+  - **On a host**, only for work that must happen there: `vpn-server` runs OpenVPN; Runtime and Network IDS sensors watch the host.
+  - **In one place**: installed once, it gets its settings there and reads many hosts at intervals, without installing anything on them. `infra-agent` works this way (ADR 0031).
+- Agents have no database of their own, talk only to their product's API, and are versioned with it.
 
 ## Consequences
 
-- A product is installed as one container plus its agents where needed; for VPN that is `vpn-manager` (API and UI) and `vpn-server` (OpenVPN on the host).
+- A product is installed as one container plus its agents where needed; for VPN that is `vpn-manager` (API and UI) and `vpn-server` (OpenVPN on the host), for Infrastructure `infra` and one `infra-agent` per network.
 - Scaling a product means running a bigger instance, not more services. Large data paths (logs, metrics, traces) use their own storage engines inside the same product.

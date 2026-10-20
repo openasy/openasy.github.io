@@ -143,6 +143,61 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_API_TOKEN" -H 'content-type: ap
       { name: "Swagger UI", url: "https://github.com/swagger-api/swagger-ui", role: "API reference" },
     ],
   },
+  infrastructure: {
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    note: "infra-agent holds the SSH certificate authority your hosts trust, sealed with its own key: keep openasy-agent-kek apart from its volume, and run one agent per network. Serve Infrastructure over HTTPS.",
+    guides: [
+      {
+        title: "Prepare a host",
+        text: "Nothing is installed: one account, and sshd trusts the CA of your infra-agent for that account only. Setup in the UI prints these lines with the agent's CA, and an optional sudoers file for the details that need root.",
+        code: `useradd --create-home --shell /bin/sh openasy && passwd -l openasy
+install -d -m 755 /etc/ssh/principals && echo openasy > /etc/ssh/principals/openasy
+echo 'ssh-ed25519 AAAA... OpenAsy Infrastructure CA' > /etc/ssh/openasy_ca.pub
+cat > /etc/ssh/sshd_config.d/openasy.conf <<'EOF'
+TrustedUserCAKeys /etc/ssh/openasy_ca.pub
+AuthorizedPrincipalsFile /etc/ssh/principals/%u
+Match User openasy
+  AllowTcpForwarding no
+  AllowAgentForwarding no
+  X11Forwarding no
+  PermitTTY no
+EOF
+sshd -t && systemctl reload ssh`,
+      },
+      {
+        title: "Check the host key",
+        text: "Add the host in the UI. The agent reports the fingerprint the host presents; compare it on the host before accepting. If the key changes later, collection stops until an admin accepts the new one.",
+        code: "ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub",
+      },
+      {
+        title: "Add a Kubernetes cluster",
+        text: "Apply the read-only role from Setup (no Secrets, no ConfigMaps, nothing it can change), then add the cluster with its API server URL, CA and this token. Nothing runs in the cluster.",
+        code: "kubectl -n openasy get secret openasy-infra-token -o jsonpath='{.data.token}' | base64 -d",
+      },
+    ],
+    features: [
+      { title: "One infra-agent per network reads hosts over SSH with 5-minute certificates, trusted for one unprivileged account only; nothing installed on hosts", done: true },
+      { title: "The agent keeps the SSH keys and runs only its own script: a compromised Infrastructure cannot run commands on hosts", done: true },
+      { title: "System, processes, listening ports, services, cron, accounts, sudo, SSH keys, packages, firewall, storage and network", done: true },
+      { title: "Every change kept: a new account, an opened port, a package version, a reboot", done: true },
+      { title: "Pinned host keys: collection stops when a host key changes", done: true },
+      { title: "Docker and Podman containers, with environment variables by name only", done: true },
+      { title: "Kubernetes through its API with a read-only token: nodes, workloads, pods, services, volumes, cluster admins", done: true },
+      { title: "Hosts in other networks through jump hosts", done: true },
+      { title: "Optional read-only sudo rules with fixed arguments, checked against every known way out", done: true },
+      { title: "Cloud accounts (AWS, Hetzner and others) and hosts without SSH access", done: false },
+      { title: "Package lists to Vulnerabilities, so hosts need no vulns-agent", done: false },
+      { title: "Windows over SSH or WinRM", done: false },
+    ],
+    upstream: [
+      { name: "OpenSSH", url: "https://www.openssh.com/", role: "the connection, certificates and host keys" },
+      { name: "Kubernetes API", url: "https://kubernetes.io/docs/reference/kubernetes-api/", role: "clusters" },
+      { name: "SQLite", url: "https://sqlite.org/", role: "storage" },
+      { name: "Swagger UI", url: "https://github.com/swagger-api/swagger-ui", role: "API reference" },
+    ],
+  },
   dast: {
     status: "Designed",
     features: [],

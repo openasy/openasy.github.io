@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** Device private keys are returned once and never stored; the API never returns them again. The CA key is still stored unencrypted, and the key-encryption key is not built yet.
+- **Where:** `infra-agent` seals its SSH certificate authority, keys and secret with per-secret data keys under its own key-encryption key, and `infra` seals cluster tokens under the product's key mounted from `/run/secrets/openasy-kek`; neither starts without its key. `vulns` and `vpn-manager` encrypt sign-in secrets with the same key. In `vpn-manager`, device private keys are returned once and never stored, but the VPN CA key is still stored unencrypted. Rotation and the recovery key are not built yet.
 - **Priority:** Critical
 - **Area:** Security
 

@@ -30,7 +30,7 @@ Each record has two statuses:
 | 0015 | [Your data stays yours](./0015-data-ownership.md) | Privacy | Accepted | In progress |
 | 0016 | [One container per product, signed](./0016-one-container-per-product.md) | Operations | Accepted | In progress |
 | 0017 | [Every product can be monitored](./0017-self-observability.md) | Operations | Accepted | In progress |
-| 0018 | [One application per product; agents on hosts are separate](./0018-one-application-per-product.md) | Architecture | Accepted | Implemented |
+| 0018 | [One application per product; agents are separate](./0018-one-application-per-product.md) | Architecture | Accepted | Implemented |
 | 0019 | [Versioning: independent SemVer per product, monthly releases](./0019-versioning-and-releases.md) | Engineering | Accepted | In progress |
 | 0020 | [Long-term support for Enterprise customers](./0020-long-term-support.md) | Engineering | Accepted | Not started |
 | 0021 | [Secrets and key management](./0021-secrets-and-keys.md) | Security | Proposed · Critical | In progress |
@@ -43,5 +43,6 @@ Each record has two statuses:
 | 0028 | [Resource budgets](./0028-resource-budgets.md) | Operations | Proposed · Medium | In progress |
 | 0029 | [Testing and quality gates](./0029-testing-and-quality-gates.md) | Quality | Accepted | In progress |
 | 0030 | [Open-source governance](./0030-open-source-governance.md) | Project | Proposed · High | Not started |
+| 0031 | [Nothing installed on hosts: one agent reads them](./0031-agentless-collection.md) | Architecture | Accepted | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.

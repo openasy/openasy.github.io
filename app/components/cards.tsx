@@ -124,11 +124,40 @@ export function composeFor(ids: string[]): string {
       );
       return;
     }
+    if (id === "infrastructure") {
+      // Matches compose.yaml in infra: nothing runs on the hosts it reads (ADR 0031).
+      lines.push(
+        `  ${id}:`,
+        `    image: ${p.image}:${tag}`,
+        "    restart: unless-stopped",
+        "    read_only: true",
+        "    tmpfs: [/tmp]   # SSH keys for one connection, never on the data volume",
+        "    ports:",
+        `      - "127.0.0.1:${8080 + i}:8080"   # UI and API; put a TLS proxy in front`,
+        "    volumes:",
+        `      - ${id}-data:/data   # hosts, clusters, collections and changes`,
+        "    secrets: [openasy-kek]   # encrypts the SSH CA and cluster tokens (ADR 0021)",
+        "    environment:",
+        `      INFRA_PUBLIC_URL: http://localhost:${8080 + i}   # the https:// address behind your TLS proxy`,
+        "  infra-agent:",
+        `    image: ${p.agentImage}:${tag}   # always the same version as ${id}; reads hosts over SSH, nothing installed on them`,
+        "    restart: unless-stopped",
+        "    read_only: true",
+        "    tmpfs: [/tmp]",
+        "    volumes:",
+        "      - infra-agent-data:/data   # its SSH CA and keys, sealed with its own key",
+        "    secrets: [openasy-agent-kek]",
+        "    environment:",
+        `      INFRA_URL: http://${id}:8080`,
+        "      INFRA_ENROLL_TOKEN: ${INFRA_ENROLL_TOKEN:-}   # one-time, from Settings, Agents",
+      );
+      return;
+    }
     lines.push(`  ${id}:`, `    image: ${p.image}:${tag}`, "    restart: unless-stopped", "    ports:", `      - "${8443 + i}:8443"`);
     lines.push("    volumes:", `      - ${id}-data:/data   # SQLite database and settings`, "    environment:", `      OPENASY_BACKUP: daily   # snapshot at 02:00, kept 7 daily / 4 weekly / 12 monthly`);
   });
-  lines.push("volumes:", ...ids.map((id) => `  ${id}-data:`));
-  if (ids.some((id) => statusFor(id).signIn)) lines.push("secrets:", "  openasy-kek:", "    file: ./openasy-kek");
+  lines.push("volumes:", ...ids.map((id) => `  ${id}-data:`), ...(ids.includes("infrastructure") ? ["  infra-agent-data:"] : []));
+  if (ids.some((id) => statusFor(id).signIn)) lines.push("secrets:", "  openasy-kek:", "    file: ./openasy-kek", ...(ids.includes("infrastructure") ? ["  openasy-agent-kek:", "    file: ./openasy-agent-kek"] : []));
   return lines.join("\n");
 }
 
@@ -140,6 +169,7 @@ export function composeRun(ids: string[]): string {
     "",
     "# then",
     ...(signIn.length ? ["openssl rand -hex 32 > openasy-kek   # keep it with your backups"] : []),
+    ...(ids.includes("infrastructure") ? ["openssl rand -hex 32 > openasy-agent-kek   # the agent's own key"] : []),
     "docker compose up -d",
     ...signIn.map((id) => `docker compose logs ${id} | grep "no owner yet"   # one-time link that creates the owner`),
   ].join("\n");

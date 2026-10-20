@@ -141,7 +141,7 @@ export function SiteFooter() {
   return (
     <footer className="mt-12 border-t border-line bg-surface">
       <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-4 px-4 py-6 text-xs text-fg-muted">
-        <p className="m-0">OpenAsy is open source: products under AGPL-3.0, the component library under Apache-2.0. No telemetry, no lock-in. Support plans fund the work.</p>
+        <p className="m-0">OpenAsy is open source: products under AGPL-3.0, the component and sign-in libraries under Apache-2.0. No telemetry, no lock-in. Support plans fund the work.</p>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-0 text-sm sm:gap-4 sm:text-xs">
           <a href="/support" className={link}>
             Support
