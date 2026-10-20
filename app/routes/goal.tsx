@@ -5,7 +5,7 @@ import { goalById, type GoalStep } from "../data/goals";
 import { READINESS_TONE, readiness, statusFor } from "../data/status";
 import { storyUrl } from "../data/storybook";
 import { CodeBlock, Section } from "../components/site";
-import { ProductStatusBadge, composeFor, product } from "../components/cards";
+import { ProductStatusBadge, composeRun, product } from "../components/cards";
 
 export function meta({ params }: { params: { id?: string } }) {
   const g = goalById(params.id);
@@ -19,8 +19,8 @@ export default function GoalPage() {
   const ready = readiness(g.required);
   const first = g.required[0]!;
   const steps: GoalStep[] = g.install ?? [
-    { title: "Start the products", body: `Save this as compose.yaml on a host with Docker and run it. Each product is one container with its data in one SQLite file.`, code: `${composeFor(g.required)}\n\n# then\ndocker compose up -d` },
-    { title: "Create the owner account", body: "There are no default passwords. Each product prints a one-time setup link on first start; open it to create the owner and turn on MFA.", code: `docker compose logs ${first} | grep "setup link"` },
+    { title: "Start the products", body: `Save this as compose.yaml on a host with Docker and run it. Each product is one container with its data in one SQLite file.`, code: composeRun(g.required) },
+    { title: "Create the owner account", body: "There are no default passwords. Each product prints a one-time setup link on first start; open it to create the owner and turn on MFA.", code: `docker compose logs ${first} | grep "no owner yet"` },
     ...g.steps,
     { title: "Check backups", body: "Backups run daily from the first night. In Settings → Backups, add S3-compatible storage for off-site copies and continuous replication, which lets you restore to any point in time." },
   ];

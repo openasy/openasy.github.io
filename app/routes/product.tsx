@@ -7,7 +7,7 @@ import { goalsForProduct } from "../data/goals";
 import { statusFor, withStatus } from "../data/status";
 import { storyUrl } from "../data/storybook";
 import { ButtonLink, CodeBlock, GITHUB, Section } from "../components/site";
-import { ProductStatusBadge, composeFor, helmFor, product } from "../components/cards";
+import { ProductStatusBadge, composeRun, helmFor, product } from "../components/cards";
 
 export function meta({ params }: { params: { id?: string } }) {
   const p = PRODUCT_IDS.includes(params.id as ProductId) ? product(params.id!) : undefined;
@@ -33,7 +33,7 @@ function RunIt({ id }: { id: string }) {
   const s = statusFor(id);
   const helm = helmFor(id);
   const [way, setWay] = useState<InstallWay>("compose");
-  const compose = <CodeBlock code={`${composeFor([id])}\n\n# then\ndocker compose up -d`} label={`compose.yaml for ${p.name}`} className="mt-3 p-4" />;
+  const compose = <CodeBlock code={composeRun([id])} label={`compose.yaml for ${p.name}`} className="mt-3 p-4" />;
   if (!helm || !s.helm) return compose;
   return (
     <>

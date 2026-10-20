@@ -60,8 +60,12 @@ describe("data", () => {
 
   it("builds one service and one volume per product", () => {
     const yaml = composeFor(["vpn", "logs"]);
-    expect(yaml).toContain("image: ghcr.io/openasy/vpn-manager:0.2.0");
-    expect(yaml).toContain("image: ghcr.io/openasy/vpn-server:0.2.0");
+    expect(yaml).toContain("image: ghcr.io/openasy/vpn-manager:0.3.0");
+    expect(yaml).toContain("image: ghcr.io/openasy/vpn-server:0.3.0");
+    // Sign-in: no admin token, a secrets key, and the address cookies and passkeys are bound to.
+    expect(yaml).not.toContain("ADMIN_TOKEN");
+    expect(yaml).toContain("VPN_MANAGER_PUBLIC_URL: http://localhost:8443");
+    expect(yaml).toContain("secrets:\n  openasy-kek:\n    file: ./openasy-kek");
     expect(yaml).toContain("net.ipv4.ip_forward: 1");
     expect(yaml).toContain('"1194:1194/udp"');
     expect(yaml).toContain("logs-data:/data");
@@ -94,7 +98,9 @@ describe("pages", () => {
     expect(screen.getByLabelText(/Code for step 1/)).toHaveTextContent("VPN_PUBLIC_HOST");
     expect(screen.getByLabelText(/Code for step 1/)).toHaveTextContent("docker compose up -d");
     expect(screen.getByText("Ready to try")).toBeInTheDocument();
-    expect(screen.queryByText("Create the owner account")).not.toBeInTheDocument();
+    // Sign-in: the owner account comes from the one-time link in the log, not an admin token.
+    expect(screen.getByText("Create the owner account")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Code for step 1/)).not.toHaveTextContent("ADMIN_TOKEN");
   });
 
   it("products page filters by group", async () => {
@@ -148,12 +154,12 @@ describe("pages", () => {
 
   it("the VPN product page shows what works, what it is built on and how to connect", () => {
     open("/products/vpn");
-    expect(screen.getByText("Preview 0.2.0")).toBeInTheDocument();
+    expect(screen.getByText("Preview 0.3.0")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Features" })).toHaveTextContent("Command line tool (not yet)");
     expect(screen.getByRole("link", { name: "OpenVPN" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Connect a device" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "OpenVPN Connect" }).length).toBeGreaterThanOrEqual(4);
-    expect(screen.getByLabelText("compose.yaml for VPN")).toHaveTextContent("vpn-manager:0.2.0");
+    expect(screen.getByLabelText("compose.yaml for VPN")).toHaveTextContent("vpn-manager:0.3.0");
   });
 
   it("a planned product shows no install steps", () => {

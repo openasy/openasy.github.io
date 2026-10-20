@@ -51,25 +51,30 @@ export const GOALS: Goal[] = [
     install: [
       {
         title: "Start the VPN",
-        body: "On a host with Docker, create two tokens and set the name or IP people connect to. Then start the manager and one OpenVPN server.",
+        body: "On a host with Docker, create the token the OpenVPN servers use and the key that encrypts sign-in secrets, and set the name or IP people connect to. Then start the manager and one OpenVPN server.",
         code: [
           "export VPN_SERVER_TOKEN=$(openssl rand -hex 32)",
-          "export VPN_ADMIN_TOKEN=$(openssl rand -hex 32)",
           "export VPN_PUBLIC_HOST=vpn.example.com",
+          "openssl rand -hex 32 > openasy-kek",
           "",
           "curl -O https://raw.githubusercontent.com/openasy/vpn-manager/main/compose.yaml",
           "docker compose up -d",
         ].join("\n"),
       },
       {
+        title: "Create the owner account",
+        body: "There is no default password. Open the one-time link from the log, choose a password and add an authenticator app or a passkey. Then invite the people who manage the VPN under Members, and create an API token with the admin role under API tokens for the commands below.",
+        code: 'docker compose logs vpn-manager | grep "no owner yet"',
+      },
+      {
         title: "Open the VPN port",
-        body: "Allow UDP 1194 to the host. TCP 443 is a second server for networks that allow only HTTPS. The UI and API stay on 127.0.0.1:8080; put a TLS proxy in front to reach them from elsewhere.",
+        body: "Allow UDP 1194 to the host. TCP 443 is a second server for networks that allow only HTTPS. The UI and API stay on 127.0.0.1:8080; put a TLS proxy in front to reach them from elsewhere, and set VPN_MANAGER_PUBLIC_URL to its https:// address.",
       },
       {
         title: "Say who may reach what",
         body: "Create a group, then an IP group with the networks and ports it may use. Anything not listed is not routed.",
         code: [
-          'API=http://127.0.0.1:8080/api/v1; AUTH="Authorization: Bearer $VPN_ADMIN_TOKEN"',
+          'API=http://localhost:8080/api/v1; AUTH="Authorization: Bearer $VPN_API_TOKEN"',
           `curl -sH "$AUTH" $API/groups -d '{"name":"Backend engineers"}'`,
           `curl -sH "$AUTH" $API/ip-groups -d '{"name":"Production databases",`,
           `  "networks":[{"cidr":"172.16.20.0/24","ports":"tcp/5432"}],`,

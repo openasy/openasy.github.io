@@ -76,8 +76,9 @@ export function composeFor(ids: string[]): string {
         `      - "${8443 + i}:8080"   # UI and API`,
         "    volumes:",
         `      - ${id}-data:/data   # SQLite database, CA and settings`,
+        "    secrets: [openasy-kek]   # encrypts sign-in secrets (ADR 0021)",
         "    environment:",
-        "      VPN_ADMIN_TOKEN: ${VPN_ADMIN_TOKEN}",
+        `      VPN_MANAGER_PUBLIC_URL: http://localhost:${8443 + i}   # the https:// address behind your TLS proxy`,
         "      VPN_SERVER_TOKEN: ${VPN_SERVER_TOKEN}",
         "      VPN_PUBLIC_HOST: vpn.example.com   # the name or IP clients connect to",
         "  vpn-server:",
@@ -106,8 +107,9 @@ export function composeFor(ids: string[]): string {
         `      - "127.0.0.1:${8080 + i}:8080"   # UI and API; put a TLS proxy in front`,
         "    volumes:",
         `      - ${id}-data:/data   # SQLite, SBOMs and the vulnerability data (3 GB)`,
+        "    secrets: [openasy-kek]   # encrypts sign-in secrets (ADR 0021)",
         "    environment:",
-        "      VULNS_ADMIN_TOKEN: ${VULNS_ADMIN_TOKEN}",
+        `      VULNS_PUBLIC_URL: http://localhost:${8080 + i}   # the https:// address behind your TLS proxy`,
         "      VULNS_INGEST_TOKEN: ${VULNS_INGEST_TOKEN}",
         "  vulns-agent:",
         `    image: ${p.agentImage}:${tag}   # always the same version as ${id}`,
@@ -126,5 +128,19 @@ export function composeFor(ids: string[]): string {
     lines.push("    volumes:", `      - ${id}-data:/data   # SQLite database and settings`, "    environment:", `      OPENASY_BACKUP: daily   # snapshot at 02:00, kept 7 daily / 4 weekly / 12 monthly`);
   });
   lines.push("volumes:", ...ids.map((id) => `  ${id}-data:`));
+  if (ids.some((id) => statusFor(id).signIn)) lines.push("secrets:", "  openasy-kek:", "    file: ./openasy-kek");
   return lines.join("\n");
+}
+
+/** The compose file, then the commands that start it: the secrets key first, and the owner link afterwards. */
+export function composeRun(ids: string[]): string {
+  const signIn = ids.filter((id) => statusFor(id).signIn);
+  return [
+    composeFor(ids),
+    "",
+    "# then",
+    ...(signIn.length ? ["openssl rand -hex 32 > openasy-kek   # keep it with your backups"] : []),
+    "docker compose up -d",
+    ...signIn.map((id) => `docker compose logs ${id} | grep "no owner yet"   # one-time link that creates the owner`),
+  ].join("\n");
 }

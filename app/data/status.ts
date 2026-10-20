@@ -61,6 +61,11 @@ export interface Guide {
 
 export interface ProductState {
   status: ProductStatus;
+  /**
+   * Signs people in with @openasy/auth: compose mounts a secrets key (openasy-kek), and the first start prints a
+   * one-time link that creates the owner (ADR 0002, 0013).
+   */
+  signIn?: boolean;
   /** Released version, used as the image tag. */
   version?: string;
   /** Shown under the summary, for limits people must know before they run it. */
@@ -80,8 +85,9 @@ const DESIGNED: ProductState = { status: "Designed", features: [], upstream: [] 
 export const STATUS: Partial<Record<string, ProductState>> = {
   vulnerabilities: {
     status: "Preview",
-    version: "0.1.0",
-    note: "For testing only. There is no sign-in yet: the API and UI use one shared admin token. Sign-in comes in the next release.",
+    version: "0.2.0",
+    signIn: true,
+    note: "Serve it over HTTPS and set VULNS_PUBLIC_URL to that address: cookies and passkeys need it. There is no email yet, so invitations and password resets are links an admin sends.",
     helm: {
       chart: "oci://ghcr.io/openasy/charts/vulns",
       summary: "vulns as one pod with its volume, and vulns-agent on every node as a DaemonSet. Tokens are generated on install and kept across upgrades.",
@@ -98,7 +104,7 @@ export const STATUS: Partial<Record<string, ProductState>> = {
         code: `docker run -d --name vulns-agent --restart unless-stopped --hostname "$(hostname)" \\
   --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \\
   -v /:/host:ro -e VULNS_URL=https://vulns.example.com -e VULNS_INGEST_TOKEN=... \\
-  ghcr.io/openasy/vulns-agent:0.1.0`,
+  ghcr.io/openasy/vulns-agent:0.2.0`,
       },
       {
         title: "Check images in CI",
@@ -110,9 +116,9 @@ jq -e '.knownExploited == 0 and .open.critical == 0' result.json`,
       },
       {
         title: "Run without internet",
-        text: "Turn downloads off with VULNS_FEED_UPDATE_HOURS=0. Download the vulnerability data on a machine that has access, then upload it; every host and image is matched again.",
+        text: "Turn downloads off with VULNS_FEED_UPDATE_HOURS=0. Download the vulnerability data on a machine that has access, then upload it with an API token that has the admin role (Settings → API tokens); every host and image is matched again.",
         code: `grype db download -o vulnerability-db.tar.zst
-curl -sf -X PUT -H "Authorization: Bearer $VULNS_ADMIN_TOKEN" -H 'content-type: application/zstd' \\
+curl -sf -X PUT -H "Authorization: Bearer $VULNS_API_TOKEN" -H 'content-type: application/zstd' \\
   --data-binary @vulnerability-db.tar.zst https://vulns.example.com/api/v1/feed`,
       },
     ],
@@ -125,7 +131,8 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_ADMIN_TOKEN" -H 'content-type: 
       { title: "Accepted risk with a reason and an expiry", done: true },
       { title: "Works without internet: import the vulnerability data", done: true },
       { title: "REST API with an OpenAPI reference, and Prometheus metrics", done: true },
-      { title: "Sign-in and roles", done: false },
+      { title: "Sign-in with passkeys, authenticator apps or your identity provider (OIDC)", done: true },
+      { title: "Roles per member (owner, admin, editor, viewer), and API tokens with a role and an expiry", done: true },
       { title: "Policies, and tickets for fixes", done: false },
       { title: "Linking with Infrastructure for internet-facing and running context", done: false },
     ],
@@ -146,8 +153,9 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_ADMIN_TOKEN" -H 'content-type: 
   },
   vpn: {
     status: "Preview",
-    version: "0.2.0",
-    note: "For testing only. There is no sign-in yet: the API and UI use one shared admin token, and the CA key is stored unencrypted. Both come in the next release.",
+    version: "0.3.0",
+    signIn: true,
+    note: "For testing only: the CA key is stored unencrypted in the database, so protect the data volume and its backups. Encrypting it is planned (ADR 0021).",
     features: [
       { title: "Add a device and download its .ovpn file", done: true },
       { title: "Groups and IP groups: each group reaches only the networks and ports it is allowed", done: true },
@@ -157,7 +165,8 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_ADMIN_TOKEN" -H 'content-type: 
       { title: "Several servers, for example UDP 1194 and TCP 443 for networks that allow only HTTPS", done: true },
       { title: "Servers keep running with the last good config when the manager is down", done: true },
       { title: "REST API with an OpenAPI reference, and Prometheus metrics", done: true },
-      { title: "Sign-in and roles", done: false },
+      { title: "Sign-in with passkeys, authenticator apps or your identity provider (OIDC)", done: true },
+      { title: "Roles per member (owner, admin, editor, viewer), and API tokens with a role and an expiry", done: true },
       { title: "Encrypted CA key", done: false },
       { title: "People, access and sessions screens in the UI", done: false },
       { title: "Command line tool", done: false },
