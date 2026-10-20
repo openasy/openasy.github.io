@@ -33,7 +33,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0005": { title: "Accessible", text: "WCAG 2.2 AA, full keyboard use, levels readable without colour. Every screen is tested with axe in CI." },
   "0006": { title: "Ready for your language", text: "English first; ICU messages, locale-aware formats and right-to-left layouts for translations." },
   "0007": { title: "Light and dark", text: "Every colour has a light and a dark value. Follows the system setting unless you pick one." },
-  "0008": { title: "Open source", text: "Products under AGPL-3.0, the component library under Apache-2.0, developed in public. No closed enterprise edition: support plans and commercial licences fund the work." },
+  "0008": { title: "Open source", text: "Products under AGPL-3.0, the component and sign-in libraries under Apache-2.0, developed in public. No closed enterprise edition: support plans and commercial licences fund the work." },
   "0009": { title: "Current, supported libraries", text: "Supported versions only, Node LTS. New majors after their first patch release; updates gated by CI." },
   "0010": { title: "Forward-only upgrades", text: "Migrations only go forward. To roll back, restore the backup taken before the upgrade." },
   "0011": { title: "SQLite by default", text: "One file per product, no database server to run." },

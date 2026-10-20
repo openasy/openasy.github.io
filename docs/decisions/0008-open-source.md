@@ -1,4 +1,4 @@
-# 0008. Open source: AGPL-3.0 products, Apache-2.0 library, developed in public
+# 0008. Open source: AGPL-3.0 products, Apache-2.0 libraries, developed in public
 
 - **Decision:** Accepted
 - **Implementation:** In progress
@@ -12,7 +12,7 @@ Security tools must be inspectable, and nobody should be locked in. A permissive
 ## Decision
 
 - Products and their agents (for example `vpn-manager` and `vpn-server`) are published under AGPL-3.0. Anyone may use, change and share them; whoever runs a changed version for others, including as a hosted service, must offer those users the source code under the same licence.
-- The UI library `@openasy/ui` and this documentation stay under Apache-2.0, so anyone can build on them.
+- The libraries every product embeds, `@openasy/ui` and `@openasy/auth`, and this documentation are under Apache-2.0, so anyone can build on them.
 - A commercial licence without the AGPL obligations is available for organisations that cannot meet them. It covers the same code.
 - Contributors sign a contributor licence agreement (CLA) that lets the project offer both licences.
 - "OpenAsy" and its logo are trademarks. Neither licence grants the right to use them; forks must use another name.

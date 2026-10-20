@@ -1,8 +1,8 @@
 # 0013. Secure by default
 
 - **Decision:** Accepted
-- **Implementation:** Not started
-- **Where:** `vpn-server` authenticates to `vpn-manager` with a token; TLS, the owner link, encrypted secrets and the audit log are not built yet.
+- **Implementation:** In progress
+- **Where:** `vulns` and `vpn-manager` print a one-time link that creates the owner, encrypt TOTP secrets with a mounted key, and log every sign-in and change to members and tokens (`@openasy/auth`). `vpn-server` authenticates to `vpn-manager` with a token; the VPN CA key is not encrypted yet (ADR 0021). TLS between products and an append-only audit log are not built yet.
 - **Area:** Security
 
 ## Context

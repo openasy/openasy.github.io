@@ -14,18 +14,18 @@ Each record has two statuses:
 | # | Decision | Area | Decision status | Implementation |
 | --- | --- | --- | --- | --- |
 | 0001 | [Every product runs alone, with the others and with third-party tools](./0001-standalone-and-together.md) | Architecture | Accepted | In progress |
-| 0002 | [Authentication: local accounts, MFA and single sign-on](./0002-authentication.md) | Security | Accepted | Not started |
-| 0003 | [Authorization: per-product roles and scoped tokens](./0003-authorization.md) | Security | Accepted | Not started |
+| 0002 | [Authentication: local accounts, MFA and single sign-on](./0002-authentication.md) | Security | Accepted | In progress |
+| 0003 | [Authorization: per-product roles and scoped tokens](./0003-authorization.md) | Security | Accepted | In progress |
 | 0004 | [Customization: white-label and feature switches](./0004-customization.md) | Product | Accepted | In progress |
 | 0005 | [Accessibility: WCAG 2.2 AA, tested in CI](./0005-accessibility.md) | Quality | Accepted | In progress |
 | 0006 | [Languages: English first, ready for translation](./0006-languages.md) | Product | Accepted | Not started |
 | 0007 | [Theme: light, dark and follow the system](./0007-theme.md) | Product | Accepted | Implemented |
-| 0008 | [Open source: AGPL-3.0 products, Apache-2.0 library, developed in public](./0008-open-source.md) | Project | Accepted | In progress |
+| 0008 | [Open source: AGPL-3.0 products, Apache-2.0 libraries, developed in public](./0008-open-source.md) | Project | Accepted | In progress |
 | 0009 | [Current, supported libraries](./0009-latest-libraries.md) | Engineering | Accepted | In progress |
 | 0010 | [Forward-only upgrades, no backward compatibility](./0010-forward-only-upgrades.md) | Engineering | Accepted | In progress |
 | 0011 | [SQLite by default](./0011-sqlite-by-default.md) | Architecture | Accepted | Implemented |
 | 0012 | [Daily backups and point-in-time restore](./0012-backups.md) | Operations | Accepted | Not started |
-| 0013 | [Secure by default](./0013-secure-by-default.md) | Security | Accepted | Not started |
+| 0013 | [Secure by default](./0013-secure-by-default.md) | Security | Accepted | In progress |
 | 0014 | [API-first](./0014-api-first.md) | Architecture | Accepted | In progress |
 | 0015 | [Your data stays yours](./0015-data-ownership.md) | Privacy | Accepted | In progress |
 | 0016 | [One container per product, signed](./0016-one-container-per-product.md) | Operations | Accepted | In progress |
