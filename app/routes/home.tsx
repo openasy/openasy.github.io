@@ -189,11 +189,11 @@ export default function Home() {
               {PRODUCT_IDS.length} products for operations and security that work alone, together, or next to what you already run. {readyLine} Your data never leaves your
               network.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#available" className="inline-flex h-11 items-center gap-2 rounded-md bg-[#1f4fd8] px-5 font-semibold text-white no-underline hover:bg-[#1a44bb]">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <a href="#available" className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#1f4fd8] px-5 font-semibold text-white no-underline hover:bg-[#1a44bb]">
                 {released.length === 1 ? `Try the ${product(released[0]!).name}` : "Try what is ready"} <ArrowRight aria-hidden className="size-4" />
               </a>
-              <Link to="/goals" className="inline-flex h-11 items-center rounded-md border border-[#3c4e72] px-5 font-medium text-[#e8eef7] no-underline hover:bg-[#16233b]">
+              <Link to="/goals" className="inline-flex h-11 items-center justify-center rounded-md border border-[#3c4e72] px-5 font-medium text-[#e8eef7] no-underline hover:bg-[#16233b]">
                 Start from a goal
               </Link>
             </div>
@@ -207,7 +207,7 @@ export default function Home() {
                 <span className="ml-2 grow font-mono text-xs text-[#93a2bd]">compose.yaml</span>
                 <span className="rounded bg-[#12301f] px-2 py-0.5 text-xs font-semibold text-[#4cc38a]">Preview {vpnTag}</span>
               </div>
-              <pre tabIndex={0} aria-label="compose.yaml for the VPN" className="m-0 overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-[#e8eef7]">
+              <pre tabIndex={0} aria-label="compose.yaml for the VPN" className="m-0 overflow-x-auto p-3.5 font-mono text-[12px] leading-relaxed text-[#e8eef7] sm:p-5 sm:text-[13px]">
                 <code>{HERO_COMPOSE}</code>
               </pre>
             </div>
@@ -289,7 +289,9 @@ export default function Home() {
           ))}
         </ul>
         <p className="mt-6 mb-0">
-          <Link to="/principles">All {PRINCIPLES.length} design decisions, and how far each is built</Link>
+          <Link to="/principles" className="inline-flex min-h-11 items-center sm:min-h-0">
+            All {PRINCIPLES.length} design decisions, and how far each is built
+          </Link>
         </p>
       </Section>
 

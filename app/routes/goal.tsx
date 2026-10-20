@@ -62,7 +62,7 @@ export default function GoalPage() {
           </h2>
           {ready === "Ready to try" ? (
             notes.length > 0 && (
-              <Callout tone="warning" title="For testing" className="mt-3">
+              <Callout tone="warning" title="Before you install" className="mt-3">
                 {notes.join(" ")}
               </Callout>
             )

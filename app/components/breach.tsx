@@ -54,7 +54,9 @@ export function BreachToday({ released }: { released: readonly string[] }) {
         })}
       </ol>
       <p className="m-0 text-sm text-fg-muted">
-        <a href={BREACH_STORY}>Replay a phishing-to-crypto-miner breach step by step</a>
+        <a href={BREACH_STORY} className="inline-flex min-h-11 items-center sm:min-h-0">
+          Replay a phishing-to-crypto-miner breach step by step
+        </a>
       </p>
     </div>
   );

@@ -184,6 +184,20 @@ describe("pages", () => {
     expect(screen.getByRole("navigation", { name: "Footer" })).toHaveTextContent("Support");
   });
 
+  it("phones get the same links behind one Menu button", async () => {
+    const Stub = createRoutesStub([{ path: "/", Component: () => <SiteHeader theme="system" onThemeChange={() => {}} /> }]);
+    render(<Stub initialEntries={["/"]} />);
+    const details = screen.getByText("Menu", { selector: "span" }).closest("details")!;
+    expect(details.open).toBe(false);
+    await userEvent.click(screen.getByText("Menu", { selector: "span" }));
+    expect(details.open).toBe(true);
+    const menu = screen.getByRole("navigation", { name: "Menu" });
+    for (const name of ["Goals", "Products", "Principles", "Storybook", "GitHub"]) expect(menu).toHaveTextContent(name);
+    expect(menu).not.toHaveTextContent("Support");
+    await userEvent.keyboard("{Escape}");
+    expect(details.open).toBe(false);
+  });
+
   it("principles link to their records, accepted and proposed apart", () => {
     open("/principles");
     expect(screen.getAllByRole("link", { name: /^Read the record:/ })).toHaveLength(PRINCIPLES.length);

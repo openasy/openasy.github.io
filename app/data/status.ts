@@ -155,7 +155,7 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_API_TOKEN" -H 'content-type: ap
     status: "Preview",
     version: "0.3.0",
     signIn: true,
-    note: "For testing only: the CA key is stored unencrypted in the database, so protect the data volume and its backups. Encrypting it is planned (ADR 0021).",
+    note: "The CA key is stored unencrypted in the database, so protect the data volume and its backups. Encrypting it is planned (ADR 0021).",
     features: [
       { title: "Add a device and download its .ovpn file", done: true },
       { title: "Groups and IP groups: each group reaches only the networks and ports it is allowed", done: true },

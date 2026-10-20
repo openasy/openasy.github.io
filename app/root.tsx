@@ -31,7 +31,7 @@ function Shell({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useThemePreference();
   return (
     <BrandProvider theme={theme} root brand={{ name: "OpenAsy", hidePoweredBy: true }} className="flex min-h-screen flex-col">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:rounded focus:bg-surface focus:px-3 focus:py-2">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-30 focus:top-2 focus:left-2 focus:rounded focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
       <SiteHeader theme={theme} onThemeChange={setTheme} />

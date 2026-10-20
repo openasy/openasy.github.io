@@ -99,7 +99,7 @@ export default function ProductPage() {
       </div>
       <p className="mt-3 max-w-2xl text-lg">{p.summary}</p>
       {s.note && (
-        <Callout tone="warning" title="Not for production yet" className="mt-4 max-w-2xl">
+        <Callout tone="warning" title="Before you install" className="mt-4 max-w-2xl">
           {s.note}
         </Callout>
       )}
