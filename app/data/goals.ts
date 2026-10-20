@@ -51,7 +51,7 @@ export const GOALS: Goal[] = [
     install: [
       {
         title: "Start the VPN",
-        body: "On a host with Docker, create the token the OpenVPN servers use and the key that encrypts sign-in secrets, and set the name or IP people connect to. Then start the manager and one OpenVPN server.",
+        body: "On a host with Docker, create the token the OpenVPN servers use and the key that seals the CA and sign-in secrets, and set the name or IP people connect to. Then start vpn and one OpenVPN server. Keep openasy-kek with your backups, apart from the data volume.",
         code: [
           "export VPN_SERVER_TOKEN=$(openssl rand -hex 32)",
           "export VPN_PUBLIC_HOST=vpn.example.com",
@@ -63,7 +63,7 @@ export const GOALS: Goal[] = [
       },
       {
         title: "Create the owner account",
-        body: "There is no default password. Open the one-time link from the log, choose a password and add an authenticator app or a passkey. Then invite the people who manage the VPN under Members, and create an API token with the admin role under API tokens for the commands below.",
+        body: "There is no default password. Open the one-time link from the log, choose a password and add an authenticator app or a passkey. Then invite the people who manage the VPN under Members, and create an API token with the admin role under API tokens if you want the command line for the steps below.",
         code: 'docker compose logs vpn | grep "no owner yet"',
       },
       {
@@ -72,21 +72,20 @@ export const GOALS: Goal[] = [
       },
       {
         title: "Say who may reach what",
-        body: "Create a group, then an IP group with the networks and ports it may use. Anything not listed is not routed.",
+        body: "Under Access, create a group, then an IP group with the networks and ports it may use. Anything not listed is not routed. The same from the command line, run inside the vpn container:",
         code: [
-          'API=http://localhost:8080/api/v1; AUTH="Authorization: Bearer $VPN_API_TOKEN"',
-          `curl -sH "$AUTH" $API/groups -d '{"name":"Backend engineers"}'`,
-          `curl -sH "$AUTH" $API/ip-groups -d '{"name":"Production databases",`,
-          `  "networks":[{"cidr":"172.16.20.0/24","ports":"tcp/5432"}],`,
-          `  "allowedGroups":["Backend engineers"]}'`,
+          "export VPN_API_TOKEN=oa_vpn_...   # the admin token from the step above",
+          "alias openasy-vpn='docker compose exec -T -e VPN_API_TOKEN vpn /nodejs/bin/node cli/openasy-vpn.ts'",
+          'openasy-vpn groups add "Backend engineers"',
+          'openasy-vpn ip-groups add "Production databases" --network 172.16.20.0/24=tcp/5432 --allow "Backend engineers"',
         ].join("\n"),
       },
       {
         title: "Add a person and their device",
-        body: "Each device gets its own .ovpn file. It holds the private key and is shown only once, so send it straight to the person.",
+        body: "Add them under People, then a device on their page. Each device gets its own .ovpn file. It holds the private key and is given only once, so send it straight to the person.",
         code: [
-          `curl -sH "$AUTH" $API/people -d '{"name":"Dana Kim","email":"dana@example.com","groups":["Backend engineers"]}'`,
-          `curl -sH "$AUTH" $API/people/<person id>/devices -d '{"name":"Laptop"}' | jq -r .ovpn > dana-laptop.ovpn`,
+          'openasy-vpn people add "Dana Kim" dana@example.com --group "Backend engineers"',
+          "(umask 077; openasy-vpn devices add dana@example.com Laptop --out - > dana-laptop.ovpn)",
         ].join("\n"),
       },
       {

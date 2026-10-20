@@ -76,7 +76,7 @@ export function composeFor(ids: string[]): string {
         `      - "${8443 + i}:8080"   # UI and API`,
         "    volumes:",
         `      - ${id}-data:/data   # SQLite database, CA and settings`,
-        "    secrets: [openasy-kek]   # encrypts sign-in secrets (ADR 0021)",
+        "    secrets: [openasy-kek]   # seals the CA key and sign-in secrets (ADR 0021)",
         "    environment:",
         `      VPN_PUBLIC_URL: http://localhost:${8443 + i}   # the https:// address behind your TLS proxy`,
         "      VPN_SERVER_TOKEN: ${VPN_SERVER_TOKEN}",

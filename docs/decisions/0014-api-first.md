@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn` has a REST API described with OpenAPI, with a reference at `/api/docs/`. The CLI is not built yet.
+- **Where:** `vpn`, `vulns` and `infra` have a REST API described with OpenAPI, with a reference at `/api/docs/`. `vpn` ships `openasy-vpn`, a command line tool on the same API: one file with no dependencies, in the image and attached to each release. The other products have no CLI yet.
 - **Area:** Architecture
 
 ## Context
