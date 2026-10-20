@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn-manager` migrates forward on start. The backup before an upgrade is not built yet.
+- **Where:** `vpn` migrates forward on start. The backup before an upgrade is not built yet.
 - **Area:** Engineering
 
 ## Context

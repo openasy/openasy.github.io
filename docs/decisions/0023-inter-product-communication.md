@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `infra-agent` enrols with a one-time token and then uses its own secret; it asks `infra` for work, keeps running when `infra` is unreachable and says so in `/readyz`. `vpn-server` pulls its config from `vpn-manager` with `ETag` and a 10 second timeout, keeps the last good config when the manager is unreachable, and takes disconnect requests in the heartbeat answer; it and `vulns-agent` still share one token per product. `Idempotency-Key` is not built yet.
+- **Where:** `infra-agent` enrols with a one-time token and then uses its own secret; it asks `infra` for work, keeps running when `infra` is unreachable and says so in `/readyz`. `vpn-server` pulls its config from `vpn` with `ETag` and a 10 second timeout, keeps the last good config when the manager is unreachable, and takes disconnect requests in the heartbeat answer; it and `vulns-agent` still share one token per product. `Idempotency-Key` is not built yet.
 - **Area:** Architecture
 
 ## Context

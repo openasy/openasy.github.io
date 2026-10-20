@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** Implemented
-- **Where:** `vpn-manager` 0.1.0.
+- **Where:** `vpn`, `vulns` and `infra`.
 - **Area:** Architecture
 
 ## Context

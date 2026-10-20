@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** Dependabot runs on `vpn-manager` and `vpn-server`.
+- **Where:** Dependabot runs on `vpn` and `vpn-server`.
 - **Area:** Engineering
 
 ## Context

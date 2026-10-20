@@ -17,7 +17,7 @@ Monthly releases (ADR 0019) suit most teams, but some cannot upgrade every month
 - A fix lands on `main` first and is then cherry-picked to the `lts/X.Y` branch and released as a PATCH (`1.4.7`). A long-term patch never adds a database migration; a fix that needs one ships only in the latest release, and the release notes say so.
 - Long-term patches are public releases like any other, so the code stays the same for everyone. What Enterprise customers pay for is the promise to make them.
 - Upgrades stay forward-only (ADR 0010). From a long-term line you can upgrade to the next long-term line or to the latest release in one step.
-- An agent follows its product's line: `vpn-server 1.4.x` runs with `vpn-manager 1.4.x` (ADR 0018).
+- An agent or server follows its product's line: `vpn-server 1.4.x` runs with `vpn 1.4.x` (ADR 0018).
 - Image tags do not change: the `X.Y` tag (`1.4`) follows the line and there is still no `latest` tag. Long-term images carry the labels `org.openasy.lts=true` and `org.openasy.lts.eol=<date>`.
 
 ## Consequences

@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `@openasy/auth` 0.1.0, used by `vulns` and `vpn-manager`: the four roles per product, IdP groups mapped to roles, API tokens with one role and an expiry, new members invited as Viewers by default. Custom roles and per-permission checks are not built yet.
+- **Where:** `@openasy/auth` 0.1.0, used by `vulns` and `vpn`: the four roles per product, IdP groups mapped to roles, API tokens with one role and an expiry, new members invited as Viewers by default. Custom roles and per-permission checks are not built yet.
 - **Area:** Security
 
 ## Context

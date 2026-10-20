@@ -1,9 +1,9 @@
 /**
  * OpenAPI descriptions of the products that have one, read at build time from the product
- * repositories checked out next to this one (../vpn-manager, ../vulns, ../infra), like @openasy/ui.
+ * repositories checked out next to this one (../vpn, ../vulns, ../infra), like @openasy/ui.
  */
 import type { ProductId } from "@openasy/ui";
-import vpn from "../../../vpn-manager/openapi.json" with { type: "json" };
+import vpn from "../../../vpn/openapi.json" with { type: "json" };
 import vulns from "../../../vulns/openapi.json" with { type: "json" };
 import infra from "../../../infra/openapi.json" with { type: "json" };
 
@@ -65,7 +65,7 @@ export interface ApiInfo {
 }
 
 export const APIS: Partial<Record<ProductId, ApiInfo>> = {
-  vpn: { spec: vpn as OpenApi, repo: "openasy/vpn-manager" },
+  vpn: { spec: vpn as OpenApi, repo: "opena../vpn" },
   vulnerabilities: { spec: vulns as OpenApi, repo: "openasy/vulns" },
   infrastructure: { spec: infra as OpenApi, repo: "openasy/infra" },
 };

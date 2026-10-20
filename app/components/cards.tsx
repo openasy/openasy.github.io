@@ -67,7 +67,7 @@ export function composeFor(ids: string[]): string {
     const p = product(id);
     const tag = statusFor(id).version ?? "1";
     if (id === "vpn" && p.agentImage) {
-      // Matches compose.yaml in vpn-manager: the manager listens on 8080 and has no backup setting yet.
+      // Matches compose.yaml in vpn: vpn listens on 8080 and has no backup setting yet.
       lines.push(
         `  ${id}:`,
         `    image: ${p.image}:${tag}`,
@@ -78,7 +78,7 @@ export function composeFor(ids: string[]): string {
         `      - ${id}-data:/data   # SQLite database, CA and settings`,
         "    secrets: [openasy-kek]   # encrypts sign-in secrets (ADR 0021)",
         "    environment:",
-        `      VPN_MANAGER_PUBLIC_URL: http://localhost:${8443 + i}   # the https:// address behind your TLS proxy`,
+        `      VPN_PUBLIC_URL: http://localhost:${8443 + i}   # the https:// address behind your TLS proxy`,
         "      VPN_SERVER_TOKEN: ${VPN_SERVER_TOKEN}",
         "      VPN_PUBLIC_HOST: vpn.example.com   # the name or IP clients connect to",
         "  vpn-server:",
@@ -91,7 +91,7 @@ export function composeFor(ids: string[]): string {
         "    ports:",
         `      - "1194:1194/udp"   # add a second vpn-server with OPENVPN_PROTO: tcp and OPENVPN_PORT: "443" for TCP 443`,
         "    environment:",
-        `      VPN_MANAGER_URL: http://${id}:8080`,
+        `      VPN_URL: http://${id}:8080`,
         "      VPN_SERVER_TOKEN: ${VPN_SERVER_TOKEN}",
       );
       return;

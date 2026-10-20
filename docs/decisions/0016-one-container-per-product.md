@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn-manager` 0.1.0 is signed, has an SBOM and SLSA level 3 provenance. `vulns` has a Helm chart, published as a signed OCI artifact and tested on a kind cluster in CI; `vpn-manager` has none yet.
+- **Where:** Every release since `vpn-manager` 0.1.0 (now `vpn`) is signed, has an SBOM and SLSA level 3 provenance. `vulns` has a Helm chart, published as a signed OCI artifact and tested on a kind cluster in CI; `vpn` has none yet.
 - **Area:** Operations
 
 ## Context
@@ -11,7 +11,7 @@ Installing should take minutes, and you should be able to verify what you run.
 
 ## Decision
 
-- Each product is one container image (`ghcr.io/openasy/<product>`), started with `docker compose up` or a Helm chart. Agents that run on hosts (ADR 0018) have their own image, for example `ghcr.io/openasy/vpn-manager` and `ghcr.io/openasy/vpn-server`.
+- Each product is one container image (`ghcr.io/openasy/<product>`), started with `docker compose up` or a Helm chart. Agents and servers (ADR 0018) have their own image, for example `ghcr.io/openasy/vpn` and `ghcr.io/openasy/vpn-server`.
 - Images are built and pushed to GitHub Container Registry by GitHub Actions when a version tag is pushed, for `linux/amd64` and `linux/arm64`.
 - Images are signed with cosign, ship an SBOM and carry SLSA level 3 provenance.
 
@@ -20,8 +20,8 @@ Installing should take minutes, and you should be able to verify what you run.
 - You can verify an image before running it:
 
   ```bash
-  cosign verify ghcr.io/openasy/vpn-manager:0.1.0 \
-    --certificate-identity-regexp '^https://github.com/openasy/vpn-manager/' \
+  cosign verify ghcr.io/openasy/vpn:0.4.0 \
+    --certificate-identity-regexp '^https://github.com/openasy/vpn/' \
     --certificate-oidc-issuer https://token.actions.githubusercontent.com
   ```
 

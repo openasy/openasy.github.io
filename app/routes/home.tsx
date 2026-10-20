@@ -51,7 +51,7 @@ const installWays = (id: string) => (statusFor(id).helm ? "Docker Compose, or He
 const vpnTag = statusFor("vpn").version;
 const HERO_COMPOSE = `services:
   vpn:
-    image: ghcr.io/openasy/vpn-manager:${vpnTag}
+    image: ghcr.io/openasy/vpn:${vpnTag}
     ports: ["8443:8080"]
     volumes: [vpn-data:/data]
   vpn-server:

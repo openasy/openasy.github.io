@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `@openasy/auth` 0.1.0 has the first wave: local accounts, TOTP, passkeys, recovery codes, OIDC, sessions, members and API tokens. `vulns` and `vpn-manager` use it. The other methods are planned.
+- **Where:** `@openasy/auth` 0.1.0 has the first wave: local accounts, TOTP, passkeys, recovery codes, OIDC, sessions, members and API tokens. `vulns` and `vpn` use it. The other methods are planned.
 - **Area:** Security
 
 ## Context

@@ -57,18 +57,18 @@ export const GOALS: Goal[] = [
           "export VPN_PUBLIC_HOST=vpn.example.com",
           "openssl rand -hex 32 > openasy-kek",
           "",
-          "curl -O https://raw.githubusercontent.com/openasy/vpn-manager/main/compose.yaml",
+          "curl -O https://raw.githubusercontent.com/openasy/vpn/main/compose.yaml",
           "docker compose up -d",
         ].join("\n"),
       },
       {
         title: "Create the owner account",
         body: "There is no default password. Open the one-time link from the log, choose a password and add an authenticator app or a passkey. Then invite the people who manage the VPN under Members, and create an API token with the admin role under API tokens for the commands below.",
-        code: 'docker compose logs vpn-manager | grep "no owner yet"',
+        code: 'docker compose logs vpn | grep "no owner yet"',
       },
       {
         title: "Open the VPN port",
-        body: "Allow UDP 1194 to the host. TCP 443 is a second server for networks that allow only HTTPS. The UI and API stay on 127.0.0.1:8080; put a TLS proxy in front to reach them from elsewhere, and set VPN_MANAGER_PUBLIC_URL to its https:// address.",
+        body: "Allow UDP 1194 to the host. TCP 443 is a second server for networks that allow only HTTPS. The UI and API stay on 127.0.0.1:8080; put a TLS proxy in front to reach them from elsewhere, and set VPN_PUBLIC_URL to its https:// address.",
       },
       {
         title: "Say who may reach what",

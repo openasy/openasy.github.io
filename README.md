@@ -23,7 +23,7 @@ next to this repository and build it once:
 
 ```bash
 git clone git@github.com:openasy/ui.git ../ui && (cd ../ui && npm ci && npm run build)
-git clone git@github.com:openasy/vpn-manager.git ../vpn-manager   # API reference at /products/vpn/api
+git clone git@github.com:openasy/vpn.git ../vpn   # API reference at /products/vpn/api
 git clone git@github.com:openasy/vulns.git ../vulns               # API reference at /products/vulnerabilities/api
 npm ci
 npm run dev        # http://localhost:5173

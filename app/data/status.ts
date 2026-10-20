@@ -208,7 +208,7 @@ sshd -t && systemctl reload ssh`,
   },
   vpn: {
     status: "Preview",
-    version: "0.3.0",
+    version: "0.4.0",
     signIn: true,
     note: "The CA key is stored unencrypted in the database, so protect the data volume and its backups. Encrypting it is planned (ADR 0021).",
     features: [

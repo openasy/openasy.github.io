@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** No telemetry and no external requests in `vpn-manager` and `vpn-server`. Retention, export and delete are not built yet.
+- **Where:** No telemetry and no external requests in `vpn` and `vpn-server`. Retention, export and delete are not built yet.
 - **Area:** Privacy
 
 ## Context

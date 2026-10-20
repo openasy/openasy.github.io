@@ -11,7 +11,7 @@
 
 ## Decision
 
-- Every product, every agent (ADR 0018) and `@openasy/ui` has its own version: MAJOR.MINOR.PATCH (SemVer). An agent always has the same version as its product.
+- Every product, every agent and server (ADR 0018) and `@openasy/ui` has its own version: MAJOR.MINOR.PATCH (SemVer). An agent or server always has the same version as its product.
 - MAJOR changes when anything a user or another product relies on breaks: the public API, configuration, the CLI or the data format. MINOR adds features. PATCH only fixes bugs.
 - Each product releases once a month when it has changes. Security fixes and critical bugs ship as a PATCH at any time; a critical security fix ships within 72 hours.
 - Each product declares what it needs from others in a manifest, for example `requires: { identity: ">=2.1 <3" }`. A product refuses to link to an incompatible version and says which version to install.

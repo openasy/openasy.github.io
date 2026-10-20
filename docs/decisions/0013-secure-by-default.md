@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vulns` and `vpn-manager` print a one-time link that creates the owner, encrypt TOTP secrets with a mounted key, and log every sign-in and change to members and tokens (`@openasy/auth`). `vpn-server` authenticates to `vpn-manager` with a token; the VPN CA key is not encrypted yet (ADR 0021). TLS between products and an append-only audit log are not built yet.
+- **Where:** `vulns` and `vpn` print a one-time link that creates the owner, encrypt TOTP secrets with a mounted key, and log every sign-in and change to members and tokens (`@openasy/auth`). `vpn-server` authenticates to `vpn` with a token; the VPN CA key is not encrypted yet (ADR 0021). TLS between products and an append-only audit log are not built yet.
 - **Area:** Security
 
 ## Context

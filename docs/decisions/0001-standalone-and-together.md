@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** VPN runs alone (`vpn-manager` 0.2.0: people, devices, IP groups, OpenVPN servers). Linking products is not built yet.
+- **Where:** VPN runs alone (`vpn` 0.4.0: people, devices, IP groups, OpenVPN servers). Linking products is not built yet.
 - **Area:** Architecture
 
 ## Context
