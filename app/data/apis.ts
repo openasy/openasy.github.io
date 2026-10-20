@@ -65,7 +65,7 @@ export interface ApiInfo {
 }
 
 export const APIS: Partial<Record<ProductId, ApiInfo>> = {
-  vpn: { spec: vpn as OpenApi, repo: "opena../vpn" },
+  vpn: { spec: vpn as OpenApi, repo: "openasy/vpn" },
   vulnerabilities: { spec: vulns as OpenApi, repo: "openasy/vulns" },
   infrastructure: { spec: infra as OpenApi, repo: "openasy/infra" },
 };

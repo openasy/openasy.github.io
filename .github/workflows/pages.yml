@@ -34,7 +34,7 @@ jobs:
       # Product API descriptions are read from ../vpn, ../vulns and ../infra openapi.json at build time.
       - uses: actions/checkout@v5
         with:
-          repository: opena../vpn
+          repository: openasy/vpn
           path: vpn
           sparse-checkout: openapi.json
           sparse-checkout-cone-mode: false
