@@ -113,7 +113,8 @@ describe("pages", () => {
     expect(list().children).toHaveLength(1);
     await userEvent.click(screen.getByRole("radio", { name: "All groups" }));
     await userEvent.click(screen.getByRole("radio", { name: /^Ready to try/ }));
-    expect(list().children).toHaveLength(3);
+    expect(list().children).toHaveLength(4);
+    expect(list()).toHaveTextContent("Identity");
     expect(list()).toHaveTextContent("VPN");
     expect(list()).toHaveTextContent("Vulnerabilities");
     expect(list()).toHaveTextContent("Infrastructure");
@@ -135,7 +136,7 @@ describe("pages", () => {
   it("home shows which attack stages released products watch today", () => {
     open("/");
     expect(screen.getByRole("list", { name: "ATT&CK stages" }).children).toHaveLength(12);
-    expect(screen.getByRole("listitem", { name: /Initial access: covered today by VPN/ })).toBeInTheDocument();
+    expect(screen.getByRole("listitem", { name: /Initial access: covered today by (.*, )?VPN/ })).toBeInTheDocument();
     expect(screen.getByRole("listitem", { name: /Execution: covered once/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Replay a phishing/ })).toHaveAttribute("href", BREACH_STORY);
   });
@@ -217,10 +218,12 @@ describe("pages", () => {
     expect(screen.getByRole("link", { name: "OpenAsy Identity" })).toHaveAttribute("href", "/products/identity");
   });
 
-  it("a product being built shows what it will build on", () => {
+  it("Identity is released: its compose file and what it builds on", () => {
     open("/products/identity");
-    expect(screen.getByRole("heading", { name: "Being built now" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "oidc-provider" })).toBeInTheDocument();
+    expect(screen.getByText("Preview 0.1.0")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Run it" })).toBeInTheDocument();
+    expect(screen.getByText(/image: ghcr.io\/openasy\/identity:0.1.0/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "samlify" })).toBeInTheDocument();
   });
 
   it("a planned product shows no install steps", () => {

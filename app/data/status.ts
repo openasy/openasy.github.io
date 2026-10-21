@@ -239,8 +239,10 @@ sshd -t && systemctl reload ssh`,
     ],
   },
   identity: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
     signIn: true,
+    note: "openasy-kek seals the signing keys, client secrets and sign-in secrets (ADR 0021). Keep it apart from the data volume and with your backups: identity does not start without it. Serve it over HTTPS and keep IDENTITY_PUBLIC_URL fixed once applications use it: it is the issuer they trust.",
     features: [
       { title: "OpenID Connect provider: discovery, PKCE for every application, refresh tokens, userinfo and logout", done: true },
       { title: "OpenAsy VPN, Infrastructure and Vulnerabilities from templates, and any OpenID Connect application", done: true },

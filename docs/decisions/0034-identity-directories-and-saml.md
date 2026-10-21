@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `identity` answers SAML 2.0 applications on samlify, reads LDAP and Active Directory on ldapts, takes people and groups over SCIM 2.0, and lets a group accept only a passkey; `@openasy/auth` 0.3.0 records which factor opened a session and lets another directory keep some people's passwords. CI reads a real lldap server. It is not released yet. Single sign-on for VPN connections is not started.
+- **Where:** `identity` answers SAML 2.0 applications on samlify, reads LDAP and Active Directory on ldapts, takes people and groups over SCIM 2.0, and lets a group accept only a passkey; `@openasy/auth` 0.4.0 records which factor opened a session and lets another directory keep some people's passwords. CI reads a real lldap server. Released in identity 0.1.0, with `@openasy/auth` 0.4.0. Single sign-on for VPN connections is not started.
 - **Area:** Architecture
 
 ## Context

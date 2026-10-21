@@ -159,6 +159,23 @@ export function composeFor(ids: string[]): string {
       );
       return;
     }
+    if (id === "identity") {
+      // Matches compose.yaml in identity: the OpenID and SAML provider on 8080 (ADR 0033, 0034).
+      lines.push(
+        `  ${id}:`,
+        `    image: ${p.image}:${tag}`,
+        "    restart: unless-stopped",
+        "    read_only: true",
+        "    ports:",
+        `      - "127.0.0.1:${8080 + i}:8080"   # UI, API and the providers; put a TLS proxy in front`,
+        "    volumes:",
+        `      - ${id}-data:/data   # SQLite database`,
+        "    secrets: [openasy-kek]   # seals the signing keys, client secrets and sign-in secrets (ADR 0021)",
+        "    environment:",
+        `      IDENTITY_PUBLIC_URL: http://localhost:${8080 + i}   # the https:// address behind your TLS proxy; the issuer, keep it fixed`,
+      );
+      return;
+    }
     lines.push(`  ${id}:`, `    image: ${p.image}:${tag}`, "    restart: unless-stopped", "    ports:", `      - "${8443 + i}:8443"`);
     lines.push("    volumes:", `      - ${id}-data:/data   # SQLite database and settings`, "    environment:", `      OPENASY_BACKUP: daily   # snapshot at 02:00, kept 7 daily / 4 weekly / 12 monthly`);
   });
