@@ -59,6 +59,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0031": { title: "Hosts stay clean", text: "One agent per network reads hosts over SSH with 5-minute certificates and keeps the keys; the product holds none. Nothing is installed on your hosts." },
   "0032": { title: "VPN servers anywhere", text: "Add a VPN server per location from one place. Each enrols with a one-time token and gets its own secret; clients move to the next server when one is down." },
   "0033": { title: "One sign-in for everything", text: "Identity is an OpenID provider on a certified library, in one container with SQLite. It also helps you connect Keycloak, Entra ID, Okta or Google." },
+  "0034": { title: "Bring your directory", text: "Identity signs in SAML applications such as AWS, reads LDAP and Active Directory, takes people from Okta or Entra ID over SCIM, and can ask a group for a passkey only." },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });
