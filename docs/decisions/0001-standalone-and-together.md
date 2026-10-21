@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** VPN runs alone (`vpn` 0.4.0: people, devices, IP groups, OpenVPN servers). Linking products is not built yet.
+- **Where:** VPN runs alone (`vpn` 0.4.0: people, devices, IP groups, OpenVPN servers). Linking products is not built yet, except the product switcher: every product reads the install's products and their addresses from `OPENASY_PRODUCTS` and serves them at `GET /api/v1/products`.
 - **Area:** Architecture
 
 ## Context
@@ -19,6 +19,7 @@ People adopt one tool at a time. Someone who only needs a VPN should not have to
 
 - A product never assumes another one is installed; missing data is shown as "connect X to see this", not as an error.
 - Shared UI (shell, product switcher, entity chips) lives in `@openasy/ui` so linked products feel like one system.
+- Each product is told the install's other products and their addresses in one setting, `OPENASY_PRODUCTS`, with the same value everywhere. A product without it shows no switcher.
 
 ## Where you can see it
 
