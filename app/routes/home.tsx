@@ -212,7 +212,10 @@ export default function Home() {
               </pre>
             </div>
             <figcaption className="mt-3 text-sm text-[#93a2bd]">
-              The VPN in one file. Every product installs the same way{withHelm.length ? `, and ${names(withHelm)} also with Helm on Kubernetes` : ""}.
+              The VPN in one file. Every product installs the same way{withHelm.length ? `, and ${names(withHelm)} also with Helm on Kubernetes` : ""}.{" "}
+              <Link to="/products/vpn#run" className="text-[#9db5f0]">
+                VPN servers at the edge or at several locations
+              </Link>
             </figcaption>
           </figure>
         </Section>
