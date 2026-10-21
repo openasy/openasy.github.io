@@ -6,5 +6,5 @@ import { APIS } from "./app/data/apis";
 export default {
   // A static site for GitHub Pages: every route is rendered to HTML at build time.
   ssr: false,
-  prerender: ["/", "/goals", "/products", "/principles", "/sign-in", "/support", ...GOALS.map((g) => `/goals/${g.id}`), ...SITE_PRODUCT_IDS.map((id) => `/products/${id}`), ...Object.keys(APIS).map((id) => `/products/${id}/api`)],
+  prerender: ["/", "/goals", "/products", "/principles", "/install", "/sign-in", "/support", ...GOALS.map((g) => `/goals/${g.id}`), ...SITE_PRODUCT_IDS.map((id) => `/products/${id}`), ...Object.keys(APIS).map((id) => `/products/${id}/api`)],
 } satisfies Config;

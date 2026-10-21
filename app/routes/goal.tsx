@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router";
 import { Badge, Callout } from "@openasy/ui";
 import { apiFor } from "../data/apis";
 import { goalById, type GoalStep } from "../data/goals";
+import { INSTALLABLE } from "../data/install";
 import { READINESS_TONE, readiness, statusFor } from "../data/status";
 import { storyUrl } from "../data/storybook";
 import { CodeBlock, Section } from "../components/site";
@@ -61,11 +62,18 @@ export default function GoalPage() {
             Install
           </h2>
           {ready === "Ready to try" ? (
-            notes.length > 0 && (
-              <Callout tone="warning" title="Before you install" className="mt-3">
-                {notes.join(" ")}
-              </Callout>
-            )
+            <>
+              {notes.length > 0 && (
+                <Callout tone="warning" title="Before you install" className="mt-3">
+                  {notes.join(" ")}
+                </Callout>
+              )}
+              {g.required.every((r) => (INSTALLABLE as readonly string[]).includes(r)) && (
+                <p className="mt-3 mb-0">
+                  Or <Link to={`/install?products=${g.required.join(",")}`}>build the setup</Link> with sign-in, HTTPS and the keys made for you.
+                </p>
+              )}
+            </>
           ) : (
             <Callout tone="info" title="Not released yet" className="mt-3">
               The screens are designed and published in Storybook; the container images are not released yet. These steps describe how installation will work.

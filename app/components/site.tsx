@@ -44,6 +44,7 @@ const NAV = [
   { to: "/goals", label: "Goals" },
   { to: "/products", label: "Products" },
   { to: "/principles", label: "Principles" },
+  { to: "/install", label: "Install" },
 ];
 
 export function SiteHeader({ theme, onThemeChange }: { theme: ThemePreference; onThemeChange: (next: ThemePreference) => void }) {
@@ -78,11 +79,11 @@ export function SiteHeader({ theme, onThemeChange }: { theme: ThemePreference; o
               {n.label}
             </NavLink>
           ))}
-          <a href={STORYBOOK} className="py-1 text-fg-muted no-underline hover:text-fg">
-            Storybook
-          </a>
         </nav>
         <div className="hidden items-center gap-4 md:flex">
+          <a href={STORYBOOK} className="py-1 text-sm text-fg-muted no-underline hover:text-fg">
+            Storybook
+          </a>
           <a href={GITHUB} className="inline-flex items-center gap-1.5 py-1 text-sm text-fg-muted no-underline hover:text-fg">
             <Code aria-hidden className="size-4" />
             GitHub

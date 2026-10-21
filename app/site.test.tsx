@@ -20,6 +20,7 @@ import { APIS } from "./data/apis";
 import Principles from "./routes/principles";
 import Support from "./routes/support";
 import SignIn from "./routes/sign-in";
+import Install from "./routes/install";
 import { PLANS, SUPPORT_EMAIL } from "./data/support";
 import { atLeast, readiness } from "./data/status";
 
@@ -33,6 +34,7 @@ const Stub = createRoutesStub([
   { path: "/principles", Component: Principles },
   { path: "/support", Component: Support },
   { path: "/sign-in", Component: SignIn },
+  { path: "/install", Component: Install },
 ]);
 
 const open = (url: string) => render(<Stub initialEntries={[url]} />);
@@ -224,6 +226,26 @@ describe("pages", () => {
     expect(screen.getByRole("heading", { name: "Run it" })).toBeInTheDocument();
     expect(screen.getByText(/image: ghcr.io\/openasy\/identity:0.1.0/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "samlify" })).toBeInTheDocument();
+  });
+
+  it("the install builder writes one setup for the products picked", async () => {
+    open("/install");
+    const compose = () => screen.getByLabelText("compose.yaml").textContent ?? "";
+    expect(compose()).toContain("VPN_OIDC_PROVIDER: openasy-identity");
+    // Coming products are listed, but only released ones can be picked.
+    await userEvent.click(screen.getByRole("radio", { name: /^All/ }));
+    expect(within(screen.getByRole("list", { name: "Products" })).getAllByRole("checkbox")).toHaveLength(4);
+    await userEvent.click(screen.getByRole("button", { name: /Know your servers/ }));
+    expect(compose()).toContain("  infra-agent:");
+    expect(compose()).not.toContain("  vpn:");
+    await userEvent.click(screen.getByRole("button", { name: /Sign-in/ }));
+    await userEvent.click(screen.getByRole("radio", { name: /Keycloak, ready for OpenAsy/ }));
+    expect(compose()).toContain("INFRA_OIDC_PROVIDER: keycloak");
+    // Secrets are made in the browser once the page runs.
+    await userEvent.click(screen.getByRole("tab", { name: ".env" }));
+    expect(screen.getByLabelText(".env")).toHaveTextContent(/VULNS_INGEST_TOKEN=[0-9a-f]{48}/);
+    await userEvent.click(screen.getByRole("tab", { name: "Steps" }));
+    expect(screen.getByRole("list", { name: "Steps to start" })).toHaveTextContent("openasy-realm.json");
   });
 
   it("a planned product shows no install steps", () => {

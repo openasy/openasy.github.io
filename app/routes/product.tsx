@@ -4,6 +4,7 @@ import { ArrowRight, Check, Circle } from "lucide-react";
 import { Callout, PRODUCT_IDS, Tabs, cn, type ProductId } from "@openasy/ui";
 import { apiFor } from "../data/apis";
 import { goalsForProduct } from "../data/goals";
+import { INSTALLABLE } from "../data/install";
 import { deploymentsFor, statusFor, withStatus, type Deployment, type Guide } from "../data/status";
 import { storyUrl } from "../data/storybook";
 import { ButtonLink, CodeBlock, GITHUB, Section } from "../components/site";
@@ -208,6 +209,11 @@ export default function ProductPage() {
                 Image <code className="font-mono">{p.image}</code>, signed with cosign.
               </p>
               <RunIt id={id} />
+              {(INSTALLABLE as readonly string[]).includes(id) && (
+                <p className="mt-3 mb-0">
+                  Running it with other products? <Link to={`/install?products=${id}`}>Build one setup</Link> in which they sign in through Identity or Keycloak and share one key.
+                </p>
+              )}
               {s.signIn && (
                 <p className="mt-3 mb-0">
                   People sign in with a password and a second factor, or with your identity provider: <Link to="/sign-in">sign-in guides</Link> for Keycloak, Microsoft Entra ID, Okta, Google and
