@@ -230,6 +230,14 @@ sshd -t && systemctl reload ssh`,
       { name: "Swagger UI", url: "https://github.com/swagger-api/swagger-ui", role: "API reference" },
     ],
   },
+  logs: {
+    status: "Designed",
+    features: [],
+    upstream: [
+      { name: "VictoriaLogs", url: "https://docs.victoriametrics.com/victorialogs/", role: "storage and LogsQL" },
+      { name: "SQLite", url: "https://sqlite.org/", role: "sources, pipelines and saved views" },
+    ],
+  },
   dast: {
     status: "Designed",
     features: [],

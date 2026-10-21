@@ -60,6 +60,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0032": { title: "VPN servers anywhere", text: "Add a VPN server per location from one place. Each enrols with a one-time token and gets its own secret; clients move to the next server when one is down." },
   "0033": { title: "One sign-in for everything", text: "Identity is an OpenID provider on a certified library, in one container with SQLite. It also helps you connect Keycloak, Entra ID, Okta or Google." },
   "0034": { title: "Bring your directory", text: "Identity signs in SAML applications such as AWS, reads LDAP and Active Directory, takes people from Okta or Entra ID over SCIM, and can ask a group for a passkey only." },
+  "0035": { title: "Logs without a shipper", text: "Logs keeps them in VictoriaLogs inside its one container. Send them over Syslog, OpenTelemetry or what Vector and Fluent Bit speak, or let one agent read journald over SSH." },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });
