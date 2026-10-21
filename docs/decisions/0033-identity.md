@@ -1,0 +1,39 @@
+# 0033. Identity: an OpenID provider of our own, on node-oidc-provider
+
+- **Decision:** Accepted
+- **Implementation:** In progress
+- **Where:** `identity` has its skeleton: sign-in for the people who manage it, health, metrics and the API reference. The OpenID provider, applications, users, groups, MFA policies and upstream providers are next.
+- **Area:** Architecture
+
+## Context
+
+Every OpenAsy product signs people in on its own and can use an identity provider over OIDC (ADR 0002). Teams without one have no single sign-on across products, no single place to turn MFA on, and no single place to switch a leaver off. Teams with one, often Keycloak, Entra ID, Okta or Google, need help connecting it: today each product takes one provider from environment variables, and the steps differ per provider.
+
+Identity fills both needs. It is a provider for OpenAsy products and any other application, and it can sit in front of the provider a team already has. It must follow the rules every product follows: one container, its data in one SQLite file (ADR 0011), secrets sealed with a key kept outside the volume (ADR 0021), and small enough to run on a small server (ADR 0028).
+
+The options were to wrap an existing identity server or to build on a library:
+
+- **Keycloak** is the most complete, with SAML, LDAP and federation built in. It needs Java, half a gigabyte of memory or more, and PostgreSQL, and its own administration model would sit under ours.
+- **Zitadel** and **Authentik** are lighter or more modern, but both need PostgreSQL, and Authentik also Redis.
+- **node-oidc-provider** is an OpenID Certified implementation of the provider side of OpenID Connect, for Node, under the MIT licence. It has no storage and no user interface of its own: both are ours to supply.
+
+## Decision
+
+- Identity is built on node-oidc-provider, in the same stack as the other products: Node, SQLite, one container, `ghcr.io/openasy/identity`.
+- People, passwords, authenticator apps, passkeys and recovery codes come from `@openasy/auth`, so every product signs people in the same way. The provider's signing keys and client secrets are sealed with `openasy-kek` and rotate without breaking sessions.
+- The first release offers OpenID Connect with discovery, authorization code with PKCE, refresh tokens and RP-initiated logout. Its screens follow the design in Storybook:
+  - applications, with a template for each OpenAsy product that fills in the redirect address and the groups claim;
+  - users, and groups that decide who may sign in to which application;
+  - MFA policies, for everyone or per group, including passkeys only;
+  - upstream providers (Keycloak, Entra ID, Okta, Google, Authentik, Zitadel), with sign-in creating the person the first time and groups read from nested claims;
+  - an audit log of sign-ins and changes.
+- The provider settings for Keycloak, Entra ID, Okta, Google, Authentik and Zitadel live in `@openasy/auth`. Identity's upstream providers and the sign-in settings of every product use the same ones, so a team that keeps its provider gets the same help as one that uses Identity.
+- OpenAsy also ships a ready Keycloak for teams that want one: a compose file with a realm in which every OpenAsy product is a client, with groups and role mappings set. CI signs in to each product through it, which is the real-server test ADR 0002 requires.
+- SAML 2.0, LDAP and Active Directory, SCIM and single sign-on for VPN connections come after the first release, each with its own record.
+
+## Consequences
+
+- Identity holds the keys every application trusts. The keys are sealed and rotated, the provider follows the certified library's defaults, and changes to applications and providers are in the audit log.
+- We own the user interface and the storage, so they follow our design and our backup and upgrade rules; we also own their bugs. The protocol itself stays in a certified library.
+- Each product keeps signing people in on its own (ADR 0001): Identity is one provider among others, never a requirement.
+- Applications that need SAML wait for its record, or use Keycloak in front of Identity meanwhile.

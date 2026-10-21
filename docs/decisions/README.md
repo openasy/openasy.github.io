@@ -45,5 +45,6 @@ Each record has two statuses:
 | 0030 | [Open-source governance](./0030-open-source-governance.md) | Project | Proposed · High | Not started |
 | 0031 | [Nothing installed on hosts: one agent reads them](./0031-agentless-collection.md) | Architecture | Accepted | In progress |
 | 0032 | [VPN servers at several locations, each with its own identity](./0032-vpn-server-enrolment.md) | Architecture | Proposed · High | In progress |
+| 0033 | [Identity: an OpenID provider of our own, on node-oidc-provider](./0033-identity.md) | Architecture | Accepted | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.
