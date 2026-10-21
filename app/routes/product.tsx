@@ -208,6 +208,12 @@ export default function ProductPage() {
                 Image <code className="font-mono">{p.image}</code>, signed with cosign.
               </p>
               <RunIt id={id} />
+              {s.signIn && (
+                <p className="mt-3 mb-0">
+                  People sign in with a password and a second factor, or with your identity provider: <Link to="/sign-in">sign-in guides</Link> for Keycloak, Microsoft Entra ID, Okta, Google and
+                  others.
+                </p>
+              )}
               {guide && (
                 <p className="mt-3 mb-0">
                   Step by step, with the first device: <Link to={`/goals/${guide.id}`}>{guide.title} guide</Link>

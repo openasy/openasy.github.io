@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `identity` has its skeleton: sign-in for the people who manage it, health, metrics and the API reference. The OpenID provider, applications, users, groups, MFA policies and upstream providers are next.
+- **Where:** `identity` has the OpenID provider on oidc-provider, applications with templates for OpenAsy products, people with the user role of `@openasy/auth` 0.3.0, groups that can follow a provider's groups, a second factor per group and the audit log; it is not released yet. `@openasy/auth` 0.2.0 added the provider presets and Settings, Sign-in, used by `vpn`, `infra` and `vulns`. `auth/examples/keycloak` is the ready Keycloak, signed in through in CI. Passkey-only groups, SAML, LDAP and SCIM are not started.
 - **Area:** Architecture
 
 ## Context

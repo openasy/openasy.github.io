@@ -12,6 +12,7 @@
     "preview": "vite preview --outDir build/client"
   },
   "dependencies": {
+    "@openasy/auth": "https://github.com/openasy/auth/releases/download/v0.3.0/openasy-auth-0.3.0.tgz",
     "@openasy/ui": "file:../ui",
     "@react-router/node": "^8.5.0",
     "isbot": "^5.2.2",

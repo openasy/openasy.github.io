@@ -19,6 +19,7 @@ import ProductApi from "./routes/product-api";
 import { APIS } from "./data/apis";
 import Principles from "./routes/principles";
 import Support from "./routes/support";
+import SignIn from "./routes/sign-in";
 import { PLANS, SUPPORT_EMAIL } from "./data/support";
 import { atLeast, readiness } from "./data/status";
 
@@ -31,6 +32,7 @@ const Stub = createRoutesStub([
   { path: "/products/:id/api", Component: ProductApi },
   { path: "/principles", Component: Principles },
   { path: "/support", Component: Support },
+  { path: "/sign-in", Component: SignIn },
 ]);
 
 const open = (url: string) => render(<Stub initialEntries={[url]} />);
@@ -198,6 +200,27 @@ describe("pages", () => {
     expect(atLeast("0.10.0", "0.6.0")).toBe(true);
     expect(atLeast("0.5.9", "0.6.0")).toBe(false);
     expect(atLeast(undefined, "0.6.0")).toBe(false);
+  });
+
+  it("the sign-in guides follow the presets and the reader's product address", async () => {
+    open("/sign-in");
+    const tabs = within(screen.getByRole("tablist", { name: "Identity provider" })).getAllByRole("tab").map((t) => t.textContent);
+    expect(tabs).toEqual(["Keycloak", "Microsoft Entra ID", "Okta", "Google", "authentik", "ZITADEL", "OpenAsy Identity", "Another OpenID Connect provider"]);
+    expect(screen.getByText("https://vpn.example.com/api/v1/auth/oidc/keycloak/callback")).toBeInTheDocument();
+    const address = screen.getByLabelText("Your product's address");
+    await userEvent.clear(address);
+    await userEvent.type(address, "https://infra.acme.io/");
+    expect(screen.getByText("https://infra.acme.io/api/v1/auth/oidc/keycloak/callback")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Google" }));
+    expect(screen.getByText(/Google sends no groups/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Environment for Google")).toHaveTextContent("VPN_OIDC_ALLOWED_DOMAINS=example.com");
+    expect(screen.getByRole("link", { name: "OpenAsy Identity" })).toHaveAttribute("href", "/products/identity");
+  });
+
+  it("a product being built shows what it will build on", () => {
+    open("/products/identity");
+    expect(screen.getByRole("heading", { name: "Being built now" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "oidc-provider" })).toBeInTheDocument();
   });
 
   it("a planned product shows no install steps", () => {
