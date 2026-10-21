@@ -59,6 +59,21 @@ export interface Guide {
   code?: string;
 }
 
+/** One way to lay a product out, for products where the right one depends on the team. */
+export interface Deployment {
+  id: string;
+  /** Tab label. */
+  label: string;
+  /** Who it suits, in one sentence. */
+  fits: string;
+  /** Starts with the compose file for one host. */
+  compose?: boolean;
+  /** `{version}` in code is the released version. */
+  steps: Guide[];
+  /** First release that supports it: until then the page does not show it. */
+  since: string;
+}
+
 export interface ProductState {
   status: ProductStatus;
   /**
@@ -78,9 +93,26 @@ export interface ProductState {
   clients?: Client[];
   helm?: Helm;
   guides?: Guide[];
+  deployments?: Deployment[];
 }
 
 const DESIGNED: ProductState = { status: "Designed", features: [], upstream: [] };
+
+// The panel and a vpn-server on their own hosts (ADR 0032). vpn never connects to a server: servers reach it over HTTPS.
+const VPN_PANEL = `openssl rand -hex 32 > openasy-kek   # keep it with your backups
+docker run -d --name vpn --restart unless-stopped \\
+  -p 127.0.0.1:8080:8080 -v vpn-data:/data \\
+  -v "$PWD/openasy-kek:/run/secrets/openasy-kek:ro" \\
+  -e VPN_PUBLIC_URL=https://vpn.internal.example.com \\
+  ghcr.io/openasy/vpn:{version}
+docker logs vpn | grep "no owner yet"   # one-time link that creates the owner`;
+const vpnServer = (address: string) => `# on ${address}
+docker run -d --name vpn-server --restart unless-stopped \\
+  --cap-add NET_ADMIN --device /dev/net/tun --sysctl net.ipv4.ip_forward=1 \\
+  -p 1194:1194/udp -v vpn-server-data:/var/lib/openasy-vpn \\
+  -e VPN_URL=https://vpn.internal.example.com \\
+  -e VPN_ENROLL_TOKEN=ove_... \\
+  ghcr.io/openasy/vpn-server:{version}`;
 
 export const STATUS: Partial<Record<string, ProductState>> = {
   vulnerabilities: {
@@ -226,6 +258,51 @@ sshd -t && systemctl reload ssh`,
       { title: "People, devices, access and live sessions in the UI", done: true },
       { title: "Command line tool, openasy-vpn, on the same API", done: true },
     ],
+    deployments: [
+      {
+        id: "one-host",
+        label: "One host",
+        fits: "A small team with one office or one cloud network: everything on one machine, one file.",
+        compose: true,
+        steps: [
+          {
+            title: "Start the server",
+            text: "Under Servers, add edge-1 with the address clients connect to, and start it with the one-time token the page shows, as the last line above does. For networks that allow only HTTPS, add a second server on TCP 443 the same way.",
+          },
+        ],
+        since: "0.6.0",
+      },
+      {
+        id: "edge",
+        label: "Panel inside, server at the edge",
+        fits: "When the panel must not be reachable from the internet: only the VPN port is open to the world.",
+        steps: [
+          { title: "Run the panel on an internal host", text: "Behind your TLS proxy. Only the people who manage it and the vpn-server hosts reach it.", code: VPN_PANEL },
+          { title: "Add the server", text: "Under Servers, add edge-1 with the public address clients connect to. You get a one-time token." },
+          {
+            title: "Start vpn-server on the edge host",
+            text: "It connects out to the panel over HTTPS and needs nothing open towards it: the panel never connects to a server. Keep its volume, it holds the server's secret.",
+            code: vpnServer("vpn.example.com"),
+          },
+        ],
+        since: "0.6.0",
+      },
+      {
+        id: "locations",
+        label: "Several locations",
+        fits: "Offices or regions, or a second server to fall back to: one panel, a vpn-server at each location.",
+        steps: [
+          { title: "Run the panel once", text: "On an internal host, as for one server at the edge.", code: VPN_PANEL },
+          { title: "Add a server per location", text: "Under Servers, one per host, each with its own address, for example fra-1 at fra.vpn.example.com and ist-1 at ist.vpn.example.com. Each gets its own one-time token." },
+          { title: "Start vpn-server at each location", text: "With that location's token. Each server reaches the panel over HTTPS and gets its own secret.", code: vpnServer("fra.vpn.example.com, then the same on ist.vpn.example.com with its token") },
+          {
+            title: "Then add devices",
+            text: "Each device's file lists every server that has reported, so clients move to the next one when a server is down. Start the servers first: a file lists the servers there were when it was made. Access applies on every server, so each must reach the networks your IP groups allow.",
+          },
+        ],
+        since: "0.6.0",
+      },
+    ],
     upstream: [
       { name: "OpenVPN", url: "https://openvpn.net/community/", role: "the tunnel" },
       { name: "iptables", url: "https://www.netfilter.org/projects/iptables/", role: "per-device firewall" },
@@ -276,6 +353,21 @@ export function readiness(required: string[]): Readiness {
   if (required.every(isReleased)) return "Ready to try";
   return required.some((id) => statusFor(id).status !== "Designed") ? "In progress" : "Designed";
 }
+
+/** Whether a plain x.y.z `version` is `min` or later. */
+export function atLeast(version: string | undefined, min: string): boolean {
+  if (!version) return false;
+  const a = version.split(".").map(Number);
+  const b = min.split(".").map(Number);
+  for (let i = 0; i < 3; i++) if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0);
+  return true;
+}
+
+/** The ways to deploy that the released version supports, with its version in the commands. */
+export const deploymentsFor = (s: ProductState): Deployment[] =>
+  (s.deployments ?? [])
+    .filter((d) => atLeast(s.version, d.since))
+    .map((d) => ({ ...d, steps: d.steps.map((g) => (g.code ? { ...g, code: g.code.replaceAll("{version}", s.version!) } : g)) }));
 
 /** Product ids in a given status, in the order given. */
 export const withStatus = (ids: readonly string[], status: ProductStatus) => ids.filter((id) => statusFor(id).status === status);

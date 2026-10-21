@@ -4,7 +4,7 @@ import { ArrowRight, Check, Circle } from "lucide-react";
 import { Callout, PRODUCT_IDS, Tabs, cn, type ProductId } from "@openasy/ui";
 import { apiFor } from "../data/apis";
 import { goalsForProduct } from "../data/goals";
-import { statusFor, withStatus } from "../data/status";
+import { deploymentsFor, statusFor, withStatus, type Deployment, type Guide } from "../data/status";
 import { storyUrl } from "../data/storybook";
 import { ButtonLink, CodeBlock, GITHUB, Section } from "../components/site";
 import { ProductStatusBadge, composeRun, helmFor, product } from "../components/cards";
@@ -25,6 +25,41 @@ function SideCard({ id, title, children }: { id: string; title: string; children
   );
 }
 
+/** Numbered steps, each with its command. */
+function Steps({ items, label }: { items: Guide[]; label?: string }) {
+  return (
+    <ol aria-label={label} className="mt-4 flex list-none flex-col gap-6 p-0">
+      {items.map((g, i) => (
+        <li key={g.title} className="flex items-start gap-3">
+          <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent-text">
+            {i + 1}
+          </span>
+          <div className="min-w-0 grow">
+            <h3 className="m-0 text-base font-semibold">{g.title}</h3>
+            <p className="mt-1 mb-0 text-fg-muted">{g.text}</p>
+            {g.code && <CodeBlock code={g.code} label={g.title} className="mt-3 p-4" />}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** For a product whose layout depends on the team: one tab per way to deploy it. */
+function Deployments({ id, ways }: { id: string; ways: Deployment[] }) {
+  const p = product(id);
+  const [way, setWay] = useState(ways[0]!.id);
+  const d = ways.find((w) => w.id === way) ?? ways[0]!;
+  return (
+    <>
+      <Tabs<string> label="How to deploy" value={d.id} onChange={setWay} className="mt-4" items={ways.map((w) => ({ value: w.id, label: w.label }))} />
+      <p className="mt-3 mb-0 text-fg-muted">{d.fits}</p>
+      {d.compose && <CodeBlock code={composeRun([id])} label={`compose.yaml for ${p.name}`} className="mt-3 p-4" />}
+      <Steps items={d.steps} label={`Steps: ${d.label}`} />
+    </>
+  );
+}
+
 type InstallWay = "compose" | "kubernetes";
 
 /** Docker Compose for everyone, and Helm for products that have a chart. */
@@ -33,6 +68,8 @@ function RunIt({ id }: { id: string }) {
   const s = statusFor(id);
   const helm = helmFor(id);
   const [way, setWay] = useState<InstallWay>("compose");
+  const ways = deploymentsFor(s);
+  if (ways.length > 1) return <Deployments id={id} ways={ways} />;
   const compose = <CodeBlock code={composeRun([id])} label={`compose.yaml for ${p.name}`} className="mt-3 p-4" />;
   if (!helm || !s.helm) return compose;
   return (
@@ -184,20 +221,7 @@ export default function ProductPage() {
               <h2 id="guides" className="m-0 text-2xl font-semibold">
                 After installing
               </h2>
-              <ol className="mt-4 flex list-none flex-col gap-6 p-0">
-                {s.guides.map((g, i) => (
-                  <li key={g.title} className="flex items-start gap-3">
-                    <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent-text">
-                      {i + 1}
-                    </span>
-                    <div className="min-w-0 grow">
-                      <h3 className="m-0 text-base font-semibold">{g.title}</h3>
-                      <p className="mt-1 mb-0 text-fg-muted">{g.text}</p>
-                      {g.code && <CodeBlock code={g.code} label={g.title} className="mt-3 p-4" />}
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <Steps items={s.guides} />
             </section>
           )}
 

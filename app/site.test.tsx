@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
@@ -20,7 +20,7 @@ import { APIS } from "./data/apis";
 import Principles from "./routes/principles";
 import Support from "./routes/support";
 import { PLANS, SUPPORT_EMAIL } from "./data/support";
-import { readiness } from "./data/status";
+import { atLeast, readiness } from "./data/status";
 
 const Stub = createRoutesStub([
   { path: "/", Component: Home },
@@ -162,6 +162,43 @@ describe("pages", () => {
     expect(screen.getByRole("heading", { name: "Connect a device" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "OpenVPN Connect" }).length).toBeGreaterThanOrEqual(4);
     expect(screen.getByLabelText("compose.yaml for VPN")).toHaveTextContent("vpn:0.5.0");
+  });
+
+  it("the VPN product page offers ways to deploy once the release supports them", async () => {
+    open("/products/vpn");
+    // 0.5.0 servers share VPN_SERVER_TOKEN: one compose file, no choice of layout.
+    expect(screen.queryByRole("tablist", { name: "How to deploy" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("compose.yaml for VPN")).toHaveTextContent("VPN_SERVER_TOKEN");
+
+    const vpn = STATUS.vpn!;
+    const was = vpn.version;
+    vpn.version = "0.6.0";
+    cleanup();
+    try {
+      open("/products/vpn");
+      const tabs = within(screen.getByRole("tablist", { name: "How to deploy" })).getAllByRole("tab");
+      expect(tabs.map((t) => t.textContent)).toEqual(["One host", "Panel inside, server at the edge", "Several locations"]);
+      const compose = screen.getByLabelText("compose.yaml for VPN");
+      expect(compose).toHaveTextContent("vpn:0.6.0");
+      expect(compose).toHaveTextContent("VPN_ENROLL_TOKEN: ${EDGE_1_TOKEN:-}");
+      expect(compose).toHaveTextContent("vpn-server-data:/var/lib/openasy-vpn");
+      expect(compose).not.toHaveTextContent("VPN_SERVER_TOKEN");
+
+      await userEvent.click(screen.getByRole("tab", { name: "Several locations" }));
+      const steps = screen.getByRole("list", { name: "Steps: Several locations" });
+      expect(within(steps).getAllByRole("heading").map((h) => h.textContent)).toEqual(["Run the panel once", "Add a server per location", "Start vpn-server at each location", "Then add devices"]);
+      expect(screen.getByLabelText("Start vpn-server at each location")).toHaveTextContent("ghcr.io/openasy/vpn-server:0.6.0");
+      expect(screen.queryByLabelText("compose.yaml for VPN")).not.toBeInTheDocument();
+    } finally {
+      vpn.version = was;
+    }
+  });
+
+  it("compares versions", () => {
+    expect(atLeast("0.6.0", "0.6.0")).toBe(true);
+    expect(atLeast("0.10.0", "0.6.0")).toBe(true);
+    expect(atLeast("0.5.9", "0.6.0")).toBe(false);
+    expect(atLeast(undefined, "0.6.0")).toBe(false);
   });
 
   it("a planned product shows no install steps", () => {

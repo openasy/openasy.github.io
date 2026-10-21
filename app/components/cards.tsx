@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { Badge, PRODUCTS, cn, type ProductId } from "@openasy/ui";
 import type { Goal } from "../data/goals";
-import { READINESS_TONE, STATUS_TONE, readiness, statusFor, statusLabel } from "../data/status";
+import { READINESS_TONE, STATUS_TONE, atLeast, readiness, statusFor, statusLabel } from "../data/status";
 
 export const product = (id: string) => PRODUCTS[id as ProductId];
 
@@ -60,6 +60,9 @@ export function helmFor(id: string): { full: string; agentsOnly?: string } | und
   return { full: cmd(id === "vulnerabilities" ? "vulns" : id, s.helm.set ?? []), agentsOnly: s.helm.agentsOnly && cmd(`${id === "vulnerabilities" ? "vulns" : id}-agent`, s.helm.agentsOnly.set) };
 }
 
+/** vpn-server enrols with a one-time token from this release on, instead of sharing VPN_SERVER_TOKEN. */
+const vpnEnrols = () => atLeast(statusFor("vpn").version, "0.6.0");
+
 /** docker compose file for a set of products: one container and one SQLite volume each, plus host agents. */
 export function composeFor(ids: string[]): string {
   const lines = ["services:"];
@@ -67,7 +70,9 @@ export function composeFor(ids: string[]): string {
     const p = product(id);
     const tag = statusFor(id).version ?? "1";
     if (id === "vpn" && p.agentImage) {
-      // Matches compose.yaml in vpn: vpn listens on 8080 and has no backup setting yet.
+      // Matches compose.yaml in vpn: vpn listens on 8080 and has no backup setting yet. From 0.6.0 each server enrols
+      // with its own one-time token instead of sharing VPN_SERVER_TOKEN (ADR 0032).
+      const enrol = vpnEnrols();
       lines.push(
         `  ${id}:`,
         `    image: ${p.image}:${tag}`,
@@ -79,7 +84,7 @@ export function composeFor(ids: string[]): string {
         "    secrets: [openasy-kek]   # seals the CA key and sign-in secrets (ADR 0021)",
         "    environment:",
         `      VPN_PUBLIC_URL: http://localhost:${8443 + i}   # the https:// address behind your TLS proxy`,
-        "      VPN_SERVER_TOKEN: ${VPN_SERVER_TOKEN}",
+        ...(enrol ? [] : ["      VPN_SERVER_TOKEN: ${VPN_SERVER_TOKEN}"]),
         "      VPN_PUBLIC_HOST: vpn.example.com   # the name or IP clients connect to",
         "  vpn-server:",
         `    image: ${p.agentImage}:${tag}   # always the same version as ${id}`,
@@ -90,9 +95,10 @@ export function composeFor(ids: string[]): string {
         "      net.ipv4.ip_forward: 1   # lets clients reach the networks behind this host",
         "    ports:",
         `      - "1194:1194/udp"   # add a second vpn-server with OPENVPN_PROTO: tcp and OPENVPN_PORT: "443" for TCP 443`,
+        ...(enrol ? ["    volumes:", "      - vpn-server-data:/var/lib/openasy-vpn   # its secret: without it, it must enrol again"] : []),
         "    environment:",
         `      VPN_URL: http://${id}:8080`,
-        "      VPN_SERVER_TOKEN: ${VPN_SERVER_TOKEN}",
+        enrol ? "      VPN_ENROLL_TOKEN: ${EDGE_1_TOKEN:-}   # one-time, from Servers in vpn" : "      VPN_SERVER_TOKEN: ${VPN_SERVER_TOKEN}",
       );
       return;
     }
@@ -156,7 +162,12 @@ export function composeFor(ids: string[]): string {
     lines.push(`  ${id}:`, `    image: ${p.image}:${tag}`, "    restart: unless-stopped", "    ports:", `      - "${8443 + i}:8443"`);
     lines.push("    volumes:", `      - ${id}-data:/data   # SQLite database and settings`, "    environment:", `      OPENASY_BACKUP: daily   # snapshot at 02:00, kept 7 daily / 4 weekly / 12 monthly`);
   });
-  lines.push("volumes:", ...ids.map((id) => `  ${id}-data:`), ...(ids.includes("infrastructure") ? ["  infra-agent-data:"] : []));
+  lines.push(
+    "volumes:",
+    ...ids.map((id) => `  ${id}-data:`),
+    ...(ids.includes("vpn") && vpnEnrols() ? ["  vpn-server-data:"] : []),
+    ...(ids.includes("infrastructure") ? ["  infra-agent-data:"] : []),
+  );
   if (ids.some((id) => statusFor(id).signIn)) lines.push("secrets:", "  openasy-kek:", "    file: ./openasy-kek", ...(ids.includes("infrastructure") ? ["  openasy-agent-kek:", "    file: ./openasy-agent-kek"] : []));
   return lines.join("\n");
 }
@@ -172,5 +183,6 @@ export function composeRun(ids: string[]): string {
     ...(ids.includes("infrastructure") ? ["openssl rand -hex 32 > openasy-agent-kek   # the agent's own key"] : []),
     "docker compose up -d",
     ...signIn.map((id) => `docker compose logs ${id} | grep "no owner yet"   # one-time link that creates the owner`),
+    ...(ids.includes("vpn") && vpnEnrols() ? ["# add edge-1 under Servers in vpn, then start it with its one-time token:", "EDGE_1_TOKEN=ove_... docker compose up -d vpn-server"] : []),
   ].join("\n");
 }
