@@ -47,7 +47,7 @@ Each record has two statuses:
 | 0032 | [VPN servers at several locations, each with its own identity](./0032-vpn-server-enrolment.md) | Architecture | Proposed · High | In progress |
 | 0033 | [Identity: an OpenID provider of our own, on node-oidc-provider](./0033-identity.md) | Architecture | Accepted | In progress |
 | 0034 | [Identity meets the directories and applications teams already have: SAML, LDAP, SCIM and passkey-only groups](./0034-identity-directories-and-saml.md) | Architecture | Accepted | In progress |
-| 0035 | [Logs: VictoriaLogs inside, logs sent to it or read over SSH](./0035-logs.md) | Architecture | Accepted | Not started |
+| 0035 | [Logs: VictoriaLogs inside, logs sent to it or read over SSH](./0035-logs.md) | Architecture | Accepted | In progress |
 | 0036 | [SAST: Opengrep scans every pull request, and only what is new blocks it](./0036-sast.md) | Architecture | Proposed · High | In progress |
 | 0037 | [DAST: scanners run in an agent, and only on targets you have proven are yours](./0037-dast.md) | Architecture | Proposed · High | In progress |
 | 0038 | [Secrets: a finding is where a secret was, and the secret itself is never kept](./0038-secrets.md) | Architecture | Proposed · High | In progress |
@@ -56,5 +56,13 @@ Each record has two statuses:
 | 0041 | [Incidents: one place to run an incident, with a timeline nobody can rewrite](./0041-incidents.md) | Architecture | Proposed · High | In progress |
 | 0042 | [Errors: events become issues by where they happen, and a fix that did not hold is a regression](./0042-errors.md) | Architecture | Proposed · High | In progress |
 | 0043 | [Supply Chain: a store and a judge, and what it takes on trust](./0043-supply-chain.md) | Architecture | Proposed · High | In progress |
+| 0044 | [Audit: dependency advisories from the scanner you run, and only what a change adds fails it](./0044-audit.md) | Architecture | Proposed · High | In progress |
+| 0045 | [Posture: failed controls per target, with a score over time, from the checkers you run](./0045-posture.md) | Architecture | Proposed · High | In progress |
+| 0046 | [Certificates: every certificate you send or that a public endpoint presents, and never a private key](./0046-certificates.md) | Architecture | Proposed · High | In progress |
+| 0047 | [Uptime: runners check from where users are, and the server probes nothing](./0047-uptime.md) | Architecture | Proposed · High | In progress |
+| 0048 | [Backups: track the jobs that make backups, and count a restore nobody tested as a risk](./0048-backups.md) | Architecture | Proposed · High | In progress |
+| 0049 | [Risk: a register people keep, acceptance that ends, and a history nobody edits](./0049-risk.md) | Architecture | Proposed · High | In progress |
+| 0050 | [Threat Intel: feeds in, one lookup out, and nothing dropped without a word](./0050-threat-intel.md) | Architecture | Proposed · High | In progress |
+| 0051 | [Cost: spend sent by a pipeline, owners by tag or rule, and anomalies a person decides on](./0051-cost.md) | Architecture | Proposed · Medium | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.

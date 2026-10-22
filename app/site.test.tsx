@@ -249,13 +249,19 @@ describe("pages", () => {
   });
 
   it("a planned product shows no install steps", () => {
-    open("/products/logs");
+    open("/products/waf");
     expect(screen.getByText("Designed")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Not built yet" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Run it" })).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Will build on" })).toBeInTheDocument();
     expect(screen.queryByText(/docker compose up/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "See the design" })).toBeInTheDocument();
+  });
+
+  it("a product in progress names what it builds on", () => {
+    open("/products/logs");
+    expect(screen.getByText("In progress")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Will build on" })).toBeInTheDocument();
+    expect(screen.queryByText(/docker compose up/)).not.toBeInTheDocument();
   });
 
   it("products page lists released products first", () => {

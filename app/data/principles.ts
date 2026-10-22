@@ -69,6 +69,14 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0041": { title: "A timeline nobody can rewrite", text: "Incidents keeps an append-only timeline, tasks, evidence links and a postmortem, and other products can open an incident over the API without duplicating it." },
   "0042": { title: "Errors grouped by where they happen", text: "Errors groups events by the place they come from, counts who is affected, and reopens an issue as a regression when a fix did not hold." },
   "0043": { title: "A judge, not a signer", text: "Supply Chain keeps the SBOM, the signature result and the provenance your CI reports, and answers allowed or not for an image against your policy. It says plainly that it records what CI says and does not verify signatures itself." },
+  "0044": { title: "Only what a change adds", text: "Audit reads the advisories your scanner reports for every lockfile, compares each branch with the default one, and fails a pull request only for what it adds. It holds no advisory database of its own." },
+  "0045": { title: "A score that moves", text: "Posture keeps the failed controls of each cloud account, cluster or group of hosts from the checkers you run, with decisions that last and a score over time. It needs no credentials for your infrastructure." },
+  "0046": { title: "Certificates, never keys", text: "Certificates keeps every certificate you send or a public endpoint presents, warns once per threshold before it ends, and refuses any body that holds a private key. It will not probe a private address." },
+  "0047": { title: "Checked from outside", text: "Uptime runs no probes itself: a runner you start from CI or another network checks HTTP, TCP, DNS and TLS. A check nobody has run lately is stale, never up, and a public status page shows only what you choose." },
+  "0048": { title: "A backup nobody restored is a hope", text: "Backups tracks the jobs restic, Velero or a script run, and gives each a state. A job with no recent restore test is untested, not healthy." },
+  "0049": { title: "Acceptance that ends", text: "Risk keeps the register and vendor reviews. Accepting a risk needs a reason, an approver and an end within a year, and every change goes into a history the database will not let anyone edit." },
+  "0050": { title: "Nothing dropped without a word", text: "Threat Intel imports STIX, CSV and text feeds, names whatever it cannot use, and answers one lookup for every product. TLP:RED stays with the people it was meant for." },
+  "0051": { title: "Spend with an owner", text: "Cost reads the bill a pipeline sends, gives every line an owner by tag or rule, forecasts the month and flags spikes for a person to explain. It holds no cloud credentials." },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });
