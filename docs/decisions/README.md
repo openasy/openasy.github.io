@@ -48,5 +48,7 @@ Each record has two statuses:
 | 0033 | [Identity: an OpenID provider of our own, on node-oidc-provider](./0033-identity.md) | Architecture | Accepted | In progress |
 | 0034 | [Identity meets the directories and applications teams already have: SAML, LDAP, SCIM and passkey-only groups](./0034-identity-directories-and-saml.md) | Architecture | Accepted | In progress |
 | 0035 | [Logs: VictoriaLogs inside, logs sent to it or read over SSH](./0035-logs.md) | Architecture | Accepted | Not started |
+| 0036 | [SAST: Opengrep scans every pull request, and only what is new blocks it](./0036-sast.md) | Architecture | Proposed · High | Not started |
+| 0037 | [DAST: scanners run in an agent, and only on targets you have proven are yours](./0037-dast.md) | Architecture | Proposed · High | Not started |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.
