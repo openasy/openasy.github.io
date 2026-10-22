@@ -341,7 +341,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
 
   const steps: InstallStep[] = [];
   if (picked.length) {
-    steps.push({ text: `Save ${files.map((f) => f.name).join(", ")} in one folder on a host with Docker. Keep openasy-kek${has("infrastructure") ? " and openasy-agent-kek" : ""} with your backups: without them the products cannot open their secrets.` });
+    steps.push({ text: `On a host with Docker, unzip openasy.zip and work in its openasy folder, or save ${files.map((f) => f.name).join(", ")} in one folder yourself. Keep openasy-kek${has("infrastructure") ? " and openasy-agent-kek" : ""} with your backups: without them the products cannot open their secrets.` });
     if (keycloak) steps.push({ text: "Fetch the Keycloak realm in which every product is already a client:", code: `curl -fsSLO ${REALM}` });
     if (withCaddy || onHost) steps.push({ text: `Point ${fronted.map(host).join(", ")} at this host, so ${withCaddy ? "Caddy" : "certbot"} can get their certificates.` });
     // Agents that enrol with a one-time token start once they have it.

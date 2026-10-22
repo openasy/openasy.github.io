@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { Check, Copy, Download, RefreshCw } from "lucide-react";
+import { Check, Copy, Download, FolderDown, RefreshCw } from "lucide-react";
 import { Badge, Button, PRODUCT_IDS, PRODUCTS, SearchInput, SegmentedControl, Tabs, TextField, cn, type ProductGroup, type ProductId } from "@openasy/ui";
 import { Section } from "../components/site";
 import { DEFAULT_CHOICE, INSTALLABLE, buildInstall, cleanDomain, makeSecrets, type Installable, type InstallChoice, type Provider, type Proxy, type Secrets, type SignIn, type Upstream } from "../data/install";
 import { statusFor } from "../data/status";
+import { zip } from "../data/zip";
 import { GROUPS } from "./home";
 
 export function meta() {
@@ -152,13 +153,16 @@ export default function InstallPage() {
       // No clipboard (an insecure page or a denied permission): the text stays selectable.
     }
   };
-  const download = () => {
+  const save = (blob: Blob, name: string) => {
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([`${current.content}\n`], { type: "text/plain" }));
-    a.download = current.name;
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
+  const download = () => save(new Blob([`${current.content}\n`], { type: "text/plain" }), current.name);
+  // Every file at once, in an openasy folder, with the same trailing newline as one by one.
+  const downloadAll = () => save(new Blob([zip(out.files.map((f) => ({ name: f.name, content: `${f.content}\n` })), "openasy")], { type: "application/zip" }), "openasy.zip");
 
   return (
     <Section className="py-10" labelledBy="title">
@@ -361,6 +365,12 @@ export default function InstallPage() {
             </ul>
           </div>
 
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="m-0 flex-[1_1_18rem] text-sm text-fg-muted">{out.files.length} files, ready to use together.</p>
+            <Button variant="primary" icon={<FolderDown />} onClick={downloadAll} disabled={!picked.length || secrets.kek === PENDING}>
+              Download all as openasy.zip
+            </Button>
+          </div>
           <div className="overflow-hidden rounded-xl border border-line bg-surface">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 pt-1">
               <Tabs label="Files" value={file === "steps" ? "steps" : current.name} onChange={setFile} items={[...out.files.map((f) => ({ value: f.name, label: f.name })), { value: "steps", label: "Steps" }]} />
@@ -369,7 +379,7 @@ export default function InstallPage() {
                   <Button icon={copied ? <Check /> : <Copy />} onClick={copy}>
                     {copied ? "Copied" : "Copy"}
                   </Button>
-                  <Button variant="primary" icon={<Download />} onClick={download}>
+                  <Button icon={<Download />} onClick={download}>
                     Download {current.name}
                   </Button>
                 </div>
