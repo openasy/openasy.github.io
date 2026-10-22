@@ -273,6 +273,62 @@ sshd -t && systemctl reload ssh`,
       { name: "SQLite", url: "https://sqlite.org/", role: "repositories, scans, findings and decisions" },
     ],
   },
+  malware: {
+    status: "In progress",
+    features: [
+      { title: "Send ClamAV or YARA scan reports and get back whether the check passes", done: true },
+      { title: "A source's report replaces its engine's earlier view: gone is cleaned, returning reopens", done: true },
+      { title: "Only path, signature, hash and size are kept, never file contents", done: true },
+      { title: "Quarantined, false positive and allowed, each recorded with who and when", done: true },
+      { title: "malware-agent: scan hosts, buckets and uploads, and quarantine", done: false },
+    ],
+    upstream: [
+      { name: "ClamAV", url: "https://www.clamav.net/", role: "signature scanning" },
+      { name: "YARA", url: "https://virustotal.github.io/yara/", role: "rule based detection" },
+      { name: "SQLite", url: "https://sqlite.org/", role: "sources, detections and decisions" },
+    ],
+  },
+  siem: {
+    status: "In progress",
+    features: [
+      { title: "Events in as JSON, kept with a retention period", done: true },
+      { title: "Sigma rules with selections, modifiers and conditions, and a clear refusal for what is not supported", done: true },
+      { title: "One signal per rule and host in a window, with count and sample events", done: true },
+      { title: "Test a rule against recent events before enabling it", done: true },
+      { title: "Collection by an agent and correlation across rules", done: false },
+    ],
+    upstream: [
+      { name: "Sigma", url: "https://sigmahq.io/", role: "detection rule format" },
+      { name: "SQLite", url: "https://sqlite.org/", role: "events, rules and signals" },
+    ],
+  },
+  incidents: {
+    status: "In progress",
+    features: [
+      { title: "Open an incident with severity, commander and the products involved", done: true },
+      { title: "An append-only timeline: status and severity changes write themselves", done: true },
+      { title: "Tasks, evidence links and a postmortem once resolved", done: true },
+      { title: "Other products open an incident over the API; the same reference never opens two", done: true },
+      { title: "Open incidents from SIEM, Alerts and Uptime, and notifications", done: false },
+    ],
+    upstream: [
+      { name: "SQLite", url: "https://sqlite.org/", role: "incidents, timeline and tasks" },
+    ],
+  },
+  errors: {
+    status: "In progress",
+    features: [
+      { title: "Events from applications with a project key", done: true },
+      { title: "Issues grouped by exception and the top application frames, not by line numbers", done: true },
+      { title: "Users affected, releases and the latest events with stack traces", done: true },
+      { title: "A fix that did not hold reopens the issue as a regression", done: true },
+      { title: "Per-project rate limit and scrubbing of passwords and tokens", done: true },
+      { title: "SDKs and source maps", done: false },
+    ],
+    upstream: [
+      { name: "SQLite", url: "https://sqlite.org/", role: "projects, issues and events" },
+    ],
+  },
   dast: {
     status: "In progress",
     features: [

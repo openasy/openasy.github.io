@@ -51,5 +51,9 @@ Each record has two statuses:
 | 0036 | [SAST: Opengrep scans every pull request, and only what is new blocks it](./0036-sast.md) | Architecture | Proposed · High | In progress |
 | 0037 | [DAST: scanners run in an agent, and only on targets you have proven are yours](./0037-dast.md) | Architecture | Proposed · High | In progress |
 | 0038 | [Secrets: a finding is where a secret was, and the secret itself is never kept](./0038-secrets.md) | Architecture | Proposed · High | In progress |
+| 0039 | [Malware: scans report where a file was, and the file itself is never kept](./0039-malware.md) | Architecture | Proposed · High | In progress |
+| 0040 | [SIEM: Sigma rules over events, and a signal is one rule on one host](./0040-siem.md) | Architecture | Proposed · High | In progress |
+| 0041 | [Incidents: one place to run an incident, with a timeline nobody can rewrite](./0041-incidents.md) | Architecture | Proposed · High | In progress |
+| 0042 | [Errors: events become issues by where they happen, and a fix that did not hold is a regression](./0042-errors.md) | Architecture | Proposed · High | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.
