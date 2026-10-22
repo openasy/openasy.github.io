@@ -68,6 +68,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0040": { title: "Sigma rules, one signal per host", text: "SIEM runs Sigma rules over every event and groups matches into one signal per rule and host, so an analyst sees a story and not a thousand lines." },
   "0041": { title: "A timeline nobody can rewrite", text: "Incidents keeps an append-only timeline, tasks, evidence links and a postmortem, and other products can open an incident over the API without duplicating it." },
   "0042": { title: "Errors grouped by where they happen", text: "Errors groups events by the place they come from, counts who is affected, and reopens an issue as a regression when a fix did not hold." },
+  "0043": { title: "A judge, not a signer", text: "Supply Chain keeps the SBOM, the signature result and the provenance your CI reports, and answers allowed or not for an image against your policy. It says plainly that it records what CI says and does not verify signatures itself." },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });

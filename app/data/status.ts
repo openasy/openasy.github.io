@@ -329,6 +329,24 @@ sshd -t && systemctl reload ssh`,
       { name: "SQLite", url: "https://sqlite.org/", role: "projects, issues and events" },
     ],
   },
+  "supply-chain": {
+    status: "In progress",
+    features: [
+      { title: "Keep the SBOM, signature result and provenance that CI reports for each image", done: true },
+      { title: "A policy: signed by a known identity, SBOM present, minimum SLSA level, licence allow and deny lists", done: true },
+      { title: "Ask whether an image is allowed, for admission and CI; unknown images are denied", done: true },
+      { title: "Exceptions with a reason and an end date", done: true },
+      { title: "Which images contain a package, and a licence summary per image", done: true },
+      { title: "Verify signatures and provenance itself, and an admission webhook", done: false },
+    ],
+    upstream: [
+      { name: "Sigstore cosign", url: "https://github.com/sigstore/cosign", role: "signatures, verified by your CI" },
+      { name: "SLSA", url: "https://slsa.dev/", role: "provenance levels" },
+      { name: "CycloneDX and SPDX", url: "https://cyclonedx.org/", role: "SBOM formats" },
+      { name: "SQLite", url: "https://sqlite.org/", role: "images, evidence and policy" },
+    ],
+    note: "Supply Chain records what your CI reports and judges it against your policy. It does not verify signatures or provenance itself yet.",
+  },
   dast: {
     status: "In progress",
     features: [

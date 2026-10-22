@@ -55,5 +55,6 @@ Each record has two statuses:
 | 0040 | [SIEM: Sigma rules over events, and a signal is one rule on one host](./0040-siem.md) | Architecture | Proposed · High | In progress |
 | 0041 | [Incidents: one place to run an incident, with a timeline nobody can rewrite](./0041-incidents.md) | Architecture | Proposed · High | In progress |
 | 0042 | [Errors: events become issues by where they happen, and a fix that did not hold is a regression](./0042-errors.md) | Architecture | Proposed · High | In progress |
+| 0043 | [Supply Chain: a store and a judge, and what it takes on trust](./0043-supply-chain.md) | Architecture | Proposed · High | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.
