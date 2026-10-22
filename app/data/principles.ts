@@ -63,6 +63,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0035": { title: "Logs without a shipper", text: "Logs keeps them in VictoriaLogs inside its one container. Send them over Syslog, OpenTelemetry or what Vector and Fluent Bit speak, or let one agent read journald over SSH." },
   "0036": { title: "Static analysis on every pull request", text: "SAST runs Opengrep in a separate agent, so hostile code never reaches the product. A pull request is blocked only by what it adds." },
   "0037": { title: "Scans only what is yours", text: "DAST runs ZAP and Nuclei in an agent inside your network, and attacks a target only after you prove you own it. Full scans never run on production by default." },
+  "0038": { title: "Leaks without a second leak", text: "Secrets keeps where a secret was found and never the secret: snippets are dropped, the fingerprint is salted, and rotating the key is a decision of its own." },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });

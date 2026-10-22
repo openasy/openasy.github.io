@@ -256,6 +256,23 @@ sshd -t && systemctl reload ssh`,
       { name: "SQLite", url: "https://sqlite.org/", role: "repositories, scans, findings and decisions" },
     ],
   },
+  secrets: {
+    status: "In progress",
+    features: [
+      { title: "Send gitleaks or TruffleHog reports from CI and get back whether the check passes", done: true },
+      { title: "The secret is never stored: snippets are dropped and fingerprints are salted", done: true },
+      { title: "A pull request fails for a secret it adds, not for moved ones", done: true },
+      { title: "Revoked, false positive and accepted risk, each with a reason", done: true },
+      { title: "A policy per repository: which severity fails a check", done: true },
+      { title: "secrets-agent: scan repositories, images and CI logs", done: false },
+      { title: "Link a finding to the product that issued the key", done: false },
+    ],
+    upstream: [
+      { name: "gitleaks", url: "https://github.com/gitleaks/gitleaks", role: "detection in repositories" },
+      { name: "TruffleHog", url: "https://github.com/trufflesecurity/trufflehog", role: "detection with verification" },
+      { name: "SQLite", url: "https://sqlite.org/", role: "repositories, scans, findings and decisions" },
+    ],
+  },
   dast: {
     status: "In progress",
     features: [

@@ -50,5 +50,6 @@ Each record has two statuses:
 | 0035 | [Logs: VictoriaLogs inside, logs sent to it or read over SSH](./0035-logs.md) | Architecture | Accepted | Not started |
 | 0036 | [SAST: Opengrep scans every pull request, and only what is new blocks it](./0036-sast.md) | Architecture | Proposed · High | In progress |
 | 0037 | [DAST: scanners run in an agent, and only on targets you have proven are yours](./0037-dast.md) | Architecture | Proposed · High | In progress |
+| 0038 | [Secrets: a finding is where a secret was, and the secret itself is never kept](./0038-secrets.md) | Architecture | Proposed · High | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.
