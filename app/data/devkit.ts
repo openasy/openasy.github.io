@@ -56,7 +56,8 @@ export function buildDevKit(secrets: Secrets): Install {
   const tag = (id: Installable) => statusFor(id).version!;
   const svc = (id: Installable) => PARTS[id].service;
   const env = (k: string, v: string) => `      ${k}: ${v}`;
-  const hosts = ["      - ./config/hosts.yaml:/config/hosts.yaml:ro"];
+  // A folder, not the file: an editor that saves by replacing the file would leave the product with the old one.
+  const hosts = ["      - ./config/inventory:/config/inventory:ro"];
 
   /** A product's service: its image, data, Caddy's CA to trust, its key, the brand and, but for Identity, the sign-in. */
   const product = (id: Installable, extra: { volumes?: string[]; env?: string[]; hardened?: boolean } = {}) => {
@@ -71,7 +72,7 @@ export function buildDevKit(secrets: Secrets): Install {
       "    volumes:",
       `      - ${svc(id)}-data:/data`,
       "      - caddy-data:/caddy:ro",
-      "      - ./config/brand:/config/brand:ro   # the logo brand.env names",
+      "      - ./config/brand:/config/brand:ro   # the logo and tab icon brand.env names",
       ...(extra.volumes ?? []),
       "    secrets: [openasy-kek]",
       // Its own client, issuer, ID and secret, in a file setup writes once it has made the clients; until then the
@@ -160,7 +161,7 @@ export function buildDevKit(secrets: Secrets): Install {
     env("OPENVPN_PORT", '"1194"'),
     "    depends_on: [vpn]",
     "",
-    ...product("infrastructure", { volumes: hosts, env: [env("OPENASY_HOSTS", "/config/hosts.yaml")] }),
+    ...product("infrastructure", { volumes: hosts, env: [env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")] }),
     ...agent("infra-agent", `ghcr.io/openasy/infra-agent:${tag("infrastructure")}`, "openasy-agent-kek", [
       "    volumes:",
       "      - infra-agent-data:/data",
@@ -171,7 +172,10 @@ export function buildDevKit(secrets: Secrets): Install {
       env("INFRA_ENROLL_TOKEN", "${INFRA_ENROLL_TOKEN:-}"),
       "    depends_on: [infra]",
     ]),
-    ...product("vulnerabilities", { volumes: hosts, env: [env("VULNS_INGEST_TOKEN", "${VULNS_INGEST_TOKEN}"), env("OPENASY_HOSTS", "/config/hosts.yaml")] }),
+    ...product("vulnerabilities", {
+      volumes: hosts,
+      env: [env("VULNS_INGEST_TOKEN", "${VULNS_INGEST_TOKEN}"), env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")],
+    }),
     ...agent("vulns-agent", `ghcr.io/openasy/vulns-agent:${tag("vulnerabilities")}`, "", [
       "    hostname: docker-vm   # the Linux machine Docker runs in",
       "    volumes:",
@@ -188,7 +192,10 @@ export function buildDevKit(secrets: Secrets): Install {
         const { prefix, ingest, hosts: reads } = PARTS[id];
         return product(id, {
           volumes: reads ? hosts : [],
-          env: [...(ingest ? [env(`${prefix}INGEST_TOKEN`, `\${${prefix}INGEST_TOKEN}`)] : []), ...(reads ? [env("OPENASY_HOSTS", "/config/hosts.yaml")] : [])],
+          env: [
+            ...(ingest ? [env(`${prefix}INGEST_TOKEN`, `\${${prefix}INGEST_TOKEN}`)] : []),
+            ...(reads ? [env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")] : []),
+          ],
         });
       }),
     ...agent("logs-agent", `ghcr.io/openasy/logs-agent:${tag("logs")}`, "openasy-logs-agent-kek", [
@@ -265,22 +272,27 @@ export function buildDevKit(secrets: Secrets): Install {
 
   const hostsFile = [
     "# The servers Infrastructure and Logs read over SSH, and that Vulnerabilities, Posture and Malware check for scans",
-    "# (ADR 0052). A change is picked up within a minute. setup accepts their host keys once it has compared them with",
-    "# what the servers print.",
+    "# (ADR 0052). A change is picked up within a minute. hostKey: first trusts the key each one presents the first time.",
     "hosts:",
     "  - name: web",
     "    address: host-web",
     "    containers: true",
+    "    hostKey: first",
     "    tags: { env: dev }",
     "  - name: db",
     "    address: host-db",
+    "    hostKey: first",
     "    tags: { env: dev }",
     "# A server of yours with a fixed key: put the private key in secrets/ssh, which both agents mount, and its",
-    "# public key, prefixed with restrict, in ~openasy/.ssh/authorized_keys there.",
+    "# public key, prefixed with restrict,pty, in ~/.ssh/authorized_keys of the user there.",
     "#  - name: web-2",
     "#    address: web-2.example.com",
-    "#    auth: key",
-    "#    keyFile: web-2.key",
+    "#    port: 22                # 22 when left out",
+    "#    user: openasy           # the account on the server; openasy when left out",
+    "#    auth: key               # certificate when left out: the agent's own CA, as Setup in Infrastructure shows",
+    "#    keyFile: web-2.key      # a file in secrets/ssh, with no passphrase",
+    "#    hostKey: first          # first: trust the first key; SHA256:... from ssh-keygen -lf: trust only that one;",
+    "#                            # left out: an admin accepts it under Hosts",
   ].join("\n");
 
   const brand = [
@@ -291,9 +303,11 @@ export function buildDevKit(secrets: Secrets): Install {
     "OPENASY_ORGANIZATION='OpenAsy dev'",
     "# Buttons and links in your color.",
     "# OPENASY_ACCENT=#0a66c2",
-    "# Your logo with no text in it: SVG, PNG or WebP, up to 512 KB. Put it in config/brand, which every product mounts;",
-    "# an address is not read.",
+    "# Your logo, in its own shape: SVG, PNG or WebP, up to 512 KB, shown at a fixed height in place of the OpenAsy mark.",
+    "# Files go in config/brand, which every product mounts; an address is not read.",
     "# OPENASY_LOGO=/config/brand/logo.svg",
+    "# The browser tab's icon: a square SVG, PNG or ICO, up to 128 KB.",
+    "# OPENASY_FAVICON=/config/brand/favicon.png",
   ].join("\n");
 
   // What setup.ts needs to know of each product: where it is, the file for its client, its Identity template.
@@ -355,7 +369,7 @@ export function buildDevKit(secrets: Secrets): Install {
     "| Prometheus | http://localhost:9090/targets |",
     "",
     "What is set up: Identity signs everyone in, with groups that decide the role in each product. VPN has a server on",
-    "UDP 1194. Infrastructure's and Logs' agents read the two servers in config/hosts.yaml over SSH; Vulnerabilities,",
+    "UDP 1194. Infrastructure's and Logs' agents read the two servers in config/inventory/hosts.yaml over SSH; Vulnerabilities,",
     "Posture and Malware show which of them send no scan. Products that take data from CI have their ingest token in",
     ".env, and each product's client is in secrets/oidc. config/brand.env holds the brand and config/auth.env the",
     `sign-in: change them and run ${APPLY}.`,
@@ -383,7 +397,7 @@ export function buildDevKit(secrets: Secrets): Install {
         APPLY,
       ),
     },
-    { name: "config/hosts.yaml", content: hostsFile },
+    { name: "config/inventory/hosts.yaml", content: hostsFile },
     { name: "config/Caddyfile", content: caddyfile },
     {
       name: "config/prometheus.yml",
@@ -411,7 +425,7 @@ export function buildDevKit(secrets: Secrets): Install {
       text: "events, findings, scans, runs and spend from setup/seed.ts, sent through each product's API as a CI job would.",
     },
     {
-      title: "Two servers in config/hosts.yaml",
+      title: "Two servers in config/inventory/hosts.yaml",
       text: "read over SSH by Infrastructure and Logs; Vulnerabilities, Posture and Malware show they send no scan.",
     },
     { title: "Caddy serves HTTPS", text: `on *.localhost:${PORT}, with a local CA you trust once.` },

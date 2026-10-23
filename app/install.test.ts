@@ -97,35 +97,44 @@ describe("install builder", () => {
     const out = build({ products: ["infrastructure", "vulnerabilities"], signIn: "own" });
     const compose = file(out, "compose.yaml");
     for (const name of ["infra", "vulns"]) {
-      expect(service(compose, name)).toContain("- ./config/hosts.yaml:/config/hosts.yaml:ro");
-      expect(service(compose, name)).toContain("OPENASY_HOSTS: /config/hosts.yaml");
+      // The folder, so a file saved by replacing it still reaches the product.
+      expect(service(compose, name)).toContain("- ./config/inventory:/config/inventory:ro");
+      expect(service(compose, name)).toContain("OPENASY_HOSTS: /config/inventory/hosts.yaml");
     }
     expect(service(compose, "infra-agent")).not.toContain("hosts.yaml");
-    expect(file(out, "config/hosts.yaml")).toMatch(/^# Your servers, read by Infrastructure and Vulnerabilities[\s\S]*\nhosts: \[\]$/);
+    expect(file(out, "config/inventory/hosts.yaml")).toMatch(/^# Your servers, read by Infrastructure and Vulnerabilities[\s\S]*\nhosts: \[\]$/);
     expect(out.wiring.map((w) => w.title)).toContain("One list of servers");
     const off = build({ products: ["infrastructure", "vulnerabilities"], signIn: "own", hostsFile: false });
     expect(file(off, "compose.yaml")).not.toContain("hosts.yaml");
-    expect(off.files.map((f) => f.name)).not.toContain("config/hosts.yaml");
-    expect(build().files.map((f) => f.name)).not.toContain("config/hosts.yaml");
+    expect(off.files.map((f) => f.name)).not.toContain("config/inventory/hosts.yaml");
+    expect(build().files.map((f) => f.name)).not.toContain("config/inventory/hosts.yaml");
   });
 
-  it("every product loads one brand from config/brand.env, and mounts the logo when there is one", () => {
+  it("every product loads one brand from config/brand.env, and mounts the logo and tab icon when there are any", () => {
     const plain = build();
     expect(service(file(plain, "compose.yaml"), "vpn")).toContain("config/brand.env");
     expect(service(file(plain, "compose.yaml"), "vpn-server")).not.toContain("brand.env");
     // Nothing set: every line is there to fill in later, commented out.
     expect(file(plain, "config/brand.env")).toMatch(/^# OPENASY_ORGANIZATION='Acme Corp'$/m);
-    expect(file(plain, "config/brand.env")).toMatch(/^# OPENASY_LOGO=\/config\/logo\.svg$/m);
-    expect(file(plain, "compose.yaml")).not.toContain("/config/logo");
+    expect(file(plain, "config/brand.env")).toMatch(/^# OPENASY_LOGO=\/config\/brand\/logo\.svg$/m);
+    expect(file(plain, "config/brand.env")).toMatch(/^# OPENASY_FAVICON=\/config\/brand\/favicon\.png$/m);
+    expect(file(plain, "compose.yaml")).not.toContain("/config/brand");
 
-    const out = build({ products: [...INSTALLABLE], signIn: "own", organization: " Acme's\nCorp ", accent: "#0A66C2", logo: "logo.png" });
+    const out = build({
+      products: [...INSTALLABLE],
+      signIn: "own",
+      organization: " Acme's\nCorp ",
+      accent: "#0A66C2",
+      logo: "logo.png",
+      favicon: "favicon.ico",
+    });
     const env = file(out, "config/brand.env");
     expect(env).toContain("OPENASY_ORGANIZATION='AcmesCorp'");
     expect(env).toMatch(/^OPENASY_ACCENT=#0a66c2$/m);
-    expect(env).toMatch(/^OPENASY_LOGO=\/config\/logo\.png$/m);
-    for (const name of ["identity", "vpn", "infra", "vulns"])
-      expect(service(file(out, "compose.yaml"), name)).toContain("- ./config/logo.png:/config/logo.png:ro");
-    expect(out.files.find((f) => f.name === "config/logo.png")).toMatchObject({ binary: true });
+    expect(env).toMatch(/^OPENASY_LOGO=\/config\/brand\/logo\.png$/m);
+    expect(env).toMatch(/^OPENASY_FAVICON=\/config\/brand\/favicon\.ico$/m);
+    for (const name of ["identity", "vpn", "infra", "vulns"]) expect(service(file(out, "compose.yaml"), name)).toContain("- ./config/brand:/config/brand:ro");
+    for (const name of ["config/brand/logo.png", "config/brand/favicon.ico"]) expect(out.files.find((f) => f.name === name)).toMatchObject({ binary: true });
     expect(out.files.filter((f) => f.secret).map((f) => f.name)).toEqual([
       ".env",
       "secrets/openasy-kek",
@@ -275,7 +284,7 @@ describe("install builder", () => {
     // The products are in the wired profile: a change to brand.env or auth.env is applied with it.
     for (const name of ["config/auth.env", "config/brand.env"]) expect(file(out, name)).toContain("# After a change: docker compose --profile wired up -d");
     expect(file(out, "config/auth.env")).toMatch(/^OPENASY_OIDC_AUTO_REDIRECT=true$/m);
-    for (const name of ["infra", "vulns"]) expect(service(compose, name)).toContain("OPENASY_HOSTS: /config/hosts.yaml");
+    for (const name of ["infra", "vulns"]) expect(service(compose, name)).toContain("OPENASY_HOSTS: /config/inventory/hosts.yaml");
     // Every $ meant for the shell in the demo servers is escaped from compose.
     expect(compose).not.toMatch(/[^$]\$(OPENASY_|\()/);
     expect(file(out, "setup/setup.ts")).toBe(SETUP.trimEnd());
@@ -285,7 +294,7 @@ describe("install builder", () => {
     expect(SETUP).toContain("/api/v1/auth/oidc/sso/callback");
     expect(SETUP).not.toMatch(/auth\/oidc\/(?!sso\/)[a-z-]+\/callback/);
     expect(file(out, ".env")).toContain(`VULNS_INGEST_TOKEN=${secrets.ingest}`);
-    expect(file(out, "config/hosts.yaml")).toContain("address: host-web");
+    expect(file(out, "config/inventory/hosts.yaml")).toContain("address: host-web");
     expect(out.files.filter((f) => f.secret).map((f) => f.name)).toEqual([
       ".env",
       "secrets/openasy-kek",
@@ -303,6 +312,7 @@ describe("install builder", () => {
     for (const name of ["infra-agent", "logs-agent"]) expect(service(compose, name)).toContain("- ./secrets/ssh:/keys:ro");
     for (const id of INSTALLABLE) expect(service(compose, PARTS[id].service)).toContain("- ./config/brand:/config/brand:ro");
     expect(file(out, "config/brand.env")).toContain("# OPENASY_LOGO=/config/brand/logo.svg");
+    expect(file(out, "config/brand.env")).toContain("# OPENASY_FAVICON=/config/brand/favicon.png");
     // The servers trust both agents' CAs, and Logs gets its agent.
     expect(service(compose, "host-db")).toContain("OPENASY_CA_LOGS: ${LOGS_AGENT_CA:-}");
     expect(service(compose, "logs-agent")).toContain("source: openasy-logs-agent-kek");

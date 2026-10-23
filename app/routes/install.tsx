@@ -22,6 +22,8 @@ import { PageTitle, Section } from "../components/site";
 import {
   DEFAULT_CHOICE,
   INSTALLABLE,
+  FAVICON_MAX_BYTES,
+  FAVICON_TYPES,
   LOGO_MAX_BYTES,
   PARTS,
   LOGO_TYPES,
@@ -106,7 +108,10 @@ const PROXIES: Array<{ value: Proxy; title: string; text: string }> = [
 
 const installable = (id: string): id is Installable => (INSTALLABLE as readonly string[]).includes(id);
 
-type Logo = { name: string; type: string; bytes: Uint8Array<ArrayBuffer>; url: string };
+/** A picture picked for the brand: its file name in config/brand, and its bytes, which stay in the page. */
+type Picture = { name: string; type: string; bytes: Uint8Array<ArrayBuffer>; url: string };
+/** The pictures picked, by their path in the folder. */
+type Pictures = Record<string, Picture>;
 
 function save(blob: Blob, name: string) {
   const a = document.createElement("a");
@@ -116,14 +121,15 @@ function save(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-/** A file as the person saves it: text with a trailing newline, the logo as its bytes. */
-const bytesOf = (f: InstallFile, logo?: Logo | null) => (f.binary && logo ? logo.bytes : new TextEncoder().encode(`${f.content}\n`));
-const downloadZip = (out: Install, folder: string, logo?: Logo | null) =>
+/** A file as the person saves it: text with a trailing newline, a picture as its bytes. */
+const bytesOf = (f: InstallFile, pictures: Pictures = {}) =>
+  f.binary && pictures[f.name] ? pictures[f.name]!.bytes : new TextEncoder().encode(`${f.content}\n`);
+const downloadZip = (out: Install, folder: string, pictures?: Pictures) =>
   save(
     new Blob(
       [
         zip(
-          out.files.map((f) => ({ name: f.name, content: bytesOf(f, logo) })),
+          out.files.map((f) => ({ name: f.name, content: bytesOf(f, pictures) })),
           folder,
         ),
       ],
@@ -249,9 +255,10 @@ function tree(files: InstallFile[]) {
 }
 
 /** Every file in the folder, to read, copy or download one by one. */
-function Files({ out, folder, logo }: { out: Install; folder: string; logo?: Logo | null }) {
+function Files({ out, folder, pictures = {} }: { out: Install; folder: string; pictures?: Pictures }) {
   const [file, setFile] = useState("compose.yaml");
   const current = out.files.find((f) => f.name === file) ?? out.files[0]!;
+  const picture = current.binary ? pictures[current.name] : undefined;
   const { folders, top } = tree(out.files);
   const item = (f: InstallFile, nested: boolean) => (
     <li key={f.name}>
@@ -308,10 +315,7 @@ function Files({ out, folder, logo }: { out: Install; folder: string; logo?: Log
               <Button
                 icon={<Download />}
                 onClick={() =>
-                  save(
-                    new Blob([bytesOf(current, logo)], { type: current.binary ? logo!.type : "text/plain" }),
-                    current.name.slice(current.name.lastIndexOf("/") + 1),
-                  )
+                  save(new Blob([bytesOf(current, pictures)], { type: picture?.type ?? "text/plain" }), current.name.slice(current.name.lastIndexOf("/") + 1))
                 }
                 aria-label={`Download ${current.name}`}
               >
@@ -319,9 +323,9 @@ function Files({ out, folder, logo }: { out: Install; folder: string; logo?: Log
               </Button>
             </div>
           </div>
-          {current.binary && logo ? (
+          {picture ? (
             <div className="grid min-h-48 place-items-center p-6">
-              <img src={logo.url} alt={current.name} className="max-h-32 max-w-full object-contain" />
+              <img src={picture.url} alt={current.name} className="max-h-32 max-w-full object-contain" />
             </div>
           ) : (
             <Code name={current.name} content={current.content} />
@@ -530,13 +534,86 @@ function TryLocally({ out, ready }: { out: Install; ready: boolean }) {
   );
 }
 
+/** Picks one picture for the brand; it stays in this browser until it goes into the zip. */
+function PicturePicker({
+  label,
+  base,
+  types,
+  max,
+  kinds,
+  hint,
+  value,
+  onChange,
+}: {
+  label: string;
+  base: string;
+  types: Record<string, string>;
+  max: number;
+  kinds: string;
+  hint: string;
+  value: Picture | null;
+  onChange: (p: Picture | null) => void;
+}) {
+  const [error, setError] = useState("");
+  const pick = async (f: File | undefined) => {
+    setError("");
+    if (!f) return;
+    const ext = types[f.type];
+    if (!ext) return setError(`Pick ${kinds}.`);
+    if (f.size > max) return setError(`Pick a file of ${max / 1024} KB or less.`);
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    if (value) URL.revokeObjectURL(value.url);
+    onChange({ name: `${base}.${ext}`, type: f.type, bytes, url: URL.createObjectURL(new Blob([bytes], { type: f.type })) });
+  };
+  const remove = () => {
+    if (value) URL.revokeObjectURL(value.url);
+    onChange(null);
+  };
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-medium">{label}</span>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="grid h-12 min-w-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-subtle px-2">
+          {value ? (
+            <img src={value.url} alt={`Your ${label.toLowerCase()}`} className="h-8 w-auto max-w-40 object-contain" />
+          ) : (
+            <span className="text-2xs text-fg-subtle">None</span>
+          )}
+        </span>
+        <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-line bg-surface px-3 text-sm font-medium focus-within:ring-2 focus-within:ring-accent hover:border-line-strong">
+          <Upload aria-hidden className="size-4" />
+          {value ? "Pick another" : "Pick a file"}
+          <input
+            type="file"
+            accept={Object.keys(types).join(",")}
+            aria-label={`${label}: pick a file`}
+            className="sr-only"
+            onChange={(e) => {
+              void pick(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        {value && (
+          <Button icon={<X />} onClick={remove} aria-label={`Remove the ${label.toLowerCase()}`}>
+            Remove
+          </Button>
+        )}
+      </div>
+      <span className={cn("text-xs", error ? "text-danger" : "text-fg-muted")} role={error ? "alert" : undefined}>
+        {error || `${hint} It stays in this browser until it goes into the zip.`}
+      </span>
+    </div>
+  );
+}
+
 export default function InstallPage() {
   const [mode, setMode] = useState<Mode>("dev");
   const [choice, setChoice] = useState<InstallChoice>(DEFAULT_CHOICE);
   const [secrets, setSecrets] = useState<Secrets>(PLACEHOLDER);
-  // The logo stays in this page: it goes into the zip and nowhere else.
-  const [logo, setLogo] = useState<Logo | null>(null);
-  const [logoError, setLogoError] = useState("");
+  // The pictures stay in this page: they go into the zip and nowhere else.
+  const [logo, setLogo] = useState<Picture | null>(null);
+  const [favicon, setFavicon] = useState<Picture | null>(null);
   const set = (patch: Partial<InstallChoice>) => setChoice((c) => ({ ...c, ...patch }));
   const fresh = () => setSecrets(makeSecrets((b) => crypto.getRandomValues(b)));
 
@@ -561,23 +638,10 @@ export default function InstallPage() {
     // Without Identity, nobody can sign in through it.
     set({ products, ...(id === "identity" && !on && choice.signIn === "identity" ? { signIn: "own" as SignIn } : {}) });
   };
-  const pickLogo = async (f: File | undefined) => {
-    setLogoError("");
-    if (!f) return;
-    const ext = LOGO_TYPES[f.type as keyof typeof LOGO_TYPES];
-    if (!ext) return setLogoError("Pick an SVG, PNG or WebP file.");
-    if (f.size > LOGO_MAX_BYTES) return setLogoError("Pick a file of 512 KB or less.");
-    const bytes = new Uint8Array(await f.arrayBuffer());
-    if (logo) URL.revokeObjectURL(logo.url);
-    setLogo({ name: `logo.${ext}`, type: f.type, bytes, url: URL.createObjectURL(new Blob([bytes], { type: f.type })) });
-    set({ logo: `logo.${ext}` });
-  };
-  const removeLogo = () => {
-    if (logo) URL.revokeObjectURL(logo.url);
-    setLogo(null);
-    set({ logo: null });
-  };
-  const brandSummary = [cleanOrganization(choice.organization), choice.logo && "logo", cleanAccent(choice.accent) && "color"].filter(Boolean).join(", ");
+  const brandSummary = [cleanOrganization(choice.organization), choice.logo && "logo", choice.favicon && "tab icon", cleanAccent(choice.accent) && "color"]
+    .filter(Boolean)
+    .join(", ");
+  const pictures: Pictures = Object.fromEntries([logo, favicon].filter((p) => p !== null).map((p) => [`config/brand/${p.name}`, p]));
 
   return (
     <Section className="py-12" labelledBy="title">
@@ -718,40 +782,32 @@ export default function InstallPage() {
                       maxLength={64}
                       autoComplete="organization"
                     />
-                    <div className="flex flex-col gap-2">
-                      <span className="text-sm font-medium">Logo</span>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-subtle">
-                          {logo ? (
-                            <img src={logo.url} alt="Your logo" className="size-8 object-contain" />
-                          ) : (
-                            <span className="text-2xs text-fg-subtle">None</span>
-                          )}
-                        </span>
-                        <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-line bg-surface px-3 text-sm font-medium focus-within:ring-2 focus-within:ring-accent hover:border-line-strong">
-                          <Upload aria-hidden className="size-4" />
-                          {logo ? "Pick another" : "Pick a file"}
-                          <input
-                            type="file"
-                            accept={Object.keys(LOGO_TYPES).join(",")}
-                            className="sr-only"
-                            onChange={(e) => {
-                              void pickLogo(e.target.files?.[0]);
-                              e.target.value = "";
-                            }}
-                          />
-                        </label>
-                        {logo && (
-                          <Button icon={<X />} onClick={removeLogo}>
-                            Remove
-                          </Button>
-                        )}
-                      </div>
-                      <span className={cn("text-xs", logoError ? "text-danger" : "text-fg-muted")} role={logoError ? "alert" : undefined}>
-                        {logoError ||
-                          "One square picture with no text in it: SVG, PNG or WebP, up to 512 KB. It replaces the OpenAsy mark and the tab icon, and stays in this browser until it goes into the zip."}
-                      </span>
-                    </div>
+                    <PicturePicker
+                      label="Logo"
+                      base="logo"
+                      types={LOGO_TYPES}
+                      max={LOGO_MAX_BYTES}
+                      kinds="an SVG, PNG or WebP file"
+                      hint="In its own shape: SVG, PNG or WebP, up to 512 KB. Shown at a fixed height in place of the OpenAsy mark."
+                      value={logo}
+                      onChange={(p) => {
+                        setLogo(p);
+                        set({ logo: p?.name ?? null });
+                      }}
+                    />
+                    <PicturePicker
+                      label="Tab icon"
+                      base="favicon"
+                      types={FAVICON_TYPES}
+                      max={FAVICON_MAX_BYTES}
+                      kinds="an SVG, PNG or ICO file"
+                      hint="The browser tab's icon: a square SVG, PNG or ICO, up to 128 KB. Without one, each product keeps its own."
+                      value={favicon}
+                      onChange={(p) => {
+                        setFavicon(p);
+                        set({ favicon: p?.name ?? null });
+                      }}
+                    />
                     <div className="flex flex-wrap items-end gap-3">
                       <TextField
                         label="Color"
@@ -831,7 +887,12 @@ export default function InstallPage() {
                   <li className="text-fg-muted">Pick a product to begin.</li>
                 )}
               </ul>
-              <Button variant="primary" icon={<FolderDown />} onClick={() => downloadZip(out, "openasy", logo)} disabled={!choice.products.length || !ready}>
+              <Button
+                variant="primary"
+                icon={<FolderDown />}
+                onClick={() => downloadZip(out, "openasy", pictures)}
+                disabled={!choice.products.length || !ready}
+              >
                 Download openasy.zip
               </Button>
               <button type="button" onClick={fresh} className="inline-flex items-center gap-1.5 self-start text-xs text-fg-muted hover:text-fg">
@@ -854,7 +915,7 @@ export default function InstallPage() {
               </h2>
               <span className="text-sm text-fg-subtle">Read, copy or download any file</span>
             </div>
-            <Files out={out} folder="openasy" logo={logo} />
+            <Files out={out} folder="openasy" pictures={pictures} />
           </section>
         </>
       )}

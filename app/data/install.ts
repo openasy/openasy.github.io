@@ -58,8 +58,10 @@ export interface InstallChoice {
   organization: string;
   /** #rrggbb for buttons and links; empty keeps OpenAsy's blue. */
   accent: string;
-  /** The logo's file name in the folder, such as logo.svg, once one is picked; its bytes stay in the page. */
+  /** The logo's file name in config/brand, such as logo.svg, once one is picked; its bytes stay in the page. */
   logo: string | null;
+  /** The tab icon's file name in config/brand, such as favicon.png, the same way. */
+  favicon: string | null;
 }
 
 export const DEFAULT_CHOICE: InstallChoice = {
@@ -76,6 +78,7 @@ export const DEFAULT_CHOICE: InstallChoice = {
   organization: "",
   accent: "",
   logo: null,
+  favicon: null,
 };
 
 /** Made in the reader's browser; the names are the .env variables or files they end up in. */
@@ -237,6 +240,8 @@ export const cleanDomain = (d: string) =>
 /** Logos the products show: one picture, no text in it (ADR 0053). */
 export const LOGO_TYPES = { "image/svg+xml": "svg", "image/png": "png", "image/webp": "webp" } as const;
 export const LOGO_MAX_BYTES = 512 * 1024;
+export const FAVICON_TYPES = { "image/svg+xml": "svg", "image/png": "png", "image/x-icon": "ico", "image/vnd.microsoft.icon": "ico" } as const;
+export const FAVICON_MAX_BYTES = 128 * 1024;
 
 /** One line of text, as the products show it; quotes would end the value in the env file. */
 export const cleanOrganization = (o: string) =>
@@ -352,13 +357,14 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   // The servers in one file, mounted read-only in each product that reads it (ADR 0052).
   const readers = picked.filter((id) => PARTS[id].hosts);
   const hostsFile = choice.hostsFile && readers.length > 0;
-  const hostsMount = hostsFile ? ["      - ./config/hosts.yaml:/config/hosts.yaml:ro   # your servers, shared with the other products"] : [];
-  const hostsEnv = hostsFile ? [env("OPENASY_HOSTS", "/config/hosts.yaml")] : [];
+  // A folder, not the file: an editor that saves by replacing the file would leave the product with the old one.
+  const hostsMount = hostsFile ? ["      - ./config/inventory:/config/inventory:ro   # your servers, shared with the other products"] : [];
+  const hostsEnv = hostsFile ? [env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")] : [];
   // The brand every product shows (ADR 0053) and how people sign in, each in a file of its own that every product loads.
   const envFiles = (id: Installable) => [
     `    env_file: [config/brand.env${ownAuthFile(id) ? "" : ", config/auth.env"}]   # your brand${ownAuthFile(id) ? "" : " and sign-in"}, the same in every product`,
   ];
-  const logoMount = choice.logo ? [`      - ./config/${choice.logo}:/config/${choice.logo}:ro   # your logo, in every product`] : [];
+  const brandMount = choice.logo || choice.favicon ? ["      - ./config/brand:/config/brand:ro   # your logo and tab icon, in every product"] : [];
   const hardened = ["    read_only: true", "    cap_drop: [ALL]", '    security_opt: ["no-new-privileges:true"]'];
 
   const lines = [`# OpenAsy for ${d}, made at openasy.github.io/install`, "services:"];
@@ -382,7 +388,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           ...ports(i),
           "    volumes:",
           "      - identity-data:/data",
-          ...logoMount,
+          ...brandMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
@@ -400,7 +406,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           ...ports(i),
           "    volumes:",
           "      - vpn-data:/data   # SQLite database, CA and settings",
-          ...logoMount,
+          ...brandMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
@@ -444,7 +450,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    volumes:",
           "      - infra-data:/data   # agents, hosts, clusters, collections and changes",
           ...hostsMount,
-          ...logoMount,
+          ...brandMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
@@ -484,7 +490,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    volumes:",
           "      - vulns-data:/data   # SQLite, SBOMs and the vulnerability data (3 GB)",
           ...hostsMount,
-          ...logoMount,
+          ...brandMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
@@ -524,7 +530,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    volumes:",
           `      - ${service}-data:/data   # SQLite database`,
           ...(hosts ? hostsMount : []),
-          ...logoMount,
+          ...brandMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
@@ -703,9 +709,11 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         line(!!org, "OPENASY_ORGANIZATION", org ? `'${org}'` : "'Acme Corp'"),
         "# Buttons and links in your color.",
         line(!!accent, "OPENASY_ACCENT", accent || "#0a66c2"),
-        "# Your logo with no text in it: SVG, PNG or WebP. It replaces the OpenAsy mark and the tab icon.",
-        "# Put the file in this config folder and mount it in each product, as compose.yaml shows.",
-        line(!!choice.logo, "OPENASY_LOGO", `/config/${choice.logo ?? "logo.svg"}`),
+        "# Your logo, in its own shape: SVG, PNG or WebP, up to 512 KB, shown at a fixed height in place of the OpenAsy mark.",
+        "# Files go in config/brand, which every product mounts, as compose.yaml shows; an address is not read.",
+        line(!!choice.logo, "OPENASY_LOGO", `/config/brand/${choice.logo ?? "logo.svg"}`),
+        "# The browser tab's icon: a square SVG, PNG or ICO, up to 128 KB.",
+        line(!!choice.favicon, "OPENASY_FAVICON", `/config/brand/${choice.favicon ?? "favicon.png"}`),
       ].join("\n"),
     });
     files.push({
@@ -717,14 +725,14 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           : undefined,
       ),
     });
-    if (choice.logo) files.push({ name: `config/${choice.logo}`, content: "", binary: true });
+    for (const picture of [choice.logo, choice.favicon]) if (picture) files.push({ name: `config/brand/${picture}`, content: "", binary: true });
     files.push({ name: "secrets/openasy-kek", content: secrets.kek, secret: true });
   }
   if (has("infrastructure")) files.push({ name: "secrets/openasy-agent-kek", content: secrets.agentKek, secret: true });
   if (has("logs")) files.push({ name: "secrets/openasy-logs-agent-kek", content: secrets.logsAgentKek, secret: true });
   if (hostsFile)
     files.push({
-      name: "config/hosts.yaml",
+      name: "config/inventory/hosts.yaml",
       content: [
         `# Your servers, read by ${readers.map((id) => PARTS[id].name).join(" and ")} (ADR 0052). A change is picked up within a minute.`,
         ...(readers.includes("infrastructure")
@@ -740,7 +748,10 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         "#     address: 10.0.0.5",
         "#     port: 22                   # 22 when left out",
         "#     user: openasy              # openasy when left out",
-        "#     hostKey: SHA256:...        # ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub: trusted without an admin when it matches",
+        "#     auth: key                  # certificate when left out: the agent's own CA, as Setup shows",
+        "#     keyFile: web-1.key         # with auth: key, a private key in secrets/ssh; the agent's own key when left out",
+        "#     hostKey: SHA256:...        # ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub: trusted without an admin when it matches;",
+        "#                                # first: the first key it presents is trusted; left out: an admin accepts it",
         "#     tags: { env: prod }",
         "hosts: []",
       ].join("\n"),
@@ -876,7 +887,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       steps.push({ text: "In Logs, Settings, Agents, make a token. Put it in LOGS_ENROLL_TOKEN, then:", code: "docker compose up -d logs-agent" });
     if (hostsFile)
       steps.push({
-        text: `List your servers in config/hosts.yaml. ${readers.map((id) => PARTS[id].name).join(" and ")} pick them up within a minute, with no restart.`,
+        text: `List your servers in config/inventory/hosts.yaml. ${readers.map((id) => PARTS[id].name).join(" and ")} pick them up within a minute, with no restart.`,
       });
   }
 
@@ -934,7 +945,12 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   if (fed.length) wiring.push({ title: `${names(fed)} take data from CI and scripts`, text: "each with its own ingest token, made here and kept in .env." });
   if (picked.length) {
     const org = cleanOrganization(choice.organization);
-    const parts = [org && `${org} under each product's name`, choice.logo && "your logo", cleanAccent(choice.accent) && "your color"].filter(Boolean);
+    const parts = [
+      org && `${org} under each product's name`,
+      choice.logo && "your logo",
+      choice.favicon && "your tab icon",
+      cleanAccent(choice.accent) && "your color",
+    ].filter(Boolean);
     wiring.push({
       title: "One brand",
       text: parts.length
