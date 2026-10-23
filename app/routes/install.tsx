@@ -29,7 +29,6 @@ import {
   LOGO_TYPES,
   buildInstall,
   cleanAccent,
-  cleanInternalDomain,
   cleanOrganization,
   makeSecrets,
   type Install,
@@ -842,67 +841,13 @@ export default function InstallPage() {
                   </Options>
                 )}
                 {has("vpn") && (
-                  <Options
-                    title="VPN"
-                    summary={[
-                      choice.vpnTcp ? "UDP 1194 and TCP" : "UDP 1194",
-                      cleanInternalDomain(choice.internalDomain) && `names under ${cleanInternalDomain(choice.internalDomain)}`,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")}
-                  >
+                  <Options title="VPN" summary={choice.vpnTcp ? "UDP 1194 and TCP" : "UDP 1194"}>
                     <Toggle
                       checked={choice.vpnTcp}
                       onChange={(vpnTcp) => set({ vpnTcp })}
                       title="Also on TCP"
                       text="A second vpn-server on TCP 443, for networks that allow only HTTPS. It is slower than UDP."
                     />
-                    {!(choice.onlyVpn && choice.proxy === "caddy") && (
-                      <TextField
-                        label="Internal domain"
-                        mono
-                        value={choice.internalDomain}
-                        onChange={(e) => set({ internalDomain: e.target.value })}
-                        placeholder="internal.yr"
-                        hint={
-                          choice.internalDomain && !cleanInternalDomain(choice.internalDomain)
-                            ? "A domain name, such as youreply.com.tr."
-                            : "Optional. Its inside view: names you add in VPN under Access, such as logs.youreply.com.tr, resolve to inside addresses on the VPN and nowhere else."
-                        }
-                        spellCheck={false}
-                        autoComplete="off"
-                      />
-                    )}
-                    <Toggle
-                      checked={choice.onlyVpn && choice.proxy === "caddy"}
-                      onChange={(onlyVpn) => set({ onlyVpn })}
-                      title="Products only on the VPN"
-                      text={
-                        choice.proxy === "caddy"
-                          ? "Every product but VPN and Identity answers at its name on the VPN alone, with a certificate from VPN's internal CA, and gets no public name. VPN and Identity stay public, so a first device can connect."
-                          : "Needs Caddy under HTTPS: it gets the products' certificates from VPN's internal CA."
-                      }
-                    />
-                    {choice.onlyVpn && choice.proxy === "caddy" && (
-                      <TextField
-                        label="This host's inside address"
-                        mono
-                        value={choice.insideAddress}
-                        onChange={(e) => set({ insideAddress: e.target.value })}
-                        placeholder="10.20.0.5"
-                        hint="Where the products' names point on the VPN: this host's address on the inside network, which VPN's servers reach."
-                        spellCheck={false}
-                        autoComplete="off"
-                      />
-                    )}
-                    {cleanInternalDomain(choice.internalDomain) && !(choice.onlyVpn && choice.proxy === "caddy") && (
-                      <Toggle
-                        checked={choice.internalForward}
-                        onChange={(internalForward) => set({ internalForward })}
-                        title="Its other names stay public"
-                        text="Split-horizon: on the VPN, names without an inside record, such as www or mail, come from public DNS. Turn off for a domain that exists only inside, such as internal.yr."
-                      />
-                    )}
                   </Options>
                 )}
                 {has("vulnerabilities") && (

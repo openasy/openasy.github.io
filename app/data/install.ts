@@ -50,17 +50,6 @@ export interface InstallChoice {
   prometheus: boolean;
   /** A second vpn-server on TCP, for networks that allow only HTTPS. */
   vpnTcp: boolean;
-  /** The install's domain for names answered on the VPN alone (ADR 0054), such as youreply.com.tr; empty leaves it off. */
-  internalDomain: string;
-  /** Split-horizon: the domain's other names come from public DNS. Off for a domain that exists only inside. */
-  internalForward: boolean;
-  /**
-   * The products answer only on the VPN, at their names under the domain, with certificates from VPN's internal CA;
-   * VPN and Identity stay public so a first device can connect (ADR 0054). Needs VPN and Caddy.
-   */
-  onlyVpn: boolean;
-  /** This host's address on the inside network, which the products' names resolve to on the VPN. */
-  insideAddress: string;
   /** vulns-agent on this host too. */
   vulnsHost: boolean;
   /** One hosts.yaml that Infrastructure and Vulnerabilities both read (OPENASY_HOSTS, ADR 0052). */
@@ -84,10 +73,6 @@ export const DEFAULT_CHOICE: InstallChoice = {
   proxy: "caddy",
   prometheus: true,
   vpnTcp: false,
-  internalDomain: "",
-  internalForward: true,
-  onlyVpn: false,
-  insideAddress: "",
   vulnsHost: true,
   hostsFile: true,
   organization: "",
@@ -265,11 +250,6 @@ export const cleanOrganization = (o: string) =>
     .trim()
     .slice(0, 64);
 export const cleanAccent = (a: string) => (/^#[0-9a-f]{6}$/i.test(a.trim()) ? a.trim().toLowerCase() : "");
-/** A domain name as VPN_DNS_DOMAIN takes it, or "" when it is not one. */
-export const cleanInternalDomain = (d: string) => {
-  const v = d.trim().toLowerCase().replace(/\.$/, "");
-  return /^(?=.{1,200}$)[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/.test(v) ? v : "";
-};
 
 /** One line of auth.env: the setting with what it does, commented out while it is not set. */
 const AUTH_SETTINGS: Array<[string, string, string]> = [
@@ -303,12 +283,6 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const signIn: SignIn = choice.signIn === "identity" && !has("identity") ? "own" : choice.signIn;
   const keycloak = picked.length > 0 && (signIn === "keycloak" || (viaIdentity && choice.upstream === "keycloak"));
   const apps = picked.filter((id) => id !== "identity");
-  // Only on the VPN (ADR 0054): every product but VPN and Identity, which a first device needs before it is inside.
-  const vpnOnly = choice.onlyVpn && caddy && has("vpn");
-  const inside = (id: Installable | "keycloak") => vpnOnly && id !== "vpn" && id !== "identity" && id !== "keycloak";
-  const insideAddress = /^(\d{1,3}\.){3}\d{1,3}$/.test(choice.insideAddress.trim()) ? choice.insideAddress.trim() : "";
-  // The VPN serves the inside view of the install's own domain: split-horizon, its public names unchanged.
-  const dnsDomain = vpnOnly ? d : cleanInternalDomain(choice.internalDomain);
   const host = (id: Installable | "keycloak") => (id === "keycloak" ? `auth.${d}` : `${PARTS[id].sub}.${d}`);
   const url = (id: Installable | "keycloak") => `https://${host(id)}`;
   const tag = (id: Installable) => statusFor(id).version!;
@@ -438,15 +412,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    environment:",
           env("VPN_PUBLIC_URL", url(id)),
           env("VPN_PUBLIC_HOST", `${host(id)}   # the name clients connect to`),
-          ...(dnsDomain
-            ? [
-                env("VPN_DNS_DOMAIN", `${dnsDomain}   # its inside view, on the VPN alone (ADR 0054)`),
-                ...(choice.internalForward || vpnOnly ? [] : [env("VPN_DNS_FORWARD", "false   # the domain exists only inside")]),
-              ]
-            : []),
           ...oidc(id),
-          // Caddy takes ACME over plain HTTP only from a name it counts as internal (ADR 0054).
-          ...(vpnOnly ? ["    networks:", "      default:", "        aliases: [vpn.openasy.internal]"] : []),
         ],
         ["vpn-data"],
       );
@@ -669,14 +635,6 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         "    volumes:",
         "      - ./config/Caddyfile:/etc/caddy/Caddyfile:ro",
         "      - caddy-data:/data",
-        ...(vpnOnly
-          ? [
-              "    environment:",
-              "      # The ACME key from VPN, Access, Internal CA, for the products' certificates (ADR 0054)",
-              "      OPENASY_ACME_KID: ${OPENASY_ACME_KID:-pending}",
-              "      OPENASY_ACME_HMAC: ${OPENASY_ACME_HMAC:-pending}",
-            ]
-          : []),
       ],
       ["caddy-data"],
     );
@@ -730,8 +688,6 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     ...(has("vpn") && choice.vpnTcp ? ["VPN_TCP_ENROLL_TOKEN="] : []),
     ...(has("infrastructure") ? ["INFRA_ENROLL_TOKEN="] : []),
     ...(has("logs") ? ["LOGS_ENROLL_TOKEN="] : []),
-    // Caddy's ACME key from VPN, Access, Internal CA, for the products only on the VPN (ADR 0054).
-    ...(vpnOnly ? ["OPENASY_ACME_KID=", "OPENASY_ACME_HMAC="] : []),
   ]);
 
   const names = (ids: readonly Installable[]) => ids.map((id) => PARTS[id].name).join(", ");
@@ -803,26 +759,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   if (withCaddy)
     files.push({
       name: "config/Caddyfile",
-      content: fronted
-        .map((id) => {
-          const proxy = `  reverse_proxy ${id === "keycloak" ? "keycloak" : PARTS[id].service}:8080`;
-          if (!inside(id)) return `${host(id)} {\n${proxy}\n}`;
-          // Inside: a certificate from VPN's internal CA over ACME, and nobody from outside the private networks.
-          return [
-            `${host(id)} {`,
-            "  tls {",
-            "    issuer acme {",
-            "      dir http://vpn.openasy.internal:8080/acme/directory",
-            "      eab {$OPENASY_ACME_KID} {$OPENASY_ACME_HMAC}",
-            "    }",
-            "  }",
-            "  @outside not remote_ip private_ranges",
-            "  abort @outside",
-            proxy,
-            "}",
-          ].join("\n");
-        })
-        .join("\n\n"),
+      content: fronted.map((id) => `${host(id)} {\n  reverse_proxy ${id === "keycloak" ? "keycloak" : PARTS[id].service}:8080\n}`).join("\n\n"),
     });
   // Plain HTTP sites that certbot then turns into HTTPS with a redirect. The scheme is passed on as it is, so after
   // certbot the products see https: Identity builds its issuer URLs from it.
@@ -887,13 +824,8 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     });
     if (keycloak)
       steps.push({ text: "Fetch the Keycloak realm in which every product is already a client:", code: `curl -fsSL -o config/openasy-realm.json ${REALM}` });
-    const publicSites = fronted.filter((id) => !inside(id));
     if (withCaddy || onHost)
-      steps.push({
-        text: vpnOnly
-          ? `Point ${publicSites.map(host).join(", ")} at this host in public DNS. The other products get no public name: they answer on the VPN alone.`
-          : `Point ${fronted.map(host).join(", ")} at this host, so ${withCaddy ? "Caddy" : "certbot"} can get their certificates.`,
-      });
+      steps.push({ text: `Point ${fronted.map(host).join(", ")} at this host, so ${withCaddy ? "Caddy" : "certbot"} can get their certificates.` });
     // Agents that enrol with a one-time token start once they have it.
     const waiting = ["vpn-server", "vpn-server-tcp", "infra-agent", "logs-agent"];
     const first = services.filter((sv) => !waiting.includes(sv));
@@ -949,27 +881,6 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         text: `In VPN, Servers, add ${host("vpn")}${choice.vpnTcp ? " twice, for UDP and for TCP" : ""}. Put the token in .env, then:`,
         code: `docker compose up -d vpn-server${choice.vpnTcp ? " vpn-server-tcp" : ""}`,
       });
-    if (vpnOnly) {
-      const insideSites = fronted.filter(inside).filter((id): id is Installable => id !== "keycloak");
-      const at = insideAddress || "<this host's inside address>";
-      steps.push({
-        title: "Only on the VPN",
-        text: `In VPN, Access, Internal names, give ${names(insideSites)} this host's inside address, and add an IP group with ${at}/32 and tcp/443 for the people who use them. With an API token from VPN, Settings:`,
-        code: insideSites
-          .map(
-            (id) =>
-              `curl -fsS -X POST ${url("vpn")}/api/v1/internal-names -H "authorization: Bearer $VPN_API_TOKEN" -H 'content-type: application/json' -d '{"name":"${PARTS[id].sub}","type":"A","value":"${at}"}'`,
-          )
-          .join("\n"),
-      });
-      steps.push({
-        text: "In VPN, Access, Internal CA, make an ACME key for Caddy. Put its key id and HMAC key in .env as OPENASY_ACME_KID and OPENASY_ACME_HMAC, then Caddy gets the products' certificates:",
-        code: "docker compose up -d caddy",
-      });
-      steps.push({
-        text: "On each device, install the internal CA's root once from VPN, Access, Internal CA, or with your MDM; then the products open on the VPN without a warning.",
-      });
-    }
     if (has("infrastructure"))
       steps.push({ text: "In Infrastructure, Settings, Agents, make a token. Put it in INFRA_ENROLL_TOKEN, then:", code: "docker compose up -d infra-agent" });
     if (has("logs"))
@@ -1063,13 +974,5 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       text: `for ${fronted.map(host).join(", ")}, with certificates from certbot. The products listen on 127.0.0.1 only.`,
     });
 
-  return {
-    files,
-    steps,
-    wiring,
-    addresses: fronted.map(host),
-    // The names to point at the host in public DNS: on the VPN alone, only VPN and Identity.
-    hosts: withCaddy || onHost ? fronted.filter((id) => !inside(id)).map(host) : [],
-    services,
-  };
+  return { files, steps, wiring, addresses: fronted.map(host), hosts: withCaddy || onHost ? fronted.map(host) : [], services };
 }

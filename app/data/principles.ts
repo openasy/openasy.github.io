@@ -184,10 +184,6 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
     title: "Your brand, set once",
     text: "Your organization, logo, tab icon and color in one file every product loads. The pictures are served by each product itself, so nothing is fetched from elsewhere.",
   },
-  "0054": {
-    title: "Internal names, only on the VPN",
-    text: "If you choose, tools answer at names of your own that resolve only on the VPN, with certificates from a CA that can sign nothing outside your domain. Nothing needs a port open to the internet.",
-  },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });

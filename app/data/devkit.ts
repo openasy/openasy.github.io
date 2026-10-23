@@ -17,6 +17,7 @@ const PORT = 8443;
 /** The products are in the wired profile, so a plain up -d leaves them as they are. */
 const APPLY = "docker compose --profile wired up -d";
 const ROLES = "openasy-admins=admin,openasy-editors=editor,openasy-viewers=viewer";
+const url = (id: Installable) => `https://${PARTS[id].sub}.localhost:${PORT}`;
 /** Where setup writes a product's client, under the names the product reads (OPENASY_OIDC_*). */
 export const clientFile = (id: Installable) => `secrets/oidc/${PARTS[id].service}.env`;
 /** The products with a service of their own below; every other one is the same hardened container. */
@@ -50,11 +51,7 @@ const HOST_DOCKERFILE = `# syntax=docker/dockerfile:1
         EOF
         ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]`;
 
-/** The VPN's internal names in the dev kit (ADR 0054): a domain that exists only inside, never asked of public DNS. */
-export const DEV_DNS_DOMAIN = "dev.internal";
-
 export function buildDevKit(secrets: Secrets): Install {
-  const url = (id: Installable) => `https://${PARTS[id].sub}.localhost:${PORT}`;
   const ids = INSTALLABLE;
   const tag = (id: Installable) => statusFor(id).version!;
   const svc = (id: Installable) => PARTS[id].service;
@@ -144,11 +141,7 @@ export function buildDevKit(secrets: Secrets): Install {
     "    depends_on: [caddy]",
     "",
     ...product("identity"),
-    // Internal names on the VPN (ADR 0054): the demo servers as web and db under the domain, added by seed.ts.
-    ...product("vpn", {
-      hardened: false,
-      env: [env("VPN_PUBLIC_HOST", "localhost"), env("VPN_DNS_DOMAIN", DEV_DNS_DOMAIN), env("VPN_DNS_FORWARD", "false   # the domain exists only inside")],
-    }),
+    ...product("vpn", { hardened: false, env: [env("VPN_PUBLIC_HOST", "localhost")] }),
     "  vpn-server:",
     `    image: ghcr.io/openasy/vpn-server:${tag("vpn")}`,
     "    restart: unless-stopped",

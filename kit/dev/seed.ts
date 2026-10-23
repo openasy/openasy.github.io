@@ -5,7 +5,6 @@
 // Everything here is made up: example.com names, documentation addresses and fake keys.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { lookup } from "node:dns/promises";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const STATE = "secrets/dev.json";
@@ -68,16 +67,7 @@ const SEEDS: Record<string, (call: Call) => Promise<string>> = {
       ["Sam Lee", "sam@example.com", ["Support"]],
     ];
     for (const [name, email, groups] of people) await call("/api/v1/people", { name, email, groups }, { again: true });
-    // The demo servers by name on the VPN (ADR 0054), at the addresses compose gave them, under the kit's domain.
-    const { domain } = await call<{ domain: string | null }>("/api/v1/internal-names");
-    const names = [];
-    for (const host of domain ? ["web", "db"] : []) {
-      const { address } = await lookup(`host-${host}`, { family: 4 }).catch(() => ({ address: "" }));
-      if (!address) continue;
-      await call("/api/v1/internal-names", { name: host, type: "A", value: address }, { again: true });
-      names.push(`${host}.${domain}`);
-    }
-    return `3 people, 2 groups, an IP group${names.length ? `, and ${names.join(" and ")}` : ""}`;
+    return "3 people, 2 groups, an IP group";
   },
 
   async vulns(call) {
