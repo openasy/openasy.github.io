@@ -617,20 +617,21 @@ export default function InstallPage() {
             </aside>
           </div>
 
-          <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
-            <section aria-labelledby="prod-steps" className="rounded-xl border border-line bg-surface p-6">
-              <h2 id="prod-steps" className="mt-0 mb-4 text-lg font-semibold">
-                Steps to start
-              </h2>
-              <Steps steps={out.steps} empty="Pick a product first." />
-            </section>
-            <section aria-labelledby="prod-files" className="min-w-0">
-              <h2 id="prod-files" className="mt-0 mb-3 text-lg font-semibold">
+          <section aria-labelledby="prod-steps" className="mt-10 rounded-xl border border-line bg-surface p-6 sm:p-8">
+            <h2 id="prod-steps" className="mt-0 mb-5 text-lg font-semibold">
+              Steps to start
+            </h2>
+            <Steps steps={out.steps} empty="Pick a product first." />
+          </section>
+          <section aria-labelledby="prod-files" className="mt-10">
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+              <h2 id="prod-files" className="m-0 text-lg font-semibold">
                 What is in the folder
               </h2>
-              <Files out={out} folder="openasy" logo={logo} />
-            </section>
-          </div>
+              <span className="text-sm text-fg-subtle">Read, copy or download any file</span>
+            </div>
+            <Files out={out} folder="openasy" logo={logo} />
+          </section>
         </>
       )}
 
