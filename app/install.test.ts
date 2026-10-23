@@ -298,37 +298,10 @@ describe("install builder", () => {
     expect(cleanDomain("  ")).toBe("example.com");
   });
 
-  it("the dev setup serves names on the VPN under dev.internal, or under your domain, split-horizon (ADR 0054)", () => {
-    const plain = service(file(buildDevKit(secrets), "compose.yaml"), "vpn");
-    expect(plain).toContain("VPN_DNS_DOMAIN: dev.internal");
-    expect(plain).toContain("VPN_DNS_FORWARD: false");
-    const yours = service(file(buildDevKit(secrets, { dnsDomain: " YouReply.com.tr ", dnsForward: true, overVpn: false }), "compose.yaml"), "vpn");
-    expect(yours).toContain("VPN_DNS_DOMAIN: youreply.com.tr");
-    expect(yours).not.toContain("VPN_DNS_FORWARD");
-    // A name that is not a domain keeps the default.
-    expect(service(file(buildDevKit(secrets, { dnsDomain: "not a domain", dnsForward: false, overVpn: false }), "compose.yaml"), "vpn")).toContain(
-      "VPN_DNS_DOMAIN: dev.internal",
-    );
-  });
-
-  it("the dev setup can open the products only over the VPN, at names under an inside-only domain (ADR 0054)", () => {
-    const out = buildDevKit(secrets, { dnsDomain: "youreply", dnsForward: false, overVpn: true });
-    const compose = file(out, "compose.yaml");
-    // Nothing published for the products: Caddy has no port on this machine, only the VPN's server does.
-    expect(service(compose, "caddy")).not.toContain("ports:");
-    expect(service(compose, "caddy")).toContain("aliases: [id.youreply, vpn.youreply, infra.youreply");
-    expect(service(compose, "logs")).toContain("LOGS_PUBLIC_URL: https://logs.youreply");
-    expect(service(compose, "vpn")).toContain("VPN_DNS_DOMAIN: youreply");
-    expect(service(compose, "vpn")).toContain("VPN_DNS_FORWARD: false");
-    expect(file(out, "config/Caddyfile")).toContain("https_port 443");
-    expect(file(out, "config/Caddyfile")).toContain("https://logs.youreply {");
-    expect(JSON.parse(file(out, "setup/kit.json"))).toEqual({ overVpn: true, domain: "youreply" });
-    expect(out.steps.find((s) => s.title === "Connect over the VPN")!.code).toBe(
-      'sudo mkdir -p /etc/resolver && echo "nameserver 10.8.0.1" | sudo tee /etc/resolver/youreply',
-    );
-    expect(SETUP).toContain('writeFileSync("secrets/dev.ovpn"');
-    // Off, as before: *.localhost:8443.
-    expect(service(file(buildDevKit(secrets), "compose.yaml"), "caddy")).toContain('"127.0.0.1:8443:8443"');
+  it("the dev setup serves names on the VPN under dev.internal, only inside (ADR 0054)", () => {
+    const vpn = service(file(buildDevKit(secrets), "compose.yaml"), "vpn");
+    expect(vpn).toContain("VPN_DNS_DOMAIN: dev.internal");
+    expect(vpn).toContain("VPN_DNS_FORWARD: false");
   });
 
   it("the dev setup runs every released product from released images, and a setup container wires them", () => {

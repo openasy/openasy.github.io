@@ -4,18 +4,7 @@
 import SETUP from "../../kit/dev/setup.ts?raw";
 import CODE from "../../kit/dev/code.ts?raw";
 import SEED from "../../kit/dev/seed.ts?raw";
-import {
-  INSTALLABLE,
-  PARTS,
-  THIRD_PARTY,
-  authFile,
-  cleanInternalDomain,
-  type Install,
-  type InstallFile,
-  type InstallStep,
-  type Installable,
-  type Secrets,
-} from "./install";
+import { INSTALLABLE, PARTS, THIRD_PARTY, authFile, type Install, type InstallFile, type InstallStep, type Installable, type Secrets } from "./install";
 import { statusFor } from "./status";
 
 /** Images the dev setup adds to the ones in THIRD_PARTY, pinned the same way (ADR 0027). */
@@ -61,24 +50,11 @@ const HOST_DOCKERFILE = `# syntax=docker/dockerfile:1
         EOF
         ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]`;
 
-/** The VPN's internal names in the dev kit (ADR 0054): a domain only inside by default, or yours, split-horizon. */
-export interface DevKitOptions {
-  dnsDomain: string;
-  /** The domain's other names come from public DNS: on for a real domain, off for one that exists only inside. */
-  dnsForward: boolean;
-  /**
-   * The products open at their names under the domain, only over the VPN, as an install with Products only on the VPN
-   * does; nothing is published on this machine but the VPN's port. Off: https://<product>.localhost:8443.
-   */
-  overVpn: boolean;
-}
-export const DEV_DNS: DevKitOptions = { dnsDomain: "dev.internal", dnsForward: false, overVpn: false };
+/** The VPN's internal names in the dev kit (ADR 0054): a domain that exists only inside, never asked of public DNS. */
+export const DEV_DNS_DOMAIN = "dev.internal";
 
-export function buildDevKit(secrets: Secrets, dns: DevKitOptions = DEV_DNS): Install {
-  const dnsDomain = cleanInternalDomain(dns.dnsDomain) || DEV_DNS.dnsDomain;
-  const overVpn = dns.overVpn;
-  const url = (id: Installable) => (overVpn ? `https://${PARTS[id].sub}.${dnsDomain}` : `https://${PARTS[id].sub}.localhost:${PORT}`);
-  const hostOf = (id: Installable) => new URL(url(id)).hostname;
+export function buildDevKit(secrets: Secrets): Install {
+  const url = (id: Installable) => `https://${PARTS[id].sub}.localhost:${PORT}`;
   const ids = INSTALLABLE;
   const tag = (id: Installable) => statusFor(id).version!;
   const svc = (id: Installable) => PARTS[id].service;
@@ -146,15 +122,15 @@ export function buildDevKit(secrets: Secrets, dns: DevKitOptions = DEV_DNS): Ins
     "  caddy:",
     `    image: ${THIRD_PARTY.caddy}`,
     "    restart: unless-stopped",
-    // Over the VPN nothing is published: the products are reached through the tunnel alone.
-    ...(overVpn ? [] : ["    ports:", `      - "127.0.0.1:${PORT}:${PORT}"`]),
+    "    ports:",
+    `      - "127.0.0.1:${PORT}:${PORT}"`,
     "    volumes:",
     "      - ./config/Caddyfile:/etc/caddy/Caddyfile:ro",
     "      - caddy-data:/data",
     "    networks:",
     "      default:",
     "        # Inside the network the same names reach Caddy, so issuer and callback URLs are the same everywhere.",
-    `        aliases: [${ids.map(hostOf).join(", ")}]`,
+    `        aliases: [${ids.map((id) => `${PARTS[id].sub}.localhost`).join(", ")}]`,
     "",
     "  # Runs once: starts the products after Caddy's CA exists, then makes the owners, Identity's applications and the",
     "  # agents' tokens (setup/setup.ts). It drives compose through the Docker socket, which is why this is for dev only.",
@@ -171,7 +147,7 @@ export function buildDevKit(secrets: Secrets, dns: DevKitOptions = DEV_DNS): Ins
     // Internal names on the VPN (ADR 0054): the demo servers as web and db under the domain, added by seed.ts.
     ...product("vpn", {
       hardened: false,
-      env: [env("VPN_PUBLIC_HOST", "localhost"), env("VPN_DNS_DOMAIN", dnsDomain), ...(dns.dnsForward ? [] : [env("VPN_DNS_FORWARD", "false")])],
+      env: [env("VPN_PUBLIC_HOST", "localhost"), env("VPN_DNS_DOMAIN", DEV_DNS_DOMAIN), env("VPN_DNS_FORWARD", "false   # the domain exists only inside")],
     }),
     "  vpn-server:",
     `    image: ghcr.io/openasy/vpn-server:${tag("vpn")}`,
@@ -296,7 +272,7 @@ export function buildDevKit(secrets: Secrets, dns: DevKitOptions = DEV_DNS): Ins
     "\tskip_install_trust",
     "\tauto_https disable_redirects",
     "\thttp_port 8080",
-    `\thttps_port ${overVpn ? 443 : PORT}`,
+    `\thttps_port ${PORT}`,
     "}",
     ...ids.map((id) => `\n${url(id)} {\n\treverse_proxy ${svc(id)}:8080\n}`),
   ].join("\n");
@@ -357,16 +333,6 @@ export function buildDevKit(secrets: Secrets, dns: DevKitOptions = DEV_DNS): Ins
       code: "docker compose up -d && docker compose logs -f setup",
       note: "The first start pulls the images and takes a few minutes.",
     },
-    ...(overVpn
-      ? [
-          {
-            title: "Connect over the VPN",
-            text: `setup leaves secrets/dev.ovpn: open it in OpenVPN Connect or Tunnelblick and connect. Then send names under ${dnsDomain}, and only those, to the VPN; on macOS:`,
-            code: `sudo mkdir -p /etc/resolver && echo "nameserver 10.8.0.1" | sudo tee /etc/resolver/${dnsDomain}`,
-            note: `Off the VPN the products do not open, and the VPN's server never asks public DNS about ${dnsDomain}${dns.dnsForward ? " names it has no record for, unless you turned that on" : ""}.`,
-          },
-        ]
-      : []),
     {
       title: "Open Identity and sign in",
       text: `Go to ${url("identity")} as ${DEV_EMAIL} with the password "${DEV_PASSWORD}". Every other product then signs you in by itself.`,
@@ -382,7 +348,7 @@ export function buildDevKit(secrets: Secrets, dns: DevKitOptions = DEV_DNS): Ins
     },
     {
       title: "Trust the local CA",
-      text: `Once, so the browser accepts https://*.${overVpn ? dnsDomain : "localhost"} without a warning. On macOS:`,
+      text: "Once, so the browser accepts https://*.localhost without a warning. On macOS:",
       code: "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db config/caddy-root.crt",
     },
     {
@@ -451,8 +417,6 @@ export function buildDevKit(secrets: Secrets, dns: DevKitOptions = DEV_DNS): Ins
     },
     { name: "setup/setup.ts", content: SETUP.trimEnd() },
     { name: "setup/products.json", content: JSON.stringify(setupProducts, null, 2) },
-    // Whether setup also gives this machine a VPN device and the products' names on the VPN (ADR 0054).
-    { name: "setup/kit.json", content: JSON.stringify({ overVpn, domain: dnsDomain }, null, 2) },
     { name: "setup/code.ts", content: CODE.trimEnd() },
     { name: "setup/seed.ts", content: SEED.trimEnd() },
     { name: "secrets/openasy-kek", content: secrets.kek, secret: true },
@@ -471,12 +435,7 @@ export function buildDevKit(secrets: Secrets, dns: DevKitOptions = DEV_DNS): Ins
       title: "Two servers in config/inventory/hosts.yaml",
       text: "read over SSH by Infrastructure and Logs; Vulnerabilities, Posture and Malware show they send no scan.",
     },
-    {
-      title: "Caddy serves HTTPS",
-      text: overVpn
-        ? `at *.${dnsDomain}, only through the VPN, with a local CA you trust once; the VPN answers those names and nothing else.`
-        : `on *.localhost:${PORT}, with a local CA you trust once.`,
-    },
+    { title: "Caddy serves HTTPS", text: `on *.localhost:${PORT}, with a local CA you trust once.` },
     { title: "Released images only", text: `${ids.map((id) => `${PARTS[id].name} ${tag(id)}`).join(", ")}.` },
   ];
   return { files, steps, more, wiring, addresses: ids.map(url), hosts: [], services };
