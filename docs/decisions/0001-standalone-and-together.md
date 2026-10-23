@@ -20,6 +20,7 @@ People adopt one tool at a time. Someone who only needs a VPN should not have to
 - A product never assumes another one is installed; missing data is shown as "connect X to see this", not as an error.
 - Shared UI (shell, product switcher, entity chips) lives in `@openasy/ui` so linked products feel like one system.
 - Each product is told the install's other products and their addresses in one setting, `OPENASY_PRODUCTS`, with the same value everywhere. A product without it shows no switcher.
+- What several products watch, endpoints and servers, can come from files the install mounts into each of them, which needs no link (ADR 0052).
 
 ## Where you can see it
 

@@ -21,6 +21,7 @@ Two ways to find them are common. Scanners connect to addresses and read what th
 - **State** is expired, critical (under 7 days), expiring (under the largest threshold, 30 days by default), not yet valid or valid. **Warnings** are a weak key (RSA under 2048 bits), a weak signature (SHA-1 or MD5), a wildcard, a self-signed leaf and a leaf valid for more than 398 days.
 - **Each crossing is reported once.** A certificate is reported for the tightest threshold it has crossed (30, 14, 7, 1 and 0 days by default), not again for the wider ones, so a scheduled alert that asks with `since` sends one message per step.
 - For an endpoint, whether the system's roots trust the chain and it fits the name is reported apart from expiry.
+- Endpoints can also come from the install's endpoints file, shared with Uptime, and the thresholds from `OPENASY_CERT_WARN_DAYS` (ADR 0052).
 
 ## Consequences
 
