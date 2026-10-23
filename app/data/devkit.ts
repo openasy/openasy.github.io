@@ -13,6 +13,8 @@ export const DEV_PASSWORD = "openasy dev password";
 export const DEV_FOLDER = "openasy-dev";
 
 const PORT = 8443;
+/** The products are in the wired profile, so a plain up -d leaves them as they are. */
+const APPLY = "docker compose --profile wired up -d";
 const ROLES = "openasy-admins=admin,openasy-editors=editor,openasy-viewers=viewer";
 const url = (id: Installable) => `https://${PARTS[id].sub}.localhost:${PORT}`;
 /** Where setup writes a product's client, under the names the product reads (OPENASY_OIDC_*). */
@@ -68,6 +70,7 @@ export function buildDevKit(secrets: Secrets): Install {
       "    volumes:",
       `      - ${svc(id)}-data:/data`,
       "      - caddy-data:/caddy:ro",
+      "      - ./config/brand:/config/brand:ro   # the logo brand.env names",
       ...(extra.volumes ?? []),
       "    secrets: [openasy-kek]",
       // Its own client, issuer, ID and secret, in a file setup writes once it has made the clients; until then the
@@ -160,6 +163,7 @@ export function buildDevKit(secrets: Secrets): Install {
     ...agent("infra-agent", `ghcr.io/openasy/infra-agent:${tag("infrastructure")}`, "openasy-agent-kek", [
       "    volumes:",
       "      - infra-agent-data:/data",
+      "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
       "environment",
       "    environment:",
       env("INFRA_URL", "http://infra:8080"),
@@ -189,6 +193,7 @@ export function buildDevKit(secrets: Secrets): Install {
     ...agent("logs-agent", `ghcr.io/openasy/logs-agent:${tag("logs")}`, "openasy-logs-agent-kek", [
       "    volumes:",
       "      - logs-agent-data:/data",
+      "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
       "environment",
       "    environment:",
       env("LOGS_URL", "http://logs:8080"),
@@ -269,17 +274,25 @@ export function buildDevKit(secrets: Secrets): Install {
     "  - name: db",
     "    address: host-db",
     "    tags: { env: dev }",
+    "# A server of yours with a fixed key: put the private key in secrets/ssh, which both agents mount, and its",
+    "# public key, prefixed with restrict, in ~openasy/.ssh/authorized_keys there.",
+    "#  - name: web-2",
+    "#    address: web-2.example.com",
+    "#    auth: key",
+    "#    keyFile: web-2.key",
   ].join("\n");
 
   const brand = [
-    "# The brand every product shows, loaded by each of them (ADR 0053). After a change: docker compose up -d",
+    "# The brand every product shows, loaded by each of them (ADR 0053).",
+    `# After a change: ${APPLY}`,
     "",
     "# Under each product's name, such as your company.",
     "OPENASY_ORGANIZATION='OpenAsy dev'",
     "# Buttons and links in your color.",
     "# OPENASY_ACCENT=#0a66c2",
-    "# Your logo with no text in it: SVG, PNG or WebP. Mount it in each product, as the production setup does.",
-    "# OPENASY_LOGO=/config/logo.svg",
+    "# Your logo with no text in it: SVG, PNG or WebP, up to 512 KB. Put it in config/brand, which every product mounts;",
+    "# an address is not read.",
+    "# OPENASY_LOGO=/config/brand/logo.svg",
   ].join("\n");
 
   // What setup.ts needs to know of each product: where it is, the file for its client, its Identity template.
@@ -339,7 +352,7 @@ export function buildDevKit(secrets: Secrets): Install {
     "UDP 1194. Infrastructure's and Logs' agents read the two servers in config/hosts.yaml over SSH; Vulnerabilities,",
     "Posture and Malware show which of them send no scan. Products that take data from CI have their ingest token in",
     ".env, and each product's client is in secrets/oidc. config/brand.env holds the brand and config/auth.env the",
-    "sign-in: change them and run docker compose up -d.",
+    `sign-in: change them and run ${APPLY}.`,
   ].join("\n");
 
   const ingest = ids.filter((id) => PARTS[id].ingest);
@@ -361,6 +374,7 @@ export function buildDevKit(secrets: Secrets): Install {
         { OPENASY_OIDC_PROVIDER: "openasy-identity", OPENASY_OIDC_ROLE_MAPPING: ROLES, OPENASY_OIDC_AUTO_REDIRECT: "true" },
         "Every product but Identity signs in through Identity; Identity keeps its own people.",
         "secrets/oidc, written by setup",
+        APPLY,
       ),
     },
     { name: "config/hosts.yaml", content: hostsFile },

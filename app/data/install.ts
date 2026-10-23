@@ -20,6 +20,12 @@ export const INSTALLABLE = [
   "incidents",
   "errors",
   "supply-chain",
+  "certificates",
+  "uptime",
+  "backups",
+  "risk",
+  "threat-intel",
+  "cost",
 ] as const;
 export type Installable = (typeof INSTALLABLE)[number];
 
@@ -175,6 +181,12 @@ export const PARTS: Record<Installable, Part> = {
   incidents: { name: "Incidents", service: "incidents", prefix: "INCIDENTS_", sub: "incidents" },
   errors: { name: "Errors", service: "errors", prefix: "ERRORS_", sub: "errors" },
   "supply-chain": { name: "Supply Chain", service: "supply-chain", prefix: "SUPPLY_CHAIN_", sub: "supply-chain", ingest: true },
+  certificates: { name: "Certificates", service: "certificates", prefix: "CERTIFICATES_", sub: "certificates", ingest: true },
+  uptime: { name: "Uptime", service: "uptime", prefix: "UPTIME_", sub: "uptime", ingest: true },
+  backups: { name: "Backups", service: "backups", prefix: "BACKUPS_", sub: "backups", ingest: true, hosts: true },
+  risk: { name: "Risk", service: "risk", prefix: "RISK_", sub: "risk" },
+  "threat-intel": { name: "Threat Intelligence", service: "threat-intel", prefix: "THREAT_INTEL_", sub: "threat-intel", ingest: true },
+  cost: { name: "Cost", service: "cost", prefix: "COST_", sub: "cost", ingest: true },
 };
 const ROLES = "openasy-admins=admin,openasy-editors=editor,openasy-viewers=viewer";
 const PROVIDER_NAME: Record<Provider, string> = { entra: "Microsoft Entra ID", okta: "Okta", google: "Google" };
@@ -247,10 +259,11 @@ const AUTH_SETTINGS: Array<[string, string, string]> = [
 ];
 
 /** auth.env: how people sign in, the same in every product that loads it (ADR 0002). Each product's client is in `clients`. */
-export function authFile(values: Record<string, string>, intro?: string, clients = ".env"): string {
+export function authFile(values: Record<string, string>, intro?: string, clients = ".env", apply = "docker compose up -d"): string {
   return [
     "# How people sign in, the same in every product that loads this file (ADR 0002). Each product's own client, its",
-    `# issuer, ID and secret, is in ${clients}. After a change: docker compose up -d`,
+    `# issuer, ID and secret, is in ${clients}.`,
+    `# After a change: ${apply}`,
     ...(intro ? ["#", `# ${intro}`] : []),
     ...AUTH_SETTINGS.flatMap(([k, what, example]) => ["", `# ${what}`, k in values ? `${k}=${values[k]}` : `# ${k}=${example}`]),
   ].join("\n");
@@ -450,6 +463,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    tmpfs: [/tmp]",
           "    volumes:",
           "      - infra-agent-data:/data   # its CA and keys, sealed with its own key",
+          "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
           "    secrets: [openasy-agent-kek]",
           "    environment:",
           env("INFRA_URL", "http://infra:8080"),
@@ -532,6 +546,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    tmpfs: [/tmp]",
           "    volumes:",
           "      - logs-agent-data:/data   # its CA and keys, sealed with its own key",
+          "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
           "    secrets:",
           "      - source: openasy-logs-agent-kek",
           "        target: openasy-agent-kek",

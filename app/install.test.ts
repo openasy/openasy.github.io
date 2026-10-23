@@ -271,6 +271,8 @@ describe("install builder", () => {
     expect(compose).not.toContain("OIDC_");
     expect(file(out, ".env")).not.toContain("CLIENT");
     expect(file(out, "config/auth.env")).toContain("is in secrets/oidc, written by setup.");
+    // The products are in the wired profile: a change to brand.env or auth.env is applied with it.
+    for (const name of ["config/auth.env", "config/brand.env"]) expect(file(out, name)).toContain("# After a change: docker compose --profile wired up -d");
     expect(file(out, "config/auth.env")).toMatch(/^OPENASY_OIDC_AUTO_REDIRECT=true$/m);
     for (const name of ["infra", "vulns"]) expect(service(compose, name)).toContain("OPENASY_HOSTS: /config/hosts.yaml");
     // Every $ meant for the shell in the demo servers is escaped from compose.
@@ -294,6 +296,10 @@ describe("install builder", () => {
       expect(service(compose, p.service)).toContain(`config/auth.env, { path: ${p.clientFile}, required: false }]`);
     for (const id of INSTALLABLE.filter((id) => PARTS[id].ingest))
       expect(file(out, ".env")).toMatch(new RegExp(`^${PARTS[id].prefix}INGEST_TOKEN=[0-9a-f]{48}$`, "m"));
+    // The agents read keys a host names with keyFile from secrets/ssh, and every product reads the logo from config/brand.
+    for (const name of ["infra-agent", "logs-agent"]) expect(service(compose, name)).toContain("- ./secrets/ssh:/keys:ro");
+    for (const id of INSTALLABLE) expect(service(compose, PARTS[id].service)).toContain("- ./config/brand:/config/brand:ro");
+    expect(file(out, "config/brand.env")).toContain("# OPENASY_LOGO=/config/brand/logo.svg");
     // The servers trust both agents' CAs, and Logs gets its agent.
     expect(service(compose, "host-db")).toContain("OPENASY_CA_LOGS: ${LOGS_AGENT_CA:-}");
     expect(service(compose, "logs-agent")).toContain("source: openasy-logs-agent-kek");

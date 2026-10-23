@@ -1,8 +1,8 @@
 # 0053. One brand for every product, from one env file
 
-- **Decision:** Proposed
-- **Implementation:** Not started
-- **Where:** `ui` (`BrandProvider`), `auth` (reads the settings and serves the logo), every product's compose file, and the install builder, which writes `config/brand.env`.
+- **Decision:** Accepted
+- **Implementation:** In progress
+- **Where:** `auth` reads the settings at start (`brandFromEnv`), sends them with the sign-in methods and serves the logo at `/api/v1/auth/brand/logo`; `useInstallBrand()` in `@openasy/auth/react` gives them to `ui`'s `BrandProvider` in every product and makes the logo the tab icon. The install builder writes `config/brand.env` and mounts the logo; the dev setup mounts `config/brand`.
 - **Priority:** Medium
 - **Area:** Architecture
 

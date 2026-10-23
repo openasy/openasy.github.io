@@ -117,7 +117,7 @@ docker run -d --name vpn-server --restart unless-stopped \\
 export const STATUS: Partial<Record<string, ProductState>> = {
   vulnerabilities: {
     status: "Preview",
-    version: "0.3.0",
+    version: "0.4.0",
     signIn: true,
     note: "Serve it over HTTPS and set VULNS_PUBLIC_URL to that address: cookies and passkeys need it. There is no email yet, so invitations and password resets are links an admin sends.",
     helm: {
@@ -178,7 +178,7 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_API_TOKEN" -H 'content-type: ap
   },
   infrastructure: {
     status: "Preview",
-    version: "0.2.0",
+    version: "0.3.0",
     signIn: true,
     note: "infra-agent holds the SSH certificate authority your hosts trust, sealed with its own key: keep openasy-agent-kek apart from its volume, and run one agent per network. Serve Infrastructure over HTTPS.",
     guides: [
@@ -242,7 +242,7 @@ sshd -t && systemctl reload ssh`,
   },
   logs: {
     status: "Preview",
-    version: "0.2.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Syslog over TLS, OpenTelemetry, Loki, Elasticsearch bulk and JSON lines, each source with its own token", done: true },
@@ -261,7 +261,7 @@ sshd -t && systemctl reload ssh`,
   },
   sast: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Send SARIF from CI and get back whether the check passes", done: true },
@@ -281,7 +281,7 @@ sshd -t && systemctl reload ssh`,
   },
   secrets: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Send gitleaks or TruffleHog reports from CI and get back whether the check passes", done: true },
@@ -300,7 +300,7 @@ sshd -t && systemctl reload ssh`,
   },
   malware: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Send ClamAV or YARA scan reports and get back whether the check passes", done: true },
@@ -318,7 +318,7 @@ sshd -t && systemctl reload ssh`,
   },
   siem: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Events in as JSON, kept with a retention period", done: true },
@@ -334,7 +334,7 @@ sshd -t && systemctl reload ssh`,
   },
   incidents: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Open an incident with severity, commander and the products involved", done: true },
@@ -347,7 +347,7 @@ sshd -t && systemctl reload ssh`,
   },
   errors: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Events from applications with a project key", done: true },
@@ -361,7 +361,7 @@ sshd -t && systemctl reload ssh`,
   },
   "supply-chain": {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Keep the SBOM, signature result and provenance that CI reports for each image", done: true },
@@ -381,7 +381,7 @@ sshd -t && systemctl reload ssh`,
   },
   audit: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Send osv-scanner JSON or SARIF from Trivy and Grype, and get back whether the check passes", done: true },
@@ -400,7 +400,7 @@ sshd -t && systemctl reload ssh`,
   },
   posture: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Send SARIF from Trivy, kubescape, checkov or Prowler for a cloud account, cluster or hosts", done: true },
@@ -417,7 +417,9 @@ sshd -t && systemctl reload ssh`,
     ],
   },
   certificates: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.2.0",
+    signIn: true,
     features: [
       { title: "Send certificates as PEM from cron, CI or a collector; a private key is refused whole", done: true },
       { title: "Read public endpoints with a TLS handshake every 6 hours; private addresses are refused", done: true },
@@ -432,7 +434,9 @@ sshd -t && systemctl reload ssh`,
     ],
   },
   uptime: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.2.0",
+    signIn: true,
     features: [
       { title: "HTTP, TCP, DNS and TLS checks, run by a runner from a CI cron or any machine", done: true },
       { title: "Degraded, down and outages; a check nobody ran lately is stale, never up", done: true },
@@ -448,7 +452,9 @@ sshd -t && systemctl reload ssh`,
     note: "Uptime probes nothing itself: a runner you start, from CI or a server, runs the checks and sends what it saw.",
   },
   backups: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.2.0",
+    signIn: true,
     features: [
       { title: "Runs from restic, Velero or any script, and restore tests, reported per job", done: true },
       { title: "A state per job: failing, at risk, late, untested or healthy", done: true },
@@ -464,7 +470,9 @@ sshd -t && systemctl reload ssh`,
     note: "Backups tracks the jobs that make backups and makes none itself.",
   },
   risk: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.2.0",
+    signIn: true,
     features: [
       { title: "A risk register: likelihood, impact, treatment and a residual score", done: true },
       { title: "Acceptance with a reason, an approver and an end within a year", done: true },
@@ -477,7 +485,9 @@ sshd -t && systemctl reload ssh`,
     upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "risks, vendors and their history" }],
   },
   "threat-intel": {
-    status: "In progress",
+    status: "Preview",
+    version: "0.2.0",
+    signIn: true,
     features: [
       { title: "Import STIX 2.1, CSV and text feeds; what cannot be read is named, never dropped", done: true },
       { title: "One lookup for addresses, blocks, domains, URLs, email addresses and hashes", done: true },
@@ -492,7 +502,9 @@ sshd -t && systemctl reload ssh`,
     ],
   },
   cost: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.2.0",
+    signIn: true,
     features: [
       { title: "Daily spend from AWS, GCP, Azure or any CSV, sent by a pipeline", done: true },
       { title: "Owners by team tag or rule, and a share nobody owns yet", done: true },
@@ -512,7 +524,7 @@ sshd -t && systemctl reload ssh`,
   },
   dast: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     features: [
       { title: "Targets, with the owner's proof that the address is theirs", done: true },
@@ -531,7 +543,7 @@ sshd -t && systemctl reload ssh`,
   },
   identity: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.3.0",
     signIn: true,
     note: "openasy-kek seals the signing keys, client secrets and sign-in secrets (ADR 0021). Keep it apart from the data volume and with your backups: identity does not start without it. Serve it over HTTPS and keep IDENTITY_PUBLIC_URL fixed once applications use it: it is the issuer they trust.",
     features: [
@@ -558,7 +570,7 @@ sshd -t && systemctl reload ssh`,
   },
   vpn: {
     status: "Preview",
-    version: "0.7.0",
+    version: "0.8.0",
     signIn: true,
     note: "openasy-kek seals the CA key, server keys and sign-in secrets (ADR 0021). Keep it apart from the data volume and with your backups: vpn does not start without it. Serve the UI over HTTPS.",
     features: [
