@@ -1,9 +1,45 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { AlertTriangle, Check, Copy, Download, FileCode, FileCog, FileImage, FileKey, FileText, Folder, FolderDown, FolderOpen, RefreshCw, Upload, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  Copy,
+  Download,
+  FileCode,
+  FileCog,
+  FileImage,
+  FileKey,
+  FileText,
+  Folder,
+  FolderDown,
+  FolderOpen,
+  RefreshCw,
+  Upload,
+  X,
+} from "lucide-react";
 import { Badge, Button, PRODUCTS, SegmentedControl, TextField, cn } from "@openasy/ui";
 import { PageTitle, Section } from "../components/site";
-import { DEFAULT_CHOICE, INSTALLABLE, LOGO_MAX_BYTES, PARTS, LOGO_TYPES, buildInstall, cleanAccent, cleanOrganization, makeSecrets, type Install, type InstallFile, type Installable, type InstallChoice, type InstallStep, type Provider, type Proxy, type Secrets, type SignIn, type Upstream } from "../data/install";
+import {
+  DEFAULT_CHOICE,
+  INSTALLABLE,
+  LOGO_MAX_BYTES,
+  PARTS,
+  LOGO_TYPES,
+  buildInstall,
+  cleanAccent,
+  cleanOrganization,
+  makeSecrets,
+  type Install,
+  type InstallFile,
+  type Installable,
+  type InstallChoice,
+  type InstallStep,
+  type Provider,
+  type Proxy,
+  type Secrets,
+  type SignIn,
+  type Upstream,
+} from "../data/install";
 import { DEV_EMAIL, DEV_FOLDER, DEV_PASSWORD, buildDevKit } from "../data/devkit";
 import { highlight, languageOf, type Kind } from "../data/highlight";
 import { statusFor } from "../data/status";
@@ -12,18 +48,36 @@ import { zip } from "../data/zip";
 export function meta() {
   return [
     { title: "Install · OpenAsy" },
-    { name: "description", content: "Try every released OpenAsy product on your machine, or pick the ones you need and how people sign in for production. You get one folder in which the products already know each other." },
+    {
+      name: "description",
+      content:
+        "Try every released OpenAsy product on your machine, or pick the ones you need and how people sign in for production. You get one folder in which the products already know each other.",
+    },
   ];
 }
 
 /** Until the page runs, so a prerendered page never shows a key someone else could copy. */
 const PENDING = "made-when-the-page-loads";
-const PLACEHOLDER: Secrets = { kek: PENDING, agentKek: PENDING, logsAgentKek: PENDING, ingest: PENDING, tokens: {}, keycloakDb: PENDING, keycloakAdmin: PENDING, clients: { identity: PENDING, vpn: PENDING, infrastructure: PENDING, vulnerabilities: PENDING } };
+const PLACEHOLDER: Secrets = {
+  kek: PENDING,
+  agentKek: PENDING,
+  logsAgentKek: PENDING,
+  ingest: PENDING,
+  tokens: {},
+  keycloakDb: PENDING,
+  keycloakAdmin: PENDING,
+  clients: { identity: PENDING, vpn: PENDING, infrastructure: PENDING, vulnerabilities: PENDING },
+};
 
 type Mode = "dev" | "prod";
 
 const SIGN_IN: Array<{ value: SignIn; title: string; text: string; badge?: string }> = [
-  { value: "identity", title: "OpenAsy Identity", text: "One sign-in for every product, with MFA per group. Adds Identity if it is not picked.", badge: "Recommended" },
+  {
+    value: "identity",
+    title: "OpenAsy Identity",
+    text: "One sign-in for every product, with MFA per group. Adds Identity if it is not picked.",
+    badge: "Recommended",
+  },
   { value: "keycloak", title: "Keycloak, ready for OpenAsy", text: "Keycloak and PostgreSQL, with a realm in which every product is already a client." },
   { value: "provider", title: "Your provider", text: "Microsoft Entra ID, Okta or Google, straight to each product." },
   { value: "own", title: "Each product on its own", text: "Passwords, passkeys and authenticator apps in each product." },
@@ -64,7 +118,19 @@ function save(blob: Blob, name: string) {
 
 /** A file as the person saves it: text with a trailing newline, the logo as its bytes. */
 const bytesOf = (f: InstallFile, logo?: Logo | null) => (f.binary && logo ? logo.bytes : new TextEncoder().encode(`${f.content}\n`));
-const downloadZip = (out: Install, folder: string, logo?: Logo | null) => save(new Blob([zip(out.files.map((f) => ({ name: f.name, content: bytesOf(f, logo) })), folder)], { type: "application/zip" }), `${folder}.zip`);
+const downloadZip = (out: Install, folder: string, logo?: Logo | null) =>
+  save(
+    new Blob(
+      [
+        zip(
+          out.files.map((f) => ({ name: f.name, content: bytesOf(f, logo) })),
+          folder,
+        ),
+      ],
+      { type: "application/zip" },
+    ),
+    `${folder}.zip`,
+  );
 
 function CopyButton({ text, label }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -119,7 +185,15 @@ function Steps({ steps, empty, label = "Steps to start" }: { steps: InstallStep[
 
 /** An icon that says what kind of file it is: settings, keys, a picture or text. */
 function FileIcon({ file }: { file: InstallFile }) {
-  const Icon = file.binary ? FileImage : file.name.endsWith("-kek") ? FileKey : file.name.endsWith(".env") ? FileCog : /\.(ya?ml|conf|ts)$|^Caddyfile$/.test(file.name) ? FileCode : FileText;
+  const Icon = file.binary
+    ? FileImage
+    : file.name.endsWith("-kek")
+      ? FileKey
+      : file.name.endsWith(".env")
+        ? FileCog
+        : /\.(ya?ml|conf|ts)$|^Caddyfile$/.test(file.name)
+          ? FileCode
+          : FileText;
   return <Icon aria-hidden className="size-4 shrink-0 text-fg-muted" />;
 }
 
@@ -138,11 +212,23 @@ const TOKEN: Record<Kind, string> = {
 function Code({ name, content }: { name: string; content: string }) {
   const lines = useMemo(() => highlight(content, languageOf(name)), [name, content]);
   return (
-    <pre tabIndex={0} aria-label={name} className="m-0 max-h-[32rem] min-h-72 overflow-auto p-4 font-mono text-xs leading-5 text-fg md:max-h-none md:min-h-0 md:flex-1">
+    <pre
+      tabIndex={0}
+      aria-label={name}
+      className="m-0 max-h-[32rem] min-h-72 overflow-auto p-4 font-mono text-xs leading-5 text-fg md:max-h-none md:min-h-0 md:flex-1"
+    >
       <code>
         {lines.map((tokens, i) => (
           <span key={i} className="block min-h-5">
-            {tokens.map((t, j) => (t.kind === "plain" ? t.text : <span key={j} className={TOKEN[t.kind]}>{t.text}</span>))}
+            {tokens.map((t, j) =>
+              t.kind === "plain" ? (
+                t.text
+              ) : (
+                <span key={j} className={TOKEN[t.kind]}>
+                  {t.text}
+                </span>
+              ),
+            )}
           </span>
         ))}
       </code>
@@ -174,7 +260,11 @@ function Files({ out, folder, logo }: { out: Install; folder: string; logo?: Log
         aria-current={f.name === current.name ? "true" : undefined}
         aria-label={`Open ${f.name}`}
         onClick={() => setFile(f.name)}
-        className={cn("flex min-h-9 w-full items-center gap-2 rounded-md px-2.5 text-left font-mono text-sm", nested && "pl-7", f.name === current.name ? "bg-accent-soft/60 font-semibold text-fg" : "text-fg-muted hover:bg-subtle hover:text-fg")}
+        className={cn(
+          "flex min-h-9 w-full items-center gap-2 rounded-md px-2.5 text-left font-mono text-sm",
+          nested && "pl-7",
+          f.name === current.name ? "bg-accent-soft/60 font-semibold text-fg" : "text-fg-muted hover:bg-subtle hover:text-fg",
+        )}
       >
         <FileIcon file={f} />
         <span className="truncate">{f.name.slice(f.name.lastIndexOf("/") + 1)}</span>
@@ -215,7 +305,16 @@ function Files({ out, folder, logo }: { out: Install; folder: string; logo?: Log
             <span className="truncate font-mono text-sm font-semibold">{current.name}</span>
             <div className="flex gap-2">
               {!current.binary && <CopyButton text={current.content} />}
-              <Button icon={<Download />} onClick={() => save(new Blob([bytesOf(current, logo)], { type: current.binary ? logo!.type : "text/plain" }), current.name.slice(current.name.lastIndexOf("/") + 1))} aria-label={`Download ${current.name}`}>
+              <Button
+                icon={<Download />}
+                onClick={() =>
+                  save(
+                    new Blob([bytesOf(current, logo)], { type: current.binary ? logo!.type : "text/plain" }),
+                    current.name.slice(current.name.lastIndexOf("/") + 1),
+                  )
+                }
+                aria-label={`Download ${current.name}`}
+              >
                 Download
               </Button>
             </div>
@@ -250,10 +349,37 @@ function Part({ n, title, hint, children }: { n: number; title: string; hint?: R
 }
 
 /** A radio or checkbox drawn as a card; the native input keeps keyboard and screen reader behaviour. */
-function Choice({ type = "radio", name, checked, onChange, title, text, badge }: { type?: "radio" | "checkbox"; name: string; checked: boolean; onChange: (on: boolean) => void; title: ReactNode; text: string; badge?: string }) {
+function Choice({
+  type = "radio",
+  name,
+  checked,
+  onChange,
+  title,
+  text,
+  badge,
+}: {
+  type?: "radio" | "checkbox";
+  name: string;
+  checked: boolean;
+  onChange: (on: boolean) => void;
+  title: ReactNode;
+  text: string;
+  badge?: string;
+}) {
   return (
-    <label className={cn("flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border bg-surface p-3", checked ? "border-accent bg-accent-soft/40 ring-1 ring-accent" : "border-line hover:border-line-strong")}>
-      <input type={type} name={name} checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 size-4 shrink-0 accent-[var(--oa-accent)]" />
+    <label
+      className={cn(
+        "flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border bg-surface p-3",
+        checked ? "border-accent bg-accent-soft/40 ring-1 ring-accent" : "border-line hover:border-line-strong",
+      )}
+    >
+      <input
+        type={type}
+        name={name}
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-1 size-4 shrink-0 accent-[var(--oa-accent)]"
+      />
       <span className="flex min-w-0 grow flex-col gap-0.5">
         <span className="flex flex-wrap items-center gap-2 font-semibold">
           {title}
@@ -305,7 +431,10 @@ function TryLocally({ out, ready }: { out: Install; ready: boolean }) {
             <h2 id="dev-title" className="mt-2 mb-0 text-2xl font-semibold tracking-tight">
               Every released product, running on your machine
             </h2>
-            <p className="mt-2 mb-0 max-w-xl text-fg-muted">Every product signs in through Identity. A VPN server, two agents reading demo servers, and every scanner ready for your CI, wired together for you. Docker is all it needs.</p>
+            <p className="mt-2 mb-0 max-w-xl text-fg-muted">
+              Every product signs in through Identity. A VPN server, two agents reading demo servers, and every scanner ready for your CI, wired together for
+              you. Docker is all it needs.
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="primary" icon={<FolderDown />} onClick={() => downloadZip(out, DEV_FOLDER)} disabled={!ready}>
@@ -452,7 +581,10 @@ export default function InstallPage() {
 
   return (
     <Section className="py-12" labelledBy="title">
-      <PageTitle title="Install">Try every released product on your machine, or set up the ones you need for production, from released images only. Either way you get one folder in which the products already know each other, and its keys are made in your browser and never sent.</PageTitle>
+      <PageTitle title="Install">
+        Try every released product on your machine, or set up the ones you need for production, from released images only. Either way you get one folder in
+        which the products already know each other, and its keys are made in your browser and never sent.
+      </PageTitle>
 
       <SegmentedControl
         label="Where it runs"
@@ -507,7 +639,13 @@ export default function InstallPage() {
                       key={o.value}
                       name="sign-in"
                       checked={choice.signIn === o.value}
-                      onChange={() => set(o.value === "identity" ? { signIn: o.value, products: has("identity") ? choice.products : [...choice.products, "identity"] } : { signIn: o.value })}
+                      onChange={() =>
+                        set(
+                          o.value === "identity"
+                            ? { signIn: o.value, products: has("identity") ? choice.products : [...choice.products, "identity"] }
+                            : { signIn: o.value },
+                        )
+                      }
                       title={o.title}
                       text={o.text}
                       badge={o.badge}
@@ -516,13 +654,25 @@ export default function InstallPage() {
                 </div>
                 {choice.signIn === "identity" && (
                   <div className="flex flex-col gap-2 rounded-lg bg-subtle p-4">
-                    <SegmentedControl label="Where Identity's people come from" className="max-w-full flex-wrap" value={choice.upstream} onChange={(upstream) => set({ upstream })} options={UPSTREAMS} />
+                    <SegmentedControl
+                      label="Where Identity's people come from"
+                      className="max-w-full flex-wrap"
+                      value={choice.upstream}
+                      onChange={(upstream) => set({ upstream })}
+                      options={UPSTREAMS}
+                    />
                     <span className="text-xs text-fg-muted">{UPSTREAM_HINT[choice.upstream]}</span>
                   </div>
                 )}
                 {choice.signIn === "provider" && (
                   <div className="flex flex-col gap-2 rounded-lg bg-subtle p-4">
-                    <SegmentedControl<Provider> label="Your provider" className="max-w-full flex-wrap" value={choice.provider} onChange={(provider) => set({ provider })} options={UPSTREAMS.slice(2) as Array<{ value: Provider; label: string }>} />
+                    <SegmentedControl<Provider>
+                      label="Your provider"
+                      className="max-w-full flex-wrap"
+                      value={choice.provider}
+                      onChange={(provider) => set({ provider })}
+                      options={UPSTREAMS.slice(2) as Array<{ value: Provider; label: string }>}
+                    />
                     <span className="text-xs text-fg-muted">
                       The <Link to="/sign-in">sign-in guide</Link> shows what to register at {UPSTREAMS.find((u) => u.value === choice.provider)!.label}.
                     </span>
@@ -531,10 +681,25 @@ export default function InstallPage() {
               </Part>
 
               <Part n={3} title="Address and HTTPS">
-                <TextField label="Domain" mono value={choice.domain} onChange={(e) => set({ domain: e.target.value })} hint={out.addresses.length ? `Addresses: ${out.addresses.join(", ")}` : "Each product gets a name under it."} spellCheck={false} autoComplete="off" />
+                <TextField
+                  label="Domain"
+                  mono
+                  value={choice.domain}
+                  onChange={(e) => set({ domain: e.target.value })}
+                  hint={out.addresses.length ? `Addresses: ${out.addresses.join(", ")}` : "Each product gets a name under it."}
+                  spellCheck={false}
+                  autoComplete="off"
+                />
                 <div role="radiogroup" aria-label="HTTPS" className="grid gap-3 sm:grid-cols-2">
                   {PROXIES.map((o) => (
-                    <Choice key={o.value} name="proxy" checked={choice.proxy === o.value} onChange={() => set({ proxy: o.value })} title={o.title} text={o.text} />
+                    <Choice
+                      key={o.value}
+                      name="proxy"
+                      checked={choice.proxy === o.value}
+                      onChange={() => set({ proxy: o.value })}
+                      title={o.title}
+                      text={o.text}
+                    />
                   ))}
                 </div>
               </Part>
@@ -542,18 +707,39 @@ export default function InstallPage() {
               <Part n={4} title="Options" hint="Each is set up well already: change only what you need.">
                 <Options title="Your brand" summary={brandSummary || "OpenAsy's own"}>
                   <div className="flex flex-col gap-4">
-                    <p className="m-0 text-sm text-fg-muted">Every product loads it from config/brand.env, a file of its own, so you see and change it in one place.</p>
-                    <TextField label="Organization" value={choice.organization} onChange={(e) => set({ organization: e.target.value })} hint="Under each product's name, such as your company. Empty leaves the line out." maxLength={64} autoComplete="organization" />
+                    <p className="m-0 text-sm text-fg-muted">
+                      Every product loads it from config/brand.env, a file of its own, so you see and change it in one place.
+                    </p>
+                    <TextField
+                      label="Organization"
+                      value={choice.organization}
+                      onChange={(e) => set({ organization: e.target.value })}
+                      hint="Under each product's name, such as your company. Empty leaves the line out."
+                      maxLength={64}
+                      autoComplete="organization"
+                    />
                     <div className="flex flex-col gap-2">
                       <span className="text-sm font-medium">Logo</span>
                       <div className="flex flex-wrap items-center gap-3">
                         <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-subtle">
-                          {logo ? <img src={logo.url} alt="Your logo" className="size-8 object-contain" /> : <span className="text-2xs text-fg-subtle">None</span>}
+                          {logo ? (
+                            <img src={logo.url} alt="Your logo" className="size-8 object-contain" />
+                          ) : (
+                            <span className="text-2xs text-fg-subtle">None</span>
+                          )}
                         </span>
                         <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-line bg-surface px-3 text-sm font-medium focus-within:ring-2 focus-within:ring-accent hover:border-line-strong">
                           <Upload aria-hidden className="size-4" />
                           {logo ? "Pick another" : "Pick a file"}
-                          <input type="file" accept={Object.keys(LOGO_TYPES).join(",")} className="sr-only" onChange={(e) => (void pickLogo(e.target.files?.[0]), (e.target.value = ""))} />
+                          <input
+                            type="file"
+                            accept={Object.keys(LOGO_TYPES).join(",")}
+                            className="sr-only"
+                            onChange={(e) => {
+                              void pickLogo(e.target.files?.[0]);
+                              e.target.value = "";
+                            }}
+                          />
                         </label>
                         {logo && (
                           <Button icon={<X />} onClick={removeLogo}>
@@ -562,32 +748,69 @@ export default function InstallPage() {
                         )}
                       </div>
                       <span className={cn("text-xs", logoError ? "text-danger" : "text-fg-muted")} role={logoError ? "alert" : undefined}>
-                        {logoError || "One square picture with no text in it: SVG, PNG or WebP, up to 512 KB. It replaces the OpenAsy mark and the tab icon, and stays in this browser until it goes into the zip."}
+                        {logoError ||
+                          "One square picture with no text in it: SVG, PNG or WebP, up to 512 KB. It replaces the OpenAsy mark and the tab icon, and stays in this browser until it goes into the zip."}
                       </span>
                     </div>
                     <div className="flex flex-wrap items-end gap-3">
-                      <TextField label="Color" mono value={choice.accent} onChange={(e) => set({ accent: e.target.value })} placeholder="#0a66c2" hint={choice.accent && !cleanAccent(choice.accent) ? "A color as #rrggbb." : "Buttons and links. Empty keeps OpenAsy's blue."} className="w-40" spellCheck={false} autoComplete="off" />
-                      <input type="color" aria-label="Pick a color" value={cleanAccent(choice.accent) || "#2f5bd3"} onChange={(e) => set({ accent: e.target.value })} className="mb-6 h-10 w-12 cursor-pointer rounded-md border border-line bg-surface p-1" />
+                      <TextField
+                        label="Color"
+                        mono
+                        value={choice.accent}
+                        onChange={(e) => set({ accent: e.target.value })}
+                        placeholder="#0a66c2"
+                        hint={choice.accent && !cleanAccent(choice.accent) ? "A color as #rrggbb." : "Buttons and links. Empty keeps OpenAsy's blue."}
+                        className="w-40"
+                        spellCheck={false}
+                        autoComplete="off"
+                      />
+                      <input
+                        type="color"
+                        aria-label="Pick a color"
+                        value={cleanAccent(choice.accent) || "#2f5bd3"}
+                        onChange={(e) => set({ accent: e.target.value })}
+                        className="mb-6 h-10 w-12 cursor-pointer rounded-md border border-line bg-surface p-1"
+                      />
                     </div>
                   </div>
                 </Options>
                 {INSTALLABLE.some((id) => has(id) && PARTS[id].hosts) && (
                   <Options title="Servers" summary={choice.hostsFile ? "From hosts.yaml" : "Added in each product"}>
-                    <Toggle checked={choice.hostsFile} onChange={(hostsFile) => set({ hostsFile })} title="One file for your servers" text="Adds config/hosts.yaml, which every product you picked that works with servers reads. You can still add servers in their UI." />
+                    <Toggle
+                      checked={choice.hostsFile}
+                      onChange={(hostsFile) => set({ hostsFile })}
+                      title="One file for your servers"
+                      text="Adds config/hosts.yaml, which every product you picked that works with servers reads. You can still add servers in their UI."
+                    />
                   </Options>
                 )}
                 {has("vpn") && (
                   <Options title="VPN" summary={choice.vpnTcp ? "UDP 1194 and TCP" : "UDP 1194"}>
-                    <Toggle checked={choice.vpnTcp} onChange={(vpnTcp) => set({ vpnTcp })} title="Also on TCP" text="A second vpn-server on TCP 443, for networks that allow only HTTPS. It is slower than UDP." />
+                    <Toggle
+                      checked={choice.vpnTcp}
+                      onChange={(vpnTcp) => set({ vpnTcp })}
+                      title="Also on TCP"
+                      text="A second vpn-server on TCP 443, for networks that allow only HTTPS. It is slower than UDP."
+                    />
                   </Options>
                 )}
                 {has("vulnerabilities") && (
                   <Options title="Vulnerabilities" summary={choice.vulnsHost ? "Scans this host too" : "Only other hosts"}>
-                    <Toggle checked={choice.vulnsHost} onChange={(vulnsHost) => set({ vulnsHost })} title="Scan this host" text="Adds vulns-agent here. Other hosts and clusters get their own agent later." />
+                    <Toggle
+                      checked={choice.vulnsHost}
+                      onChange={(vulnsHost) => set({ vulnsHost })}
+                      title="Scan this host"
+                      text="Adds vulns-agent here. Other hosts and clusters get their own agent later."
+                    />
                   </Options>
                 )}
                 <Options title="Metrics" summary={choice.prometheus ? "Prometheus" : "None"}>
-                  <Toggle checked={choice.prometheus} onChange={(prometheus) => set({ prometheus })} title="Prometheus for metrics" text="Scrapes /metrics of every product you picked, until OpenAsy Metrics ships." />
+                  <Toggle
+                    checked={choice.prometheus}
+                    onChange={(prometheus) => set({ prometheus })}
+                    title="Prometheus for metrics"
+                    text="Scrapes /metrics of every product you picked, until OpenAsy Metrics ships."
+                  />
                 </Options>
               </Part>
             </div>
@@ -636,7 +859,9 @@ export default function InstallPage() {
         </>
       )}
 
-      <p className="mt-8 mb-0 text-xs text-fg-muted">Keys and secrets are made in this browser with crypto.getRandomValues and never sent. Nothing is kept after you leave.</p>
+      <p className="mt-8 mb-0 text-xs text-fg-muted">
+        Keys and secrets are made in this browser with crypto.getRandomValues and never sent. Nothing is kept after you leave.
+      </p>
     </Section>
   );
 }

@@ -116,8 +116,14 @@ export const GOALS: Goal[] = [
       { id: "identity", why: "MFA and joiner-mover-leaver evidence (A.5.16)." },
     ],
     steps: [
-      { title: "Pick frameworks", body: "In Compliance → Frameworks, enable the ones you are audited against. Controls shared between frameworks are only answered once." },
-      { title: "Link the evidence sources", body: "In Integrations, link the OpenAsy products you run. Each one starts sending evidence for the controls it covers." },
+      {
+        title: "Pick frameworks",
+        body: "In Compliance → Frameworks, enable the ones you are audited against. Controls shared between frameworks are only answered once.",
+      },
+      {
+        title: "Link the evidence sources",
+        body: "In Integrations, link the OpenAsy products you run. Each one starts sending evidence for the controls it covers.",
+      },
       { title: "Assign owners", body: "Give every control an owner. Owners get a reminder when evidence is missing or about to expire." },
     ],
     timeToValue: "A day to set up; evidence builds up from then on",
@@ -141,9 +147,18 @@ export const GOALS: Goal[] = [
       { id: "incidents", why: "Run the response, including the GDPR 72-hour notification clock." },
     ],
     steps: [
-      { title: "Choose what to back up", body: "In Backups → Jobs, add databases, volumes and buckets. Pick a schedule and retention (default 7 daily, 4 weekly, 12 monthly)." },
-      { title: "Turn on restore tests", body: "Restore tests start a copy of each backup weekly and check it. A backup that was never restored is a hope, not a backup." },
-      { title: "Mirror traffic to Network IDS", body: "Send a span port or VPC traffic mirror to the sensor. Exfiltration and DNS-tunnel rules are on by default." },
+      {
+        title: "Choose what to back up",
+        body: "In Backups → Jobs, add databases, volumes and buckets. Pick a schedule and retention (default 7 daily, 4 weekly, 12 monthly).",
+      },
+      {
+        title: "Turn on restore tests",
+        body: "Restore tests start a copy of each backup weekly and check it. A backup that was never restored is a hope, not a backup.",
+      },
+      {
+        title: "Mirror traffic to Network IDS",
+        body: "Send a span port or VPC traffic mirror to the sensor. Exfiltration and DNS-tunnel rules are on by default.",
+      },
     ],
     timeToValue: "About an hour",
   },
@@ -166,9 +181,15 @@ export const GOALS: Goal[] = [
       { id: "endpoints", why: "Which laptop they used and whether it was compliant." },
     ],
     steps: [
-      { title: "Connect your identity provider", body: "In Identity → Providers, connect Google Workspace, Microsoft Entra ID, Okta or LDAP, or use local accounts with MFA." },
+      {
+        title: "Connect your identity provider",
+        body: "In Identity → Providers, connect Google Workspace, Microsoft Entra ID, Okta or LDAP, or use local accounts with MFA.",
+      },
       { title: "Add resources to Access", body: "Register hosts, databases and clusters. Access holds the credentials; people never see them." },
-      { title: "Set approval policies", body: "Decide who can request what, who approves, and for how long. Production defaults to one approver and four hours." },
+      {
+        title: "Set approval policies",
+        body: "Decide who can request what, who approves, and for how long. Production defaults to one approver and four hours.",
+      },
     ],
     timeToValue: "About 30 minutes",
   },
@@ -192,8 +213,15 @@ export const GOALS: Goal[] = [
       { id: "threat-intel", why: "Known-bad IPs, domains and hashes." },
     ],
     steps: [
-      { title: "Install the Runtime sensor", body: "Run the eBPF sensor as a DaemonSet or a systemd service on each host.", code: "kubectl apply -f https://openasy.github.io/install/runtime-sensor.yaml" },
-      { title: "Send events to SIEM", body: "Point Syslog, OpenTelemetry or the other products at SIEM. Detection rules for common attacks are enabled by default." },
+      {
+        title: "Install the Runtime sensor",
+        body: "Run the eBPF sensor as a DaemonSet or a systemd service on each host.",
+        code: "kubectl apply -f https://openasy.github.io/install/runtime-sensor.yaml",
+      },
+      {
+        title: "Send events to SIEM",
+        body: "Point Syslog, OpenTelemetry or the other products at SIEM. Detection rules for common attacks are enabled by default.",
+      },
       { title: "Route signals to people", body: "In SIEM → Routing, send critical signals to on-call. A detection nobody sees is not a detection." },
     ],
     timeToValue: "About an hour",
@@ -241,8 +269,15 @@ export const GOALS: Goal[] = [
       { id: "waf", why: "Virtual patches until the code is fixed." },
     ],
     steps: [
-      { title: "Install the GitHub or GitLab app", body: "Pick the repositories to protect. Findings appear as pull request comments; push protection blocks verified secrets." },
-      { title: "Add the CI step", body: "Sign images and attach SBOMs in your release workflow.", code: "- uses: openasy/supply-chain-action@v1\n  with:\n    image: ghcr.io/acme/api:${{ github.ref_name }}" },
+      {
+        title: "Install the GitHub or GitLab app",
+        body: "Pick the repositories to protect. Findings appear as pull request comments; push protection blocks verified secrets.",
+      },
+      {
+        title: "Add the CI step",
+        body: "Sign images and attach SBOMs in your release workflow.",
+        code: "- uses: openasy/supply-chain-action@v1\n  with:\n    image: ghcr.io/acme/api:${{ github.ref_name }}",
+      },
     ],
     timeToValue: "About 20 minutes",
   },

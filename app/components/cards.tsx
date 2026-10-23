@@ -14,7 +14,10 @@ export function GoalCard({ goal }: { goal: Goal }) {
   const ready = readiness(goal.required);
   return (
     <li className="flex">
-      <Link to={`/goals/${goal.id}`} className="flex w-full flex-col gap-2 rounded-lg border border-line bg-surface p-5 text-fg no-underline hover:border-line-strong hover:shadow-raised">
+      <Link
+        to={`/goals/${goal.id}`}
+        className="flex w-full flex-col gap-2 rounded-lg border border-line bg-surface p-5 text-fg no-underline hover:border-line-strong hover:shadow-raised"
+      >
         <span className="text-base font-semibold">{goal.title}</span>
         <span className="text-sm text-fg-muted">“{goal.ask}”</span>
         <span className="mt-auto flex flex-col items-start gap-1.5 pt-2 text-xs text-fg-muted">
@@ -34,7 +37,10 @@ export function ProductCard({ id }: { id: string }) {
   const { status } = statusFor(id);
   return (
     <li className="flex">
-      <Link to={`/products/${id}`} className={cn("flex w-full items-start gap-3 rounded-lg border bg-surface p-4 text-fg no-underline hover:shadow-raised", CARD_BORDER[status])}>
+      <Link
+        to={`/products/${id}`}
+        className={cn("flex w-full items-start gap-3 rounded-lg border bg-surface p-4 text-fg no-underline hover:shadow-raised", CARD_BORDER[status])}
+      >
         <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-md bg-accent-soft text-accent-text">
           <p.icon className="size-4" />
         </span>
@@ -56,8 +62,13 @@ export function helmFor(id: string): { full: string; agentsOnly?: string } | und
   if (!s.helm) return undefined;
   const version = s.version ?? "";
   const cmd = (release: string, set: string[]) =>
-    [`helm install ${release} ${s.helm!.chart} --version ${version}`, "  --namespace openasy --create-namespace", ...set.map((x) => `  --set ${x}`)].join(" \\\n");
-  return { full: cmd(id === "vulnerabilities" ? "vulns" : id, s.helm.set ?? []), agentsOnly: s.helm.agentsOnly && cmd(`${id === "vulnerabilities" ? "vulns" : id}-agent`, s.helm.agentsOnly.set) };
+    [`helm install ${release} ${s.helm!.chart} --version ${version}`, "  --namespace openasy --create-namespace", ...set.map((x) => `  --set ${x}`)].join(
+      " \\\n",
+    );
+  return {
+    full: cmd(id === "vulnerabilities" ? "vulns" : id, s.helm.set ?? []),
+    agentsOnly: s.helm.agentsOnly && cmd(`${id === "vulnerabilities" ? "vulns" : id}-agent`, s.helm.agentsOnly.set),
+  };
 }
 
 /** vpn-server enrols with a one-time token from this release on, instead of sharing VPN_SERVER_TOKEN. */
@@ -222,7 +233,13 @@ export function composeFor(ids: string[]): string {
     ...(ids.includes("infrastructure") ? ["  infra-agent-data:"] : []),
     ...(ids.includes("logs") ? ["  logs-agent-data:"] : []),
   );
-  if (ids.some((id) => statusFor(id).signIn)) lines.push("secrets:", "  openasy-kek:", "    file: ./openasy-kek", ...(ids.some((id) => id === "infrastructure" || id === "logs") ? ["  openasy-agent-kek:", "    file: ./openasy-agent-kek"] : []));
+  if (ids.some((id) => statusFor(id).signIn))
+    lines.push(
+      "secrets:",
+      "  openasy-kek:",
+      "    file: ./openasy-kek",
+      ...(ids.some((id) => id === "infrastructure" || id === "logs") ? ["  openasy-agent-kek:", "    file: ./openasy-agent-kek"] : []),
+    );
   return lines.join("\n");
 }
 
@@ -237,6 +254,8 @@ export function composeRun(ids: string[]): string {
     ...(ids.some((id) => id === "infrastructure" || id === "logs") ? ["openssl rand -hex 32 > openasy-agent-kek   # the agent's own key"] : []),
     "docker compose up -d",
     ...signIn.map((id) => `docker compose logs ${id} | grep "no owner yet"   # one-time link that creates the owner`),
-    ...(ids.includes("vpn") && vpnEnrols() ? ["# add edge-1 under Servers in vpn, then start it with its one-time token:", "EDGE_1_TOKEN=ove_... docker compose up -d vpn-server"] : []),
+    ...(ids.includes("vpn") && vpnEnrols()
+      ? ["# add edge-1 under Servers in vpn, then start it with its one-time token:", "EDGE_1_TOKEN=ove_... docker compose up -d vpn-server"]
+      : []),
   ].join("\n");
 }

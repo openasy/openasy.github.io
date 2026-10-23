@@ -74,7 +74,13 @@ export function buildDevKit(secrets: Secrets): Install {
       env(`${prefix}PUBLIC_URL`, url(id)),
       ...(extra.env ?? []),
       // Its own client; the issuer waits in .env until setup has made the clients.
-      ...(sso ? [env("OPENASY_OIDC_ISSUER", "${OPENASY_OIDC_ISSUER:-}"), env("OPENASY_OIDC_CLIENT_ID", `\${${prefix}CLIENT_ID:-}`), env("OPENASY_OIDC_CLIENT_SECRET", `\${${prefix}CLIENT_SECRET:-}`)] : []),
+      ...(sso
+        ? [
+            env("OPENASY_OIDC_ISSUER", "${OPENASY_OIDC_ISSUER:-}"),
+            env("OPENASY_OIDC_CLIENT_ID", `\${${prefix}CLIENT_ID:-}`),
+            env("OPENASY_OIDC_CLIENT_SECRET", `\${${prefix}CLIENT_SECRET:-}`),
+          ]
+        : []),
       "    depends_on: [caddy]",
       "",
     ];
@@ -155,16 +161,44 @@ export function buildDevKit(secrets: Secrets): Install {
     "    depends_on: [vpn]",
     "",
     ...product("infrastructure", { volumes: hosts, env: [env("OPENASY_HOSTS", "/config/hosts.yaml")] }),
-    ...agent("infra-agent", `ghcr.io/openasy/infra-agent:${tag("infrastructure")}`, "openasy-agent-kek", ["    volumes:", "      - infra-agent-data:/data", "environment", "    environment:", env("INFRA_URL", "http://infra:8080"), env("INFRA_ENROLL_TOKEN", "${INFRA_ENROLL_TOKEN:-}"), "    depends_on: [infra]"]),
+    ...agent("infra-agent", `ghcr.io/openasy/infra-agent:${tag("infrastructure")}`, "openasy-agent-kek", [
+      "    volumes:",
+      "      - infra-agent-data:/data",
+      "environment",
+      "    environment:",
+      env("INFRA_URL", "http://infra:8080"),
+      env("INFRA_ENROLL_TOKEN", "${INFRA_ENROLL_TOKEN:-}"),
+      "    depends_on: [infra]",
+    ]),
     ...product("vulnerabilities", { volumes: hosts, env: [env("VULNS_INGEST_TOKEN", "${VULNS_INGEST_TOKEN}"), env("OPENASY_HOSTS", "/config/hosts.yaml")] }),
-    ...agent("vulns-agent", `ghcr.io/openasy/vulns-agent:${tag("vulnerabilities")}`, "", ["    hostname: docker-vm   # the Linux machine Docker runs in", "    volumes:", '      - "/:/host:ro"', "environment", "    environment:", env("VULNS_URL", "http://vulns:8080"), env("VULNS_INGEST_TOKEN", "${VULNS_INGEST_TOKEN}"), "    depends_on: [vulns]"]),
+    ...agent("vulns-agent", `ghcr.io/openasy/vulns-agent:${tag("vulnerabilities")}`, "", [
+      "    hostname: docker-vm   # the Linux machine Docker runs in",
+      "    volumes:",
+      '      - "/:/host:ro"',
+      "environment",
+      "    environment:",
+      env("VULNS_URL", "http://vulns:8080"),
+      env("VULNS_INGEST_TOKEN", "${VULNS_INGEST_TOKEN}"),
+      "    depends_on: [vulns]",
+    ]),
     ...ids
       .filter((id) => !OWN.includes(id))
       .flatMap((id) => {
         const { prefix, ingest, hosts: reads } = PARTS[id];
-        return product(id, { volumes: reads ? hosts : [], env: [...(ingest ? [env(`${prefix}INGEST_TOKEN`, `\${${prefix}INGEST_TOKEN}`)] : []), ...(reads ? [env("OPENASY_HOSTS", "/config/hosts.yaml")] : [])] });
+        return product(id, {
+          volumes: reads ? hosts : [],
+          env: [...(ingest ? [env(`${prefix}INGEST_TOKEN`, `\${${prefix}INGEST_TOKEN}`)] : []), ...(reads ? [env("OPENASY_HOSTS", "/config/hosts.yaml")] : [])],
+        });
       }),
-    ...agent("logs-agent", `ghcr.io/openasy/logs-agent:${tag("logs")}`, "openasy-logs-agent-kek", ["    volumes:", "      - logs-agent-data:/data", "environment", "    environment:", env("LOGS_URL", "http://logs:8080"), env("LOGS_ENROLL_TOKEN", "${LOGS_ENROLL_TOKEN:-}"), "    depends_on: [logs]"]),
+    ...agent("logs-agent", `ghcr.io/openasy/logs-agent:${tag("logs")}`, "openasy-logs-agent-kek", [
+      "    volumes:",
+      "      - logs-agent-data:/data",
+      "environment",
+      "    environment:",
+      env("LOGS_URL", "http://logs:8080"),
+      env("LOGS_ENROLL_TOKEN", "${LOGS_ENROLL_TOKEN:-}"),
+      "    depends_on: [logs]",
+    ]),
     "  # Two servers for Infrastructure and Logs to read, prepared as Infrastructure's Setup page says. web can also",
     "  # list this machine's containers through Docker.",
     "  host-web:",
@@ -253,11 +287,21 @@ export function buildDevKit(secrets: Secrets): Install {
   ].join("\n");
 
   // What setup.ts needs to know of each product: where it is, the prefix of its client in .env, its Identity template.
-  const setupProducts = ids.map((id) => ({ service: svc(id), url: url(id), prefix: PARTS[id].prefix, ...(PARTS[id].template && { template: PARTS[id].template }) }));
+  const setupProducts = ids.map((id) => ({
+    service: svc(id),
+    url: url(id),
+    prefix: PARTS[id].prefix,
+    ...(PARTS[id].template && { template: PARTS[id].template }),
+  }));
 
   const steps: InstallStep[] = [
     { title: "Download and unzip", text: "The folder holds its own keys, made in this browser and never sent." },
-    { title: "Start it", text: "setup wires the products together and says when it is done.", code: "docker compose up -d && docker compose logs -f setup", note: "The first start pulls the images and takes a few minutes." },
+    {
+      title: "Start it",
+      text: "setup wires the products together and says when it is done.",
+      code: "docker compose up -d && docker compose logs -f setup",
+      note: "The first start pulls the images and takes a few minutes.",
+    },
     {
       title: "Open Identity and sign in",
       text: `Go to ${url("identity")} as ${DEV_EMAIL} with the password "${DEV_PASSWORD}". Every other product then signs you in by itself.`,
@@ -266,8 +310,16 @@ export function buildDevKit(secrets: Secrets): Install {
     },
   ];
   const more: InstallStep[] = [
-    { title: "Trust the local CA", text: "Once, so the browser accepts https://*.localhost without a warning. On macOS:", code: "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db config/caddy-root.crt" },
-    { title: "Stop, or start over", text: "The first keeps the data. The second deletes it: unzip again to start from nothing.", code: "docker compose --profile wired down\ndocker compose --profile wired down -v" },
+    {
+      title: "Trust the local CA",
+      text: "Once, so the browser accepts https://*.localhost without a warning. On macOS:",
+      code: "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db config/caddy-root.crt",
+    },
+    {
+      title: "Stop, or start over",
+      text: "The first keeps the data. The second deletes it: unzip again to start from nothing.",
+      code: "docker compose --profile wired down\ndocker compose --profile wired down -v",
+    },
   ];
 
   const readme = [
@@ -276,7 +328,12 @@ export function buildDevKit(secrets: Secrets): Install {
     "Every released OpenAsy product, wired together the way a real install is, to try. Not for production: the dev",
     "account has a fixed password, HTTPS comes from a local CA, and setup drives Docker through its socket.",
     "",
-    ...[...steps, ...more].flatMap((s, i) => [`${i + 1}. **${s.title}.** ${s.text}`, ...(s.code ? ["", "   ```", ...s.code.split("\n").map((l) => `   ${l}`), "   ```"] : []), ...(s.note ? ["", `   ${s.note}`] : []), ""]),
+    ...[...steps, ...more].flatMap((s, i) => [
+      `${i + 1}. **${s.title}.** ${s.text}`,
+      ...(s.code ? ["", "   ```", ...s.code.split("\n").map((l) => `   ${l}`), "   ```"] : []),
+      ...(s.note ? ["", `   ${s.note}`] : []),
+      "",
+    ]),
     "| Product | Address |",
     "| --- | --- |",
     ...ids.map((id) => `| ${PARTS[id].name} | ${url(id)} |`),
@@ -294,14 +351,31 @@ export function buildDevKit(secrets: Secrets): Install {
     { name: "README.md", content: readme },
     {
       name: ".env",
-      content: ["# The dev setup's tokens and clients; setup/setup.ts adds to it. Keep out of git.", ...ingest.map((id) => `${PARTS[id].prefix}INGEST_TOKEN=${id === "vulnerabilities" ? secrets.ingest : secrets.tokens[id]}`)].join("\n"),
+      content: [
+        "# The dev setup's tokens and clients; setup/setup.ts adds to it. Keep out of git.",
+        ...ingest.map((id) => `${PARTS[id].prefix}INGEST_TOKEN=${id === "vulnerabilities" ? secrets.ingest : secrets.tokens[id]}`),
+      ].join("\n"),
       secret: true,
     },
     { name: "config/brand.env", content: brand },
-    { name: "config/auth.env", content: authFile({ OPENASY_OIDC_PROVIDER: "openasy-identity", OPENASY_OIDC_ROLE_MAPPING: ROLES, OPENASY_OIDC_AUTO_REDIRECT: "true" }, "Every product but Identity signs in through Identity; Identity keeps its own people.") },
+    {
+      name: "config/auth.env",
+      content: authFile(
+        { OPENASY_OIDC_PROVIDER: "openasy-identity", OPENASY_OIDC_ROLE_MAPPING: ROLES, OPENASY_OIDC_AUTO_REDIRECT: "true" },
+        "Every product but Identity signs in through Identity; Identity keeps its own people.",
+      ),
+    },
     { name: "config/hosts.yaml", content: hostsFile },
     { name: "config/Caddyfile", content: caddyfile },
-    { name: "config/prometheus.yml", content: ["global:", "  scrape_interval: 15s", "scrape_configs:", ...ids.map((id) => `  - job_name: ${svc(id)}\n    static_configs: [{ targets: ["${svc(id)}:8080"] }]`)].join("\n") },
+    {
+      name: "config/prometheus.yml",
+      content: [
+        "global:",
+        "  scrape_interval: 15s",
+        "scrape_configs:",
+        ...ids.map((id) => `  - job_name: ${svc(id)}\n    static_configs: [{ targets: ["${svc(id)}:8080"] }]`),
+      ].join("\n"),
+    },
     { name: "setup/setup.ts", content: SETUP.trimEnd() },
     { name: "setup/products.json", content: JSON.stringify(setupProducts, null, 2) },
     { name: "setup/code.ts", content: CODE.trimEnd() },
@@ -313,7 +387,10 @@ export function buildDevKit(secrets: Secrets): Install {
   const wiring = [
     { title: "Identity signs everyone in", text: `as ${DEV_EMAIL}, an admin in every product through openasy-admins.` },
     { title: "setup wires it once", text: "owners, applications and the agents' tokens, then it exits. Running it again skips what is done." },
-    { title: "Two servers in config/hosts.yaml", text: "read over SSH by Infrastructure and Logs; Vulnerabilities, Posture and Malware show they send no scan." },
+    {
+      title: "Two servers in config/hosts.yaml",
+      text: "read over SSH by Infrastructure and Logs; Vulnerabilities, Posture and Malware show they send no scan.",
+    },
     { title: "Caddy serves HTTPS", text: `on *.localhost:${PORT}, with a local CA you trust once.` },
     { title: "Released images only", text: `${ids.map((id) => `${PARTS[id].name} ${tag(id)}`).join(", ")}.` },
   ];

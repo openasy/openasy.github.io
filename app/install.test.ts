@@ -16,7 +16,15 @@ describe("install builder", () => {
   it("only offers released products, at their released version", () => {
     for (const id of INSTALLABLE) expect(statusFor(id).status).toBe("Preview");
     const out = build({ products: [...INSTALLABLE], signIn: "own" });
-    for (const [image, id] of [["identity", "identity"], ["vpn", "vpn"], ["vpn-server", "vpn"], ["infra", "infrastructure"], ["infra-agent", "infrastructure"], ["vulns", "vulnerabilities"], ["vulns-agent", "vulnerabilities"]] as const)
+    for (const [image, id] of [
+      ["identity", "identity"],
+      ["vpn", "vpn"],
+      ["vpn-server", "vpn"],
+      ["infra", "infrastructure"],
+      ["infra-agent", "infrastructure"],
+      ["vulns", "vulnerabilities"],
+      ["vulns-agent", "vulnerabilities"],
+    ] as const)
       expect(file(out, "compose.yaml")).toContain(`image: ghcr.io/openasy/${image}:${statusFor(id).version}`);
   });
 
@@ -78,7 +86,9 @@ describe("install builder", () => {
   });
 
   it("through Identity, products without a template are added as OpenID Connect applications", () => {
-    const text = build({ products: ["identity", "vpn", "siem"] }).steps.map((s) => s.text).join("\n");
+    const text = build({ products: ["identity", "vpn", "siem"] })
+      .steps.map((s) => s.text)
+      .join("\n");
     expect(text).toContain("add VPN from its template, and SIEM as OpenID Connect applications");
   });
 
@@ -112,9 +122,15 @@ describe("install builder", () => {
     expect(env).toContain("OPENASY_ORGANIZATION='AcmesCorp'");
     expect(env).toMatch(/^OPENASY_ACCENT=#0a66c2$/m);
     expect(env).toMatch(/^OPENASY_LOGO=\/config\/logo\.png$/m);
-    for (const name of ["identity", "vpn", "infra", "vulns"]) expect(service(file(out, "compose.yaml"), name)).toContain("- ./config/logo.png:/config/logo.png:ro");
+    for (const name of ["identity", "vpn", "infra", "vulns"])
+      expect(service(file(out, "compose.yaml"), name)).toContain("- ./config/logo.png:/config/logo.png:ro");
     expect(out.files.find((f) => f.name === "config/logo.png")).toMatchObject({ binary: true });
-    expect(out.files.filter((f) => f.secret).map((f) => f.name)).toEqual([".env", "secrets/openasy-kek", "secrets/openasy-agent-kek", "secrets/openasy-logs-agent-kek"]);
+    expect(out.files.filter((f) => f.secret).map((f) => f.name)).toEqual([
+      ".env",
+      "secrets/openasy-kek",
+      "secrets/openasy-agent-kek",
+      "secrets/openasy-logs-agent-kek",
+    ]);
     expect(file(build({ accent: "blue" }), "config/brand.env")).toMatch(/^# OPENASY_ACCENT=/m);
   });
 
@@ -186,12 +202,16 @@ describe("install builder", () => {
       expect(compose).toContain('"127.0.0.1:8081:8080"');
       expect(compose).toContain('"127.0.0.1:8180:8080"');
       const conf = file(out, `config/openasy-${proxy}.conf`);
-      for (const [name, port] of [["id.example.com", 8081], ["vpn.example.com", 8082], ["auth.example.com", 8180]] as const) {
+      for (const [name, port] of [
+        ["id.example.com", 8081],
+        ["vpn.example.com", 8082],
+        ["auth.example.com", 8180],
+      ] as const) {
         expect(conf).toContain(proxy === "nginx" ? `server_name ${name};` : `ServerName ${name}`);
         expect(conf).toContain(`http://127.0.0.1:${port}`);
       }
       // Identity builds its URLs from the scheme the proxy passes on.
-      expect(conf).toContain(proxy === "nginx" ? "X-Forwarded-Proto $scheme" : "X-Forwarded-Proto \"expr=%{REQUEST_SCHEME}\"");
+      expect(conf).toContain(proxy === "nginx" ? "X-Forwarded-Proto $scheme" : 'X-Forwarded-Proto "expr=%{REQUEST_SCHEME}"');
       expect(out.steps.some((s) => s.code?.includes(`sudo certbot --${proxy} -d id.example.com -d vpn.example.com -d auth.example.com`))).toBe(true);
       expect(out.hosts).toEqual(["id.example.com", "vpn.example.com", "auth.example.com"]);
     }
@@ -200,7 +220,10 @@ describe("install builder", () => {
   it("lists every volume and secret a service uses", () => {
     const compose = file(build({ products: [...INSTALLABLE], signIn: "keycloak", vpnTcp: true }), "compose.yaml");
     const [services, rest] = compose.split("\nvolumes:\n");
-    const declared = rest!.split("\nsecrets:\n")[0]!.split("\n").map((l) => l.trim().replace(/:$/, ""));
+    const declared = rest!
+      .split("\nsecrets:\n")[0]!
+      .split("\n")
+      .map((l) => l.trim().replace(/:$/, ""));
     for (const [, v] of services!.matchAll(/^ {6}- ([a-z-]+):\//gm)) expect(declared).toContain(v);
     expect(compose).toContain("  openasy-agent-kek:\n    file: ./secrets/openasy-agent-kek");
   });
@@ -221,7 +244,15 @@ describe("install builder", () => {
   it("the dev setup runs every released product from released images, and a setup container wires them", () => {
     const out = buildDevKit(secrets);
     const compose = file(out, "compose.yaml");
-    for (const [image, id] of [["identity", "identity"], ["vpn", "vpn"], ["vpn-server", "vpn"], ["infra", "infrastructure"], ["infra-agent", "infrastructure"], ["vulns", "vulnerabilities"], ["vulns-agent", "vulnerabilities"]] as const)
+    for (const [image, id] of [
+      ["identity", "identity"],
+      ["vpn", "vpn"],
+      ["vpn-server", "vpn"],
+      ["infra", "infrastructure"],
+      ["infra-agent", "infrastructure"],
+      ["vulns", "vulnerabilities"],
+      ["vulns-agent", "vulnerabilities"],
+    ] as const)
       expect(compose).toContain(`image: ghcr.io/openasy/${image}:${statusFor(id).version}`);
     // Only the two demo servers are built, from plain Debian; everything else is a pinned image.
     expect(compose.match(/^ {4}build:/gm)).toHaveLength(1);
@@ -240,12 +271,19 @@ describe("install builder", () => {
     expect(file(out, "setup/setup.ts")).toBe(SETUP.trimEnd());
     expect(file(out, ".env")).toContain(`VULNS_INGEST_TOKEN=${secrets.ingest}`);
     expect(file(out, "config/hosts.yaml")).toContain("address: host-web");
-    expect(out.files.filter((f) => f.secret).map((f) => f.name)).toEqual([".env", "secrets/openasy-kek", "secrets/openasy-agent-kek", "secrets/openasy-logs-agent-kek"]);
+    expect(out.files.filter((f) => f.secret).map((f) => f.name)).toEqual([
+      ".env",
+      "secrets/openasy-kek",
+      "secrets/openasy-agent-kek",
+      "secrets/openasy-logs-agent-kek",
+    ]);
     // Every released product runs, signs in through Identity, and setup knows where each one is.
     const products = JSON.parse(file(out, "setup/products.json")) as Array<{ service: string; template?: string }>;
     expect(products.map((p) => p.service)).toEqual(INSTALLABLE.map((id) => PARTS[id].service));
-    for (const id of INSTALLABLE.filter((id) => id !== "identity")) expect(service(compose, PARTS[id].service)).toContain("env_file: [config/brand.env, config/auth.env]");
-    for (const id of INSTALLABLE.filter((id) => PARTS[id].ingest)) expect(file(out, ".env")).toMatch(new RegExp(`^${PARTS[id].prefix}INGEST_TOKEN=[0-9a-f]{48}$`, "m"));
+    for (const id of INSTALLABLE.filter((id) => id !== "identity"))
+      expect(service(compose, PARTS[id].service)).toContain("env_file: [config/brand.env, config/auth.env]");
+    for (const id of INSTALLABLE.filter((id) => PARTS[id].ingest))
+      expect(file(out, ".env")).toMatch(new RegExp(`^${PARTS[id].prefix}INGEST_TOKEN=[0-9a-f]{48}$`, "m"));
     // The servers trust both agents' CAs, and Logs gets its agent.
     expect(service(compose, "host-db")).toContain("OPENASY_CA_LOGS: ${LOGS_AGENT_CA:-}");
     expect(service(compose, "logs-agent")).toContain("source: openasy-logs-agent-kek");

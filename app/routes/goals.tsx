@@ -7,7 +7,10 @@ import { PageTitle, Section } from "../components/site";
 import { GoalCard, product } from "../components/cards";
 
 export function meta() {
-  return [{ title: "Goals · OpenAsy" }, { name: "description", content: "Install guides by goal: a VPN, an audit, data loss, who did what, breach detection, uptime, secure code and cloud cost." }];
+  return [
+    { title: "Goals · OpenAsy" },
+    { name: "description", content: "Install guides by goal: a VPN, an audit, data loss, who did what, breach detection, uptime, secure code and cloud cost." },
+  ];
 }
 
 const LEGEND: Array<[Readiness, string]> = [
@@ -52,7 +55,9 @@ export default function Goals() {
   const rest = GOALS.filter((g) => !ready.includes(g));
   return (
     <Section className="py-12" labelledBy="title">
-      <PageTitle title="Start from a goal">Pick what you need done. Each guide names the smallest set of products, how long it takes, and whether you can run it today.</PageTitle>
+      <PageTitle title="Start from a goal">
+        Pick what you need done. Each guide names the smallest set of products, how long it takes, and whether you can run it today.
+      </PageTitle>
       <ul aria-label="What the labels mean" className="mt-5 flex list-none flex-wrap gap-x-5 gap-y-2 p-0 text-sm text-fg-muted">
         {LEGEND.map(([r, text]) => (
           <li key={r} className="flex items-center gap-2">

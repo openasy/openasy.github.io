@@ -6,7 +6,11 @@ import { ButtonLink, PageTitle, Section } from "../components/site";
 export function meta() {
   return [
     { title: "Support · OpenAsy" },
-    { name: "description", content: "OpenAsy is free and open source. Support plans give you guaranteed response times, help with installs and upgrades, and 24/7 cover for critical issues." },
+    {
+      name: "description",
+      content:
+        "OpenAsy is free and open source. Support plans give you guaranteed response times, help with installs and upgrades, and 24/7 cover for critical issues.",
+    },
   ];
 }
 
@@ -14,7 +18,10 @@ export default function Support() {
   return (
     <>
       <Section className="pt-12 pb-6" labelledBy="title">
-        <PageTitle title="Support">Every product is free and open source. When it runs something you depend on, we stand behind it with you: answers in a guaranteed time, help with installs and upgrades, and someone to call when it matters.</PageTitle>
+        <PageTitle title="Support">
+          Every product is free and open source. When it runs something you depend on, we stand behind it with you: answers in a guaranteed time, help with
+          installs and upgrades, and someone to call when it matters.
+        </PageTitle>
       </Section>
 
       <Section className="py-2" labelledBy="plans">
@@ -46,7 +53,9 @@ export default function Support() {
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-sm text-fg-muted">Every plan uses the same open-source code. Nothing is locked, and you can stop paying at any time without losing anything.</p>
+        <p className="mt-3 text-sm text-fg-muted">
+          Every plan uses the same open-source code. Nothing is locked, and you can stop paying at any time without losing anything.
+        </p>
       </Section>
 
       <Section className="py-8" labelledBy="response">

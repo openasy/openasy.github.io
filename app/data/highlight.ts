@@ -13,7 +13,7 @@ export function languageOf(name: string): Language {
   const base = name.slice(name.lastIndexOf("/") + 1);
   if (/\.ya?ml$/.test(base)) return "yaml";
   if (/(^|\.)env$/.test(base)) return "env";
-  if (/\.ts$/.test(base)) return "ts";
+  if (base.endsWith(".ts")) return "ts";
   if (base === "Caddyfile" || base.endsWith(".conf")) return "conf";
   if (base.endsWith(".md")) return "md";
   return "text";
@@ -29,29 +29,23 @@ const RULES: Record<Exclude<Language, "text" | "md">, Rule[]> = {
     ["punct", /(?<=\s|^)[&*][A-Za-z0-9_-]+|^\s*-(?=\s)|[[\]{}]/y],
     ["literal", /(?<=[\s[,]|^)(true|false|null|-?\d+(\.\d+)?)(?=[\s,\]}]|$)/y],
   ],
-  env: [
-    ["comment", /^\s*#.*/y],
-    ["key", /^[A-Za-z_][A-Za-z0-9_]*(?==)/y],
-    STRING,
-  ],
+  env: [["comment", /^\s*#.*/y], ["key", /^[A-Za-z_][A-Za-z0-9_]*(?==)/y], STRING],
   ts: [
     ["comment", /\/\/.*|\/\*.*?\*\//y],
     ["string", /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/y],
-    ["keyword", /\b(?:import|from|export|const|let|var|function|async|await|return|if|else|for|of|in|while|break|continue|new|throw|try|catch|class|extends|interface|type|as|typeof)\b/y],
+    [
+      "keyword",
+      /\b(?:import|from|export|const|let|var|function|async|await|return|if|else|for|of|in|while|break|continue|new|throw|try|catch|class|extends|interface|type|as|typeof)\b/y,
+    ],
     ["literal", /\b(?:true|false|null|undefined|\d[\d_]*(\.\d+)?)\b/y],
   ],
-  conf: [
-    ["comment", /(?<=^|\s)#.*/y],
-    STRING,
-    ["key", /(?<=^\s*)<?\/?[A-Za-z_][A-Za-z0-9_-]*/y],
-    ["punct", /[{};]/y],
-  ],
+  conf: [["comment", /(?<=^|\s)#.*/y], STRING, ["key", /(?<=^\s*)<?\/?[A-Za-z_][A-Za-z0-9_-]*/y], ["punct", /[{};]/y]],
 };
 
 function line(text: string, rules: Rule[]): Token[] {
   const out: Token[] = [];
   let plain = "";
-  for (let i = 0; i < text.length; ) {
+  for (let i = 0; i < text.length;) {
     let hit: Token | null = null;
     for (const [kind, re] of rules) {
       re.lastIndex = i;
@@ -65,7 +59,7 @@ function line(text: string, rules: Rule[]): Token[] {
       plain += text[i++];
       continue;
     }
-    if (plain) out.push({ text: plain, kind: "plain" }), (plain = "");
+    if (plain) (out.push({ text: plain, kind: "plain" }), (plain = ""));
     out.push(hit);
     i += hit.text.length;
   }
@@ -86,7 +80,10 @@ export function highlight(content: string, language: Language): Token[][] {
       }
       if (fenced) return [{ text: l, kind: "string" }];
       if (/^#{1,6} /.test(l)) return [{ text: l, kind: "heading" }];
-      return line(l, [["string", /`[^`]+`/y], ["punct", /^\s*(\d+\.|[-*|])(?=\s)|\|/y]]);
+      return line(l, [
+        ["string", /`[^`]+`/y],
+        ["punct", /^\s*(\d+\.|[-*|])(?=\s)|\|/y],
+      ]);
     });
   }
   return lines.map((l) => line(l, RULES[language]));

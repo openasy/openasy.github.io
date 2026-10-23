@@ -38,10 +38,15 @@ const env = new Map<string, string>(
 );
 const setEnv = (k: string, v: string) => {
   env.set(k, v.includes("\n") || v.includes(" ") ? `'${v.replace(/\n/g, "\\n")}'` : v);
-  writeFileSync(ENV, `# The dev setup's tokens and clients, written by setup/setup.ts. Keep out of git.\n${[...env].map(([a, b]) => `${a}=${b}`).join("\n")}\n`, { mode: 0o600 });
+  writeFileSync(
+    ENV,
+    `# The dev setup's tokens and clients, written by setup/setup.ts. Keep out of git.\n${[...env].map(([a, b]) => `${a}=${b}`).join("\n")}\n`,
+    { mode: 0o600 },
+  );
 };
 
-const compose = (...args: string[]) => execFileSync("docker", ["compose", "--profile", "wired", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+const compose = (...args: string[]) =>
+  execFileSync("docker", ["compose", "--profile", "wired", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const step = (s: string) => console.log(`\n▸ ${s}`);
 
@@ -56,7 +61,13 @@ function totp(secret: string, at = Date.now()) {
 
 async function ready(p: Product) {
   for (let i = 0; i < 180; i++) {
-    if (await fetch(`http://${p.service}:8080/healthz`).then((r) => r.ok, () => false)) return;
+    if (
+      await fetch(`http://${p.service}:8080/healthz`).then(
+        (r) => r.ok,
+        () => false,
+      )
+    )
+      return;
     await sleep(1000);
   }
   throw new Error(`${p.service} did not start: docker compose logs ${p.service}`);
@@ -93,7 +104,10 @@ async function owner(p: Product) {
     .split("\n")
     .find((l) => l.includes("no owner yet"));
   const link = line && /"url":"([^"]+)"/.exec(line)?.[1];
-  if (!link) throw new Error(`${p.service}: no one-time owner link in its log, and no token in ${STATE}. Start over: docker compose --profile wired down -v, and unzip again`);
+  if (!link)
+    throw new Error(
+      `${p.service}: no one-time owner link in its log, and no token in ${STATE}. Start over: docker compose --profile wired down -v, and unzip again`,
+    );
   await call("/api/v1/auth/setup", { token: new URL(link).searchParams.get("setup"), name: "Dev", email: EMAIL, password: PASSWORD });
   const { secret } = await call<{ secret: string }>("/api/v1/auth/me/totp", {});
   await call("/api/v1/auth/me/totp/confirm", { code: totp(secret) });
@@ -115,7 +129,14 @@ for (let i = 0; ; i++) {
   }
 }
 // The products run as a non-root user: they may read the root certificate, never the CA's keys.
-compose("exec", "-T", "caddy", "sh", "-c", "cd /data/caddy/pki/authorities/local && chmod o+x /data/caddy/pki /data/caddy/pki/authorities . && chmod o+r root.crt");
+compose(
+  "exec",
+  "-T",
+  "caddy",
+  "sh",
+  "-c",
+  "cd /data/caddy/pki/authorities/local && chmod o+x /data/caddy/pki /data/caddy/pki/authorities . && chmod o+r root.crt",
+);
 compose("cp", "caddy:/data/caddy/pki/authorities/local/root.crt", "config/caddy-root.crt");
 
 step("Starting the products");
@@ -140,7 +161,13 @@ for (const p of PRODUCTS.filter((x) => x.service !== "identity")) {
   // A product with a template in Identity is added from it; any other as an OpenID Connect application.
   const body = p.template
     ? { name: p.service, template: p.template, url: p.url, everyone: true }
-    : { name: p.service, template: "oidc", redirectUris: [`${p.url}/api/v1/auth/oidc/openasy-identity/callback`], postLogoutRedirectUris: [p.url], everyone: true };
+    : {
+        name: p.service,
+        template: "oidc",
+        redirectUris: [`${p.url}/api/v1/auth/oidc/openasy-identity/callback`],
+        postLogoutRedirectUris: [p.url],
+        everyone: true,
+      };
   const r = await id<{ application: { id: string }; clientSecret: string }>("/api/v1/applications", body);
   setEnv(`${p.prefix}CLIENT_ID`, r.application.id);
   setEnv(`${p.prefix}CLIENT_SECRET`, r.clientSecret);
@@ -176,13 +203,18 @@ for (const a of AGENTS) {
   if (setup.sudoers) setEnv("INFRA_AGENT_SUDOERS", setup.sudoers);
 }
 compose("up", "-d", "--build", "host-web", "host-db");
-for (const [name, service] of [["web", "host-web"], ["db", "host-db"]] as const) {
+for (const [name, service] of [
+  ["web", "host-web"],
+  ["db", "host-db"],
+] as const) {
   // The same check an admin makes: the key each agent saw is the one the server prints.
   const printed = compose("exec", "-T", service, "ssh-keygen", "-lf", "/etc/ssh/ssh_host_ed25519_key.pub").split(" ")[1];
   for (const a of AGENTS) {
     const call = api[a.product]!;
     for (let i = 0; i < 60; i++) {
-      const host = (await call<{ hosts: Array<{ id: string; name: string; hostKeys: unknown[]; pendingHostKeys: Array<{ fingerprint: string }> }> }>("/api/v1/hosts")).hosts.find((h) => h.name === name);
+      const host = (
+        await call<{ hosts: Array<{ id: string; name: string; hostKeys: unknown[]; pendingHostKeys: Array<{ fingerprint: string }> }> }>("/api/v1/hosts")
+      ).hosts.find((h) => h.name === name);
       if (host?.hostKeys.length) break;
       if (host && host.pendingHostKeys[0]?.fingerprint === printed) {
         await call(`/api/v1/hosts/${host.id}/host-key/accept`, { fingerprint: printed });

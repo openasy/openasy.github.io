@@ -75,7 +75,10 @@ export const apiFor = (id: string): ApiInfo | undefined => APIS[id as ProductId]
 /** Follows a local "#/components/..." reference. */
 export function resolve<T extends { $ref?: string }>(spec: OpenApi, value: T): T {
   if (!value.$ref) return value;
-  const target = value.$ref.replace(/^#\//, "").split("/").reduce<unknown>((node, key) => (node as Record<string, unknown>)?.[key], spec);
+  const target = value.$ref
+    .replace(/^#\//, "")
+    .split("/")
+    .reduce<unknown>((node, key) => (node as Record<string, unknown>)?.[key], spec);
   return resolve(spec, target as T);
 }
 

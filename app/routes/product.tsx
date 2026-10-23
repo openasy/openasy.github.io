@@ -87,7 +87,9 @@ function RunIt({ id }: { id: string }) {
       />
       {way === "compose" ? (
         <>
-          <p className="mt-3 mb-0 text-fg-muted">One host, one file. The agent in the file covers this host; add it to others with the command under Add a host.</p>
+          <p className="mt-3 mb-0 text-fg-muted">
+            One host, one file. The agent in the file covers this host; add it to others with the command under Add a host.
+          </p>
           {compose}
         </>
       ) : (
@@ -127,7 +129,10 @@ export default function ProductPage() {
         <Link to="/products">Products</Link> <span className="text-fg-muted">/</span>
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-3.5">
-        <span aria-hidden className={cn("grid size-12 place-items-center rounded-xl", released ? "bg-accent-soft text-accent-text" : "bg-subtle text-fg-muted")}>
+        <span
+          aria-hidden
+          className={cn("grid size-12 place-items-center rounded-xl", released ? "bg-accent-soft text-accent-text" : "bg-subtle text-fg-muted")}
+        >
           <p.icon className="size-6" />
         </span>
         <h1 id="title" className="m-0 text-4xl font-semibold tracking-tight">
@@ -167,7 +172,11 @@ export default function ProductPage() {
               <ul aria-label="Features" className="mt-4 flex list-none flex-col overflow-hidden rounded-xl border border-line bg-surface p-0">
                 {s.features.map((f) => (
                   <li key={f.title} className={cn("flex items-start gap-3 border-line px-4 py-3 not-first:border-t", !f.done && "bg-canvas text-fg-muted")}>
-                    {f.done ? <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" /> : <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-fg-subtle" />}
+                    {f.done ? (
+                      <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
+                    ) : (
+                      <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-fg-subtle" />
+                    )}
                     <span className="grow">
                       {f.title}
                       {!f.done && <span className="sr-only"> (not yet)</span>}
@@ -187,7 +196,8 @@ export default function ProductPage() {
                 {s.status === "In progress" ? "Being built now" : "Not built yet"}
               </h2>
               <p className="mt-3 mb-0 max-w-xl text-base text-fg-muted">
-                The screens are designed, so you can click through how it will work today. There is no image to install yet; this page will show what works once there is.
+                The screens are designed, so you can click through how it will work today. There is no image to install yet; this page will show what works once
+                there is.
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 <ButtonLink to={storyUrl(p.name)} variant="primary" size="lg" external>
@@ -211,13 +221,14 @@ export default function ProductPage() {
               <RunIt id={id} />
               {(INSTALLABLE as readonly string[]).includes(id) && (
                 <p className="mt-3 mb-0">
-                  Running it with other products? <Link to={`/install?products=${id}`}>Build one setup</Link> in which they sign in through Identity or Keycloak and share one key.
+                  Running it with other products? <Link to={`/install?products=${id}`}>Build one setup</Link> in which they sign in through Identity or Keycloak
+                  and share one key.
                 </p>
               )}
               {s.signIn && (
                 <p className="mt-3 mb-0">
-                  People sign in with a password and a second factor, or with your identity provider: <Link to="/sign-in">sign-in guides</Link> for Keycloak, Microsoft Entra ID, Okta, Google and
-                  others.
+                  People sign in with a password and a second factor, or with your identity provider: <Link to="/sign-in">sign-in guides</Link> for Keycloak,
+                  Microsoft Entra ID, Okta, Google and others.
                 </p>
               )}
               {guide && (
@@ -278,7 +289,10 @@ export default function ProductPage() {
               <ul className="mt-4 flex list-none flex-wrap gap-2 p-0">
                 {withStatus(PRODUCT_IDS, "Preview").map((rid) => (
                   <li key={rid}>
-                    <Link to={`/products/${rid}`} className="inline-flex h-10 items-center gap-2 rounded-md border border-accent px-3.5 font-semibold text-fg no-underline hover:shadow-raised">
+                    <Link
+                      to={`/products/${rid}`}
+                      className="inline-flex h-10 items-center gap-2 rounded-md border border-accent px-3.5 font-semibold text-fg no-underline hover:shadow-raised"
+                    >
                       {product(rid).name} <ProductStatusBadge id={rid} />
                     </Link>
                   </li>

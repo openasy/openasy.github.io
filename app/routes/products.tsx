@@ -26,7 +26,10 @@ export default function Products() {
   const ids = SORTED.filter((id) => (status === "all" || statusFor(id).status === status) && (group === "all" || PRODUCTS[id].group === group));
   return (
     <Section className="py-12" labelledBy="title">
-      <PageTitle title="Products">Each one is its own container with its own users, data and API. Run one, or link them to share people and alerts. Products that work with the same servers or endpoints read them from one file you mount in each.</PageTitle>
+      <PageTitle title="Products">
+        Each one is its own container with its own users, data and API. Run one, or link them to share people and alerts. Products that work with the same
+        servers or endpoints read them from one file you mount in each.
+      </PageTitle>
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <SegmentedControl
           label="Status"
@@ -34,7 +37,10 @@ export default function Products() {
           className="max-w-full flex-wrap"
           value={status}
           onChange={setStatus}
-          options={[{ value: "all", label: `All (${PRODUCT_IDS.length})` }, ...STATUSES.map((s) => ({ value: s.value, label: `${s.label} (${count(s.value)})` }))]}
+          options={[
+            { value: "all", label: `All (${PRODUCT_IDS.length})` },
+            ...STATUSES.map((s) => ({ value: s.value, label: `${s.label} (${count(s.value)})` })),
+          ]}
         />
         <SegmentedControl
           label="Product group"

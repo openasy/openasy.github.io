@@ -211,7 +211,11 @@ sshd -t && systemctl reload ssh`,
       },
     ],
     features: [
-      { title: "One infra-agent per network reads hosts over SSH with 5-minute certificates, trusted for one unprivileged account only; nothing installed on hosts", done: true },
+      {
+        title:
+          "One infra-agent per network reads hosts over SSH with 5-minute certificates, trusted for one unprivileged account only; nothing installed on hosts",
+        done: true,
+      },
       { title: "The agent keeps the SSH keys and runs only its own script: a compromised Infrastructure cannot run commands on hosts", done: true },
       { title: "System, processes, listening ports, services, cron, accounts, sudo, SSH keys, packages, firewall, storage and network", done: true },
       { title: "Every change kept: a new account, an opened port, a package version, a reboot", done: true },
@@ -220,7 +224,11 @@ sshd -t && systemctl reload ssh`,
       { title: "Kubernetes through its API with a read-only token: nodes, workloads, pods, services, volumes, cluster admins", done: true },
       { title: "Hosts in other networks through jump hosts", done: true },
       { title: "Optional read-only sudo rules with fixed arguments, checked against every known way out", done: true },
-      { title: "Servers from a file that Logs, Vulnerabilities, Posture, Malware and Backups read too (OPENASY_HOSTS); a host key named there is trusted without an admin", done: true },
+      {
+        title:
+          "Servers from a file that Logs, Vulnerabilities, Posture, Malware and Backups read too (OPENASY_HOSTS); a host key named there is trusted without an admin",
+        done: true,
+      },
       { title: "Cloud accounts (AWS, Hetzner and others) and hosts without SSH access", done: false },
       { title: "Package lists to Vulnerabilities, so hosts need no vulns-agent", done: false },
       { title: "Windows over SSH or WinRM", done: false },
@@ -335,9 +343,7 @@ sshd -t && systemctl reload ssh`,
       { title: "Other products open an incident over the API; the same reference never opens two", done: true },
       { title: "Open incidents from SIEM, Alerts and Uptime, and notifications", done: false },
     ],
-    upstream: [
-      { name: "SQLite", url: "https://sqlite.org/", role: "incidents, timeline and tasks" },
-    ],
+    upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "incidents, timeline and tasks" }],
   },
   errors: {
     status: "Preview",
@@ -351,9 +357,7 @@ sshd -t && systemctl reload ssh`,
       { title: "Per-project rate limit and scrubbing of passwords and tokens", done: true },
       { title: "SDKs and source maps", done: false },
     ],
-    upstream: [
-      { name: "SQLite", url: "https://sqlite.org/", role: "projects, issues and events" },
-    ],
+    upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "projects, issues and events" }],
   },
   "supply-chain": {
     status: "Preview",
@@ -497,7 +501,11 @@ sshd -t && systemctl reload ssh`,
       { title: "Rightsizing recommendations", done: false },
     ],
     upstream: [
-      { name: "AWS Cost Explorer", url: "https://aws.amazon.com/aws-cost-management/aws-cost-explorer/", role: "spend, converted by a script in the repository" },
+      {
+        name: "AWS Cost Explorer",
+        url: "https://aws.amazon.com/aws-cost-management/aws-cost-explorer/",
+        role: "spend, converted by a script in the repository",
+      },
       { name: "SQLite", url: "https://sqlite.org/", role: "spend, rules, budgets and anomalies" },
     ],
     note: "Cost reads what a pipeline sends and holds no cloud credentials, so its figures are as fresh as the last export.",
@@ -588,7 +596,11 @@ sshd -t && systemctl reload ssh`,
         label: "Panel inside, server at the edge",
         fits: "When the panel must not be reachable from the internet: only the VPN port is open to the world.",
         steps: [
-          { title: "Run the panel on an internal host", text: "Behind your TLS proxy. Only the people who manage it and the vpn-server hosts reach it.", code: VPN_PANEL },
+          {
+            title: "Run the panel on an internal host",
+            text: "Behind your TLS proxy. Only the people who manage it and the vpn-server hosts reach it.",
+            code: VPN_PANEL,
+          },
           { title: "Add the server", text: "Under Servers, add edge-1 with the public address clients connect to. You get a one-time token." },
           {
             title: "Start vpn-server on the edge host",
@@ -604,8 +616,15 @@ sshd -t && systemctl reload ssh`,
         fits: "Offices or regions, or a second server to fall back to: one panel, a vpn-server at each location.",
         steps: [
           { title: "Run the panel once", text: "On an internal host, as for one server at the edge.", code: VPN_PANEL },
-          { title: "Add a server per location", text: "Under Servers, one per host, each with its own address, for example fra-1 at fra.vpn.example.com and ist-1 at ist.vpn.example.com. Each gets its own one-time token." },
-          { title: "Start vpn-server at each location", text: "With that location's token. Each server reaches the panel over HTTPS and gets its own secret.", code: vpnServer("fra.vpn.example.com, then the same on ist.vpn.example.com with its token") },
+          {
+            title: "Add a server per location",
+            text: "Under Servers, one per host, each with its own address, for example fra-1 at fra.vpn.example.com and ist-1 at ist.vpn.example.com. Each gets its own one-time token.",
+          },
+          {
+            title: "Start vpn-server at each location",
+            text: "With that location's token. Each server reaches the panel over HTTPS and gets its own secret.",
+            code: vpnServer("fra.vpn.example.com, then the same on ist.vpn.example.com with its token"),
+          },
           {
             title: "Then add devices",
             text: "Each device's file lists every server that has reported, so clients move to the next one when a server is down. Start the servers first: a file lists the servers there were when it was made. Access applies on every server, so each must reach the networks your IP groups allow.",

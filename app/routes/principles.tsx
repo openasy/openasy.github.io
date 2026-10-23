@@ -3,7 +3,10 @@ import { ADR_INDEX, PRINCIPLES, adrUrl, type ImplementationStatus, type Principl
 import { PageTitle, Section } from "../components/site";
 
 export function meta() {
-  return [{ title: "Principles · OpenAsy" }, { name: "description", content: "The design decisions every OpenAsy product follows, and how far each one is built." }];
+  return [
+    { title: "Principles · OpenAsy" },
+    { name: "description", content: "The design decisions every OpenAsy product follows, and how far each one is built." },
+  ];
 }
 
 const IMPLEMENTATION_TONE: Record<ImplementationStatus, "success" | "warning" | "neutral"> = {
@@ -12,7 +15,11 @@ const IMPLEMENTATION_TONE: Record<ImplementationStatus, "success" | "warning" | 
   "Not started": "neutral",
 };
 
-const BAR: Record<ImplementationStatus, string> = { Implemented: "bg-success", "In progress": "bg-warning", "Not started": "bg-subtle border border-line-strong" };
+const BAR: Record<ImplementationStatus, string> = {
+  Implemented: "bg-success",
+  "In progress": "bg-warning",
+  "Not started": "bg-subtle border border-line-strong",
+};
 
 const PRIORITY_TONE = { Critical: "danger", High: "warning", Medium: "neutral" } as const;
 
@@ -66,7 +73,10 @@ export default function Principles() {
   const proposed = PRINCIPLES.filter((p) => p.decision === "Proposed");
   return (
     <Section className="py-12" labelledBy="title">
-      <PageTitle title="Principles">The decisions every product follows, each a public record with its reasons. A decision says how we build; its status says how much of it ships today. Change one with a pull request.</PageTitle>
+      <PageTitle title="Principles">
+        The decisions every product follows, each a public record with its reasons. A decision says how we build; its status says how much of it ships today.
+        Change one with a pull request.
+      </PageTitle>
 
       <Progress />
 

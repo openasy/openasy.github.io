@@ -46,7 +46,12 @@ function SchemaView({ spec, schema, depth = 0 }: { spec: OpenApi; schema: Schema
     return (
       <p className="m-0 font-mono text-xs">
         {typeOf(s)}
-        {s.description && <span className="font-sans text-fg-muted"> · <Text>{s.description}</Text></span>}
+        {s.description && (
+          <span className="font-sans text-fg-muted">
+            {" "}
+            · <Text>{s.description}</Text>
+          </span>
+        )}
       </p>
     );
   }
@@ -64,7 +69,11 @@ function SchemaView({ spec, schema, depth = 0 }: { spec: OpenApi; schema: Schema
             <span className="font-mono font-semibold text-fg">{name}</span>
             {s.required?.includes(name) && <span className="text-danger-text"> *</span>}
             <span className="ml-2 font-mono text-fg-muted">{typeOf(prop)}</span>
-            {prop.description && <span className="block text-fg-muted"><Text>{prop.description}</Text></span>}
+            {prop.description && (
+              <span className="block text-fg-muted">
+                <Text>{prop.description}</Text>
+              </span>
+            )}
             {prop.pattern && <span className="block font-mono text-fg-subtle">pattern {prop.pattern}</span>}
             {prop.examples && <span className="block text-fg-subtle">e.g. {prop.examples.map((e) => JSON.stringify(e)).join(", ")}</span>}
             {nested && depth < 3 && <SchemaView spec={spec} schema={nested} depth={depth + 1} />}
@@ -87,7 +96,11 @@ function OperationCard({ spec, method, path, op }: { spec: OpenApi; method: stri
         {auth.length > 0 && <Badge tone="warning">Needs {auth.join(", ")}</Badge>}
       </div>
       <div className="flex flex-col gap-3 px-4 py-3">
-        {op.description && <p className="m-0 text-sm"><Text>{op.description}</Text></p>}
+        {op.description && (
+          <p className="m-0 text-sm">
+            <Text>{op.description}</Text>
+          </p>
+        )}
         {body && (
           <section aria-label={`Request body for ${method.toUpperCase()} ${path}`}>
             <h4 className="m-0 mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">Request body · {body[0]}</h4>
@@ -141,7 +154,11 @@ export default function ProductApi() {
       <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
         <Badge tone="neutral">{spec.info.version}</Badge> OpenAPI {spec.openapi}
       </p>
-      {spec.info.description && <p className="mt-3 max-w-3xl"><Text>{spec.info.description}</Text></p>}
+      {spec.info.description && (
+        <p className="mt-3 max-w-3xl">
+          <Text>{spec.info.description}</Text>
+        </p>
+      )}
       <p className="mt-2 max-w-3xl text-sm text-fg-muted">
         Every install serves this reference with <em>Try it out</em> at <code className="font-mono">/api/docs/</code>, and the description at{" "}
         <code className="font-mono">/api/openapi.json</code>.
@@ -173,7 +190,11 @@ export default function ProductApi() {
           <h2 id={`tag-${t.name}`} className="m-0 text-xl font-semibold">
             {t.name}
           </h2>
-          {t.description && <p className="mt-1 text-sm text-fg-muted"><Text>{t.description}</Text></p>}
+          {t.description && (
+            <p className="mt-1 text-sm text-fg-muted">
+              <Text>{t.description}</Text>
+            </p>
+          )}
           <ul className="mt-3 flex list-none flex-col gap-3 p-0">
             {operations
               .filter((o) => o.tag === t.name)
@@ -189,7 +210,10 @@ export default function ProductApi() {
           <h2 id="errors" className="m-0 text-xl font-semibold">
             Errors
           </h2>
-          <p className="mt-1 text-sm text-fg-muted">Every error is <code className="font-mono">application/problem+json</code> (RFC 9457). Match on <code className="font-mono">code</code>; show <code className="font-mono">detail</code>.</p>
+          <p className="mt-1 text-sm text-fg-muted">
+            Every error is <code className="font-mono">application/problem+json</code> (RFC 9457). Match on <code className="font-mono">code</code>; show{" "}
+            <code className="font-mono">detail</code>.
+          </p>
           <div className="mt-3 rounded-lg border border-line bg-surface p-4">
             <SchemaView spec={spec} schema={problem} />
           </div>

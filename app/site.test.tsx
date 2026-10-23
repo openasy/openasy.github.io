@@ -142,7 +142,8 @@ describe("pages", () => {
     expect(screen.getByRole("listitem", { name: /Initial access: covered today by (.*, )?VPN/ })).toBeInTheDocument();
     // Every stage says which released products watch it, or which coming product will.
     const { stages } = coverage(withStatus(PRODUCT_IDS, "Preview") as ProductId[]);
-    for (const s of stages) expect(screen.getByRole("listitem", { name: new RegExp(`^${s.name}: covered ${s.live.length ? "today" : "once"}`) })).toBeInTheDocument();
+    for (const s of stages)
+      expect(screen.getByRole("listitem", { name: new RegExp(`^${s.name}: covered ${s.live.length ? "today" : "once"}`) })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Replay a phishing/ })).toHaveAttribute("href", BREACH_STORY);
   });
 
@@ -183,7 +184,11 @@ describe("pages", () => {
 
     await userEvent.click(screen.getByRole("tab", { name: "Several locations" }));
     const steps = screen.getByRole("list", { name: "Steps: Several locations" });
-    expect(within(steps).getAllByRole("heading").map((h) => h.textContent)).toEqual(["Run the panel once", "Add a server per location", "Start vpn-server at each location", "Then add devices"]);
+    expect(
+      within(steps)
+        .getAllByRole("heading")
+        .map((h) => h.textContent),
+    ).toEqual(["Run the panel once", "Add a server per location", "Start vpn-server at each location", "Then add devices"]);
     expect(screen.getByLabelText("Start vpn-server at each location")).toHaveTextContent("ghcr.io/openasy/vpn-server:0.6.0");
     expect(screen.queryByLabelText("compose.yaml for VPN")).not.toBeInTheDocument();
   });
@@ -210,7 +215,9 @@ describe("pages", () => {
 
   it("the sign-in guides follow the presets and the reader's product address", async () => {
     open("/sign-in");
-    const tabs = within(screen.getByRole("tablist", { name: "Identity provider" })).getAllByRole("tab").map((t) => t.textContent);
+    const tabs = within(screen.getByRole("tablist", { name: "Identity provider" }))
+      .getAllByRole("tab")
+      .map((t) => t.textContent);
     expect(tabs).toEqual(["Keycloak", "Microsoft Entra ID", "Okta", "Google", "authentik", "ZITADEL", "OpenAsy Identity", "Another OpenID Connect provider"]);
     expect(screen.getByText("https://vpn.example.com/api/v1/auth/oidc/keycloak/callback")).toBeInTheDocument();
     const address = screen.getByLabelText("Your product's address");
@@ -285,7 +292,17 @@ describe("pages", () => {
   });
 
   it("the header leaves Support to the footer", () => {
-    const Stub = createRoutesStub([{ path: "/", Component: () => (<><SiteHeader theme="system" onThemeChange={() => {}} /><SiteFooter /></>) }]);
+    const Stub = createRoutesStub([
+      {
+        path: "/",
+        Component: () => (
+          <>
+            <SiteHeader theme="system" onThemeChange={() => {}} />
+            <SiteFooter />
+          </>
+        ),
+      },
+    ]);
     render(<Stub initialEntries={["/"]} />);
     expect(screen.getByRole("navigation", { name: "Main" })).not.toHaveTextContent("Support");
     expect(screen.getByRole("navigation", { name: "Footer" })).toHaveTextContent("Support");

@@ -6,4 +6,13 @@ afterEach(() => cleanup());
 
 // jsdom has no matchMedia; the site follows the system colour scheme through it.
 window.matchMedia ??= (query: string) =>
-  ({ matches: false, media: query, onchange: null, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false }) as MediaQueryList;
+  ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent: () => false,
+  }) as MediaQueryList;

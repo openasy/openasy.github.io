@@ -9,7 +9,8 @@ export function meta() {
     { title: "Sign in with your identity provider · OpenAsy" },
     {
       name: "description",
-      content: "Connect Keycloak, Microsoft Entra ID, Okta, Google, authentik, ZITADEL or OpenAsy Identity to any OpenAsy product: the steps at the provider and in the product.",
+      content:
+        "Connect Keycloak, Microsoft Entra ID, Okta, Google, authentik, ZITADEL or OpenAsy Identity to any OpenAsy product: the steps at the provider and in the product.",
     },
   ];
 }
@@ -27,7 +28,14 @@ function Guide({ id }: { id: string }) {
   const mapping = p.id === "google" ? undefined : p.id === "entra" ? "<group object id> = admin" : "ops-admins = admin";
   return (
     <div className="mt-6 flex flex-col gap-8">
-      <TextField label="Your product's address" mono value={product} onChange={(e) => setProduct(e.target.value)} hint="The address people open it at; the redirect URI below follows it." className="max-w-md" />
+      <TextField
+        label="Your product's address"
+        mono
+        value={product}
+        onChange={(e) => setProduct(e.target.value)}
+        hint="The address people open it at; the redirect URI below follows it."
+        className="max-w-md"
+      />
 
       <section aria-labelledby="at-provider">
         <h2 id="at-provider" className="m-0 text-xl font-semibold">
@@ -59,7 +67,9 @@ function Guide({ id }: { id: string }) {
         <h2 id="in-product" className="m-0 text-xl font-semibold">
           2. In the product
         </h2>
-        <p className="mt-2 text-fg-muted">As an owner, open Settings, Sign-in, add a provider and choose {name}. The page shows the same steps and the redirect URI to copy.</p>
+        <p className="mt-2 text-fg-muted">
+          As an owner, open Settings, Sign-in, add a provider and choose {name}. The page shows the same steps and the redirect URI to copy.
+        </p>
         <dl className="mt-3 grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 text-sm">
           <dt className="text-fg-muted">Issuer</dt>
           <dd className="m-0 font-mono break-all">{p.issuerExample}</dd>
@@ -71,7 +81,8 @@ function Guide({ id }: { id: string }) {
             <>
               <dt className="text-fg-muted">Roles from groups</dt>
               <dd className="m-0">
-                One <code className="font-mono">group = role</code> per line, for example <code className="font-mono">{mapping}</code>. Groups then decide the role at every sign-in.
+                One <code className="font-mono">group = role</code> per line, for example <code className="font-mono">{mapping}</code>. Groups then decide the
+                role at every sign-in.
               </dd>
             </>
           )}
@@ -83,9 +94,10 @@ function Guide({ id }: { id: string }) {
           Or in the environment
         </h2>
         <p className="mt-2 text-fg-muted">
-          For installs set up by scripts. The names are the same in every product, so an install sets them once; only the client is each product&apos;s. A provider set here has
-          the id <code className="font-mono">sso</code>, so its redirect URI ends in <code className="font-mono">/api/v1/auth/oidc/sso/callback</code>. Add <code className="font-mono">OPENASY_OIDC_AUTO_REDIRECT=true</code> to
-          open the provider straight from the sign-in page.
+          For installs set up by scripts. The names are the same in every product, so an install sets them once; only the client is each product&apos;s. A
+          provider set here has the id <code className="font-mono">sso</code>, so its redirect URI ends in{" "}
+          <code className="font-mono">/api/v1/auth/oidc/sso/callback</code>. Add <code className="font-mono">OPENASY_OIDC_AUTO_REDIRECT=true</code> to open the
+          provider straight from the sign-in page.
         </p>
         <CodeBlock
           label={`Environment for ${name}`}
@@ -95,7 +107,9 @@ function Guide({ id }: { id: string }) {
             `OPENASY_OIDC_ISSUER=${p.issuerExample}`,
             "OPENASY_OIDC_CLIENT_ID=...",
             "OPENASY_OIDC_CLIENT_SECRET=...",
-            ...(mapping ? [`OPENASY_OIDC_ROLE_MAPPING=${mapping.replace(/ = /, "=").replace(/[<>]/g, "")}`] : ["OPENASY_OIDC_ALLOWED_DOMAINS=example.com", "OPENASY_OIDC_DEFAULT_ROLE=viewer"]),
+            ...(mapping
+              ? [`OPENASY_OIDC_ROLE_MAPPING=${mapping.replace(/ = /, "=").replace(/[<>]/g, "")}`]
+              : ["OPENASY_OIDC_ALLOWED_DOMAINS=example.com", "OPENASY_OIDC_DEFAULT_ROLE=viewer"]),
           ].join("\n")}
         />
       </section>
@@ -107,8 +121,17 @@ export default function SignIn() {
   const [provider, setProvider] = useState("keycloak");
   return (
     <Section className="py-12" labelledBy="title">
-      <PageTitle title="Sign in with your identity provider">Every OpenAsy product signs people in with a password and an authenticator app or a passkey. To use the accounts you already have, connect your identity provider: people sign in with it, its MFA applies, and its groups can decide their role.</PageTitle>
-      <Tabs label="Identity provider" value={provider} onChange={setProvider} className="mt-6" items={PRESETS.map((p) => ({ value: p.id, label: title(p.id, p.name) }))} />
+      <PageTitle title="Sign in with your identity provider">
+        Every OpenAsy product signs people in with a password and an authenticator app or a passkey. To use the accounts you already have, connect your identity
+        provider: people sign in with it, its MFA applies, and its groups can decide their role.
+      </PageTitle>
+      <Tabs
+        label="Identity provider"
+        value={provider}
+        onChange={setProvider}
+        className="mt-6"
+        items={PRESETS.map((p) => ({ value: p.id, label: title(p.id, p.name) }))}
+      />
       <Guide key={provider} id={provider} />
 
       <section aria-labelledby="none-yet" className="mt-12 rounded-xl border border-line bg-surface p-6">
@@ -117,10 +140,12 @@ export default function SignIn() {
         </h2>
         <ul className="mt-3 flex list-disc flex-col gap-2 pl-5">
           <li>
-            <Link to="/products/identity">OpenAsy Identity</Link>: single sign-on for every OpenAsy product and your other applications, with MFA per group, in one container.
+            <Link to="/products/identity">OpenAsy Identity</Link>: single sign-on for every OpenAsy product and your other applications, with MFA per group, in
+            one container.
           </li>
           <li>
-            <a href={`${GITHUB}/auth/tree/main/examples/keycloak`}>A ready Keycloak</a>: a compose file with a realm in which every OpenAsy product is a client, with groups and a groups claim.
+            <a href={`${GITHUB}/auth/tree/main/examples/keycloak`}>A ready Keycloak</a>: a compose file with a realm in which every OpenAsy product is a client,
+            with groups and a groups claim.
           </li>
         </ul>
       </section>

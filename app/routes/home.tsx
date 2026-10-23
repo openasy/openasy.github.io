@@ -12,7 +12,10 @@ import { BreachToday } from "../components/breach";
 export function meta() {
   return [
     { title: "OpenAsy · Open-source tools to run and secure your infrastructure" },
-    { name: "description", content: "38 open-source products for operations and security. Run one, or all of them together. Self-hosted, SQLite by default, no telemetry." },
+    {
+      name: "description",
+      content: "38 open-source products for operations and security. Run one, or all of them together. Self-hosted, SQLite by default, no telemetry.",
+    },
   ];
 }
 
@@ -186,14 +189,20 @@ export default function Home() {
               Run and secure your infrastructure with tools you own.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[#b0bdd3]">
-              {PRODUCT_IDS.length} products for operations and security that work alone, together, or next to what you already run. {readyLine} Your data never leaves your
-              network.
+              {PRODUCT_IDS.length} products for operations and security that work alone, together, or next to what you already run. {readyLine} Your data never
+              leaves your network.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <a href="#available" className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#1f4fd8] px-5 font-semibold text-white no-underline hover:bg-[#1a44bb]">
+              <a
+                href="#available"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#1f4fd8] px-5 font-semibold text-white no-underline hover:bg-[#1a44bb]"
+              >
                 {released.length === 1 ? `Try the ${product(released[0]!).name}` : "Try what is ready"} <ArrowRight aria-hidden className="size-4" />
               </a>
-              <Link to="/goals" className="inline-flex h-11 items-center justify-center rounded-md border border-[#3c4e72] px-5 font-medium text-[#e8eef7] no-underline hover:bg-[#16233b]">
+              <Link
+                to="/goals"
+                className="inline-flex h-11 items-center justify-center rounded-md border border-[#3c4e72] px-5 font-medium text-[#e8eef7] no-underline hover:bg-[#16233b]"
+              >
                 Start from a goal
               </Link>
             </div>
@@ -207,7 +216,11 @@ export default function Home() {
                 <span className="ml-2 grow font-mono text-xs text-[#93a2bd]">compose.yaml</span>
                 <span className="rounded bg-[#12301f] px-2 py-0.5 text-xs font-semibold text-[#4cc38a]">Preview {vpnTag}</span>
               </div>
-              <pre tabIndex={0} aria-label="compose.yaml for the VPN" className="m-0 overflow-x-auto p-3.5 font-mono text-[12px] leading-relaxed text-[#e8eef7] sm:p-5 sm:text-[13px]">
+              <pre
+                tabIndex={0}
+                aria-label="compose.yaml for the VPN"
+                className="m-0 overflow-x-auto p-3.5 font-mono text-[12px] leading-relaxed text-[#e8eef7] sm:p-5 sm:text-[13px]"
+              >
                 <code>{HERO_COMPOSE}</code>
               </pre>
             </div>
@@ -228,7 +241,12 @@ export default function Home() {
         <div className="grid gap-px overflow-hidden rounded-xl border border-line bg-line shadow-overlay sm:grid-cols-3">
           {[
             { n: released.length, label: "Ready to try", text: `${names(released)}, released for testing.`, tone: "text-success" },
-            { n: building.length, label: "In progress", text: building.length ? `${names(building)}, being built now.` : "The next one starts soon.", tone: "text-warning-text" },
+            {
+              n: building.length,
+              label: "In progress",
+              text: building.length ? `${names(building)}, being built now.` : "The next one starts soon.",
+              tone: "text-warning-text",
+            },
             { n: designed, label: "Designed", text: "Every screen is in Storybook. Click through them now.", tone: "" },
           ].map((c) => (
             <div key={c.label} className="bg-surface p-6">
@@ -245,7 +263,9 @@ export default function Home() {
         <h2 id="available" className="mt-2 mb-0 scroll-mt-20 text-3xl font-semibold tracking-tight">
           Ready to try, and what is next
         </h2>
-        <p className="mt-3 max-w-2xl text-base text-fg-muted">A product ships when it works on its own. Each card says exactly what works today and what does not yet.</p>
+        <p className="mt-3 max-w-2xl text-base text-fg-muted">
+          A product ships when it works on its own. Each card says exactly what works today and what does not yet.
+        </p>
         <ul aria-label="Released and in progress products" className="mt-8 grid list-none gap-5 p-0 lg:grid-cols-2">
           {released.map((id) => (
             <ReleasedCard key={id} id={id} />
@@ -260,7 +280,9 @@ export default function Home() {
         <h2 id="goals" className="m-0 text-3xl font-semibold tracking-tight">
           What do you need?
         </h2>
-        <p className="mt-3 max-w-2xl text-base text-fg-muted">Start from the problem, not the product list. Each guide names the smallest set of products and how to install them.</p>
+        <p className="mt-3 max-w-2xl text-base text-fg-muted">
+          Start from the problem, not the product list. Each guide names the smallest set of products and how to install them.
+        </p>
         <ul className="mt-8 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4">
           {GOALS.map((g) => (
             <GoalCard key={g.id} goal={g} />
@@ -304,7 +326,9 @@ export default function Home() {
             <h2 id="catalog" className="m-0 text-3xl font-semibold tracking-tight">
               All {PRODUCT_IDS.length} products
             </h2>
-            <p className="mt-3 mb-4 text-base text-fg-muted">Each is its own container with its own users, data and API. Linked, they share hosts, people and alerts.</p>
+            <p className="mt-3 mb-4 text-base text-fg-muted">
+              Each is its own container with its own users, data and API. Linked, they share hosts, people and alerts.
+            </p>
             <Legend />
           </div>
           <ButtonLink to="/products" size="lg">
@@ -323,7 +347,10 @@ export default function Home() {
                 <ul aria-label={`${g.name} products`} className="m-0 flex list-none flex-wrap gap-1.5 p-0">
                   {ids.map((id) => (
                     <li key={id}>
-                      <Link to={`/products/${id}`} className={cn("inline-block rounded-md border px-2.5 py-1 text-sm no-underline hover:shadow-raised", CHIP[statusFor(id).status])}>
+                      <Link
+                        to={`/products/${id}`}
+                        className={cn("inline-block rounded-md border px-2.5 py-1 text-sm no-underline hover:shadow-raised", CHIP[statusFor(id).status])}
+                      >
                         {PRODUCTS[id].name}
                       </Link>
                     </li>
