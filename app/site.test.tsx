@@ -65,8 +65,8 @@ describe("data", () => {
 
   it("builds one service and one volume per product", () => {
     const yaml = composeFor(["vpn", "logs"]);
-    expect(yaml).toContain("image: ghcr.io/openasy/vpn:0.6.0");
-    expect(yaml).toContain("image: ghcr.io/openasy/vpn-server:0.6.0");
+    expect(yaml).toContain("image: ghcr.io/openasy/vpn:0.7.0");
+    expect(yaml).toContain("image: ghcr.io/openasy/vpn-server:0.7.0");
     // Sign-in: no admin token, a secrets key, and the address cookies and passkeys are bound to.
     expect(yaml).not.toContain("ADMIN_TOKEN");
     expect(yaml).toContain("VPN_PUBLIC_URL: http://localhost:8443");
@@ -164,13 +164,13 @@ describe("pages", () => {
 
   it("the VPN product page shows what works, what it is built on and how to connect", () => {
     open("/products/vpn");
-    expect(screen.getByText("Preview 0.6.0")).toBeInTheDocument();
+    expect(screen.getByText("Preview 0.7.0")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Features" })).toHaveTextContent("Command line tool, openasy-vpn");
     expect(screen.getByRole("list", { name: "Features" })).not.toHaveTextContent("(not yet)");
     expect(screen.getByRole("link", { name: "OpenVPN" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Connect a device" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "OpenVPN Connect" }).length).toBeGreaterThanOrEqual(4);
-    expect(screen.getByLabelText("compose.yaml for VPN")).toHaveTextContent("vpn:0.6.0");
+    expect(screen.getByLabelText("compose.yaml for VPN")).toHaveTextContent("vpn:0.7.0");
   });
 
   it("the VPN product page offers ways to deploy", async () => {
@@ -189,7 +189,7 @@ describe("pages", () => {
         .getAllByRole("heading")
         .map((h) => h.textContent),
     ).toEqual(["Run the panel once", "Add a server per location", "Start vpn-server at each location", "Then add devices"]);
-    expect(screen.getByLabelText("Start vpn-server at each location")).toHaveTextContent("ghcr.io/openasy/vpn-server:0.6.0");
+    expect(screen.getByLabelText("Start vpn-server at each location")).toHaveTextContent("ghcr.io/openasy/vpn-server:0.7.0");
     expect(screen.queryByLabelText("compose.yaml for VPN")).not.toBeInTheDocument();
   });
 

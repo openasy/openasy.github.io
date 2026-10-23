@@ -111,7 +111,7 @@ export function makeSecrets(fill: (bytes: Uint8Array<ArrayBuffer>) => void): Sec
 export const THIRD_PARTY = {
   keycloak: "quay.io/keycloak/keycloak:26.8.1",
   postgres: "postgres:17.6",
-  caddy: "caddy:2.10.2",
+  caddy: "caddy:2.11.7",
   prometheus: "prom/prometheus:v3.5.0",
 };
 const REALM = "https://raw.githubusercontent.com/openasy/auth/v0.4.0/examples/keycloak/openasy-realm.json";
@@ -246,11 +246,11 @@ const AUTH_SETTINGS: Array<[string, string, string]> = [
   ["OPENASY_OIDC_GROUPS_CLAIM", "Where the groups are in the token; a dotted path reads a nested claim.", "groups"],
 ];
 
-/** auth.env: how people sign in, the same in every product that loads it (ADR 0002). Each product's client is in .env. */
-export function authFile(values: Record<string, string>, intro?: string): string {
+/** auth.env: how people sign in, the same in every product that loads it (ADR 0002). Each product's client is in `clients`. */
+export function authFile(values: Record<string, string>, intro?: string, clients = ".env"): string {
   return [
     "# How people sign in, the same in every product that loads this file (ADR 0002). Each product's own client, its",
-    "# issuer, ID and secret, is in .env. After a change: docker compose up -d",
+    `# issuer, ID and secret, is in ${clients}. After a change: docker compose up -d`,
     ...(intro ? ["#", `# ${intro}`] : []),
     ...AUTH_SETTINGS.flatMap(([k, what, example]) => ["", `# ${what}`, k in values ? `${k}=${values[k]}` : `# ${k}=${example}`]),
   ].join("\n");
@@ -833,7 +833,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       const plain = apps.filter((id) => !PARTS[id].template);
       const how = [
         templated.length && `${names(templated)} from ${templated.length > 1 ? "their templates" : "its template"}`,
-        plain.length && `${names(plain)} as OpenID Connect applications with the redirect URI https://<its address>/api/v1/auth/oidc/openasy-identity/callback`,
+        plain.length && `${names(plain)} as OpenID Connect applications with the redirect URI https://<its address>/api/v1/auth/oidc/sso/callback`,
       ]
         .filter(Boolean)
         .join(", and ");
@@ -844,7 +844,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     }
     if (unrealmed.length)
       steps.push({
-        text: `In Keycloak, add ${names(unrealmed)} as clients of the openasy realm, with the redirect URI https://<its address>/api/v1/auth/oidc/keycloak/callback. Put each one's issuer, client ID and secret in .env.`,
+        text: `In Keycloak, add ${names(unrealmed)} as clients of the openasy realm, with the redirect URI https://<its address>/api/v1/auth/oidc/sso/callback. Put each one's issuer, client ID and secret in .env.`,
       });
     if (provider)
       steps.push({

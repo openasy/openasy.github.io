@@ -117,7 +117,7 @@ docker run -d --name vpn-server --restart unless-stopped \\
 export const STATUS: Partial<Record<string, ProductState>> = {
   vulnerabilities: {
     status: "Preview",
-    version: "0.2.0",
+    version: "0.3.0",
     signIn: true,
     note: "Serve it over HTTPS and set VULNS_PUBLIC_URL to that address: cookies and passkeys need it. There is no email yet, so invitations and password resets are links an admin sends.",
     helm: {
@@ -178,7 +178,7 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_API_TOKEN" -H 'content-type: ap
   },
   infrastructure: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.2.0",
     signIn: true,
     note: "infra-agent holds the SSH certificate authority your hosts trust, sealed with its own key: keep openasy-agent-kek apart from its volume, and run one agent per network. Serve Infrastructure over HTTPS.",
     guides: [
@@ -242,7 +242,7 @@ sshd -t && systemctl reload ssh`,
   },
   logs: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.2.0",
     signIn: true,
     features: [
       { title: "Syslog over TLS, OpenTelemetry, Loki, Elasticsearch bulk and JSON lines, each source with its own token", done: true },
@@ -558,7 +558,7 @@ sshd -t && systemctl reload ssh`,
   },
   vpn: {
     status: "Preview",
-    version: "0.6.0",
+    version: "0.7.0",
     signIn: true,
     note: "openasy-kek seals the CA key, server keys and sign-in secrets (ADR 0021). Keep it apart from the data volume and with your backups: vpn does not start without it. Serve the UI over HTTPS.",
     features: [

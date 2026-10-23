@@ -262,13 +262,23 @@ describe("install builder", () => {
     // The products wait for setup, which mounts this folder at the same path so compose finds its files.
     expect(service(compose, "identity")).toContain("profiles: [wired]");
     expect(service(compose, "setup")).toContain("- .:${PWD}");
-    for (const name of ["vpn", "infra", "vulns"]) expect(service(compose, name)).toContain("env_file: [config/brand.env, config/auth.env]");
+    // The demo servers' inline Dockerfile needs BuildKit, which compose in setup's container builds with only through buildx.
+    expect(service(compose, "setup")).toContain("docker-cli-buildx");
+    // Each product loads its own client from the file setup writes, and none is in compose or .env.
+    for (const name of ["vpn", "infra", "vulns"])
+      expect(service(compose, name)).toContain(`env_file: [config/brand.env, config/auth.env, { path: secrets/oidc/${name}.env, required: false }]`);
     expect(service(compose, "identity")).toContain("env_file: [config/brand.env]");
+    expect(compose).not.toContain("OIDC_");
+    expect(file(out, ".env")).not.toContain("CLIENT");
+    expect(file(out, "config/auth.env")).toContain("is in secrets/oidc, written by setup.");
     expect(file(out, "config/auth.env")).toMatch(/^OPENASY_OIDC_AUTO_REDIRECT=true$/m);
     for (const name of ["infra", "vulns"]) expect(service(compose, name)).toContain("OPENASY_HOSTS: /config/hosts.yaml");
     // Every $ meant for the shell in the demo servers is escaped from compose.
     expect(compose).not.toMatch(/[^$]\$(OPENASY_|\()/);
     expect(file(out, "setup/setup.ts")).toBe(SETUP.trimEnd());
+    // The products read their client from the environment, where @openasy/auth calls the provider sso.
+    expect(SETUP).toContain("/api/v1/auth/oidc/sso/callback");
+    expect(SETUP).not.toMatch(/auth\/oidc\/(?!sso\/)[a-z-]+\/callback/);
     expect(file(out, ".env")).toContain(`VULNS_INGEST_TOKEN=${secrets.ingest}`);
     expect(file(out, "config/hosts.yaml")).toContain("address: host-web");
     expect(out.files.filter((f) => f.secret).map((f) => f.name)).toEqual([
@@ -278,10 +288,10 @@ describe("install builder", () => {
       "secrets/openasy-logs-agent-kek",
     ]);
     // Every released product runs, signs in through Identity, and setup knows where each one is.
-    const products = JSON.parse(file(out, "setup/products.json")) as Array<{ service: string; template?: string }>;
+    const products = JSON.parse(file(out, "setup/products.json")) as Array<{ service: string; clientFile: string; template?: string }>;
     expect(products.map((p) => p.service)).toEqual(INSTALLABLE.map((id) => PARTS[id].service));
-    for (const id of INSTALLABLE.filter((id) => id !== "identity"))
-      expect(service(compose, PARTS[id].service)).toContain("env_file: [config/brand.env, config/auth.env]");
+    for (const p of products.filter((p) => p.service !== "identity"))
+      expect(service(compose, p.service)).toContain(`config/auth.env, { path: ${p.clientFile}, required: false }]`);
     for (const id of INSTALLABLE.filter((id) => PARTS[id].ingest))
       expect(file(out, ".env")).toMatch(new RegExp(`^${PARTS[id].prefix}INGEST_TOKEN=[0-9a-f]{48}$`, "m"));
     // The servers trust both agents' CAs, and Logs gets its agent.

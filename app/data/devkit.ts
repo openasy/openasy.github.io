@@ -15,6 +15,8 @@ export const DEV_FOLDER = "openasy-dev";
 const PORT = 8443;
 const ROLES = "openasy-admins=admin,openasy-editors=editor,openasy-viewers=viewer";
 const url = (id: Installable) => `https://${PARTS[id].sub}.localhost:${PORT}`;
+/** Where setup writes a product's client, under the names the product reads (OPENASY_OIDC_*). */
+export const clientFile = (id: Installable) => `secrets/oidc/${PARTS[id].service}.env`;
 /** The products with a service of their own below; every other one is the same hardened container. */
 const OWN = ["identity", "vpn", "infrastructure", "vulnerabilities"];
 
@@ -68,19 +70,13 @@ export function buildDevKit(secrets: Secrets): Install {
       "      - caddy-data:/caddy:ro",
       ...(extra.volumes ?? []),
       "    secrets: [openasy-kek]",
-      `    env_file: [config/brand.env${sso ? ", config/auth.env" : ""}]`,
+      // Its own client, issuer, ID and secret, in a file setup writes once it has made the clients; until then the
+      // product starts without sign-in through Identity.
+      sso ? `    env_file: [config/brand.env, config/auth.env, { path: ${clientFile(id)}, required: false }]` : "    env_file: [config/brand.env]",
       "    environment:",
       "      <<: [*trust, *products]",
       env(`${prefix}PUBLIC_URL`, url(id)),
       ...(extra.env ?? []),
-      // Its own client; the issuer waits in .env until setup has made the clients.
-      ...(sso
-        ? [
-            env("OPENASY_OIDC_ISSUER", "${OPENASY_OIDC_ISSUER:-}"),
-            env("OPENASY_OIDC_CLIENT_ID", `\${${prefix}CLIENT_ID:-}`),
-            env("OPENASY_OIDC_CLIENT_SECRET", `\${${prefix}CLIENT_SECRET:-}`),
-          ]
-        : []),
       "    depends_on: [caddy]",
       "",
     ];
@@ -132,7 +128,7 @@ export function buildDevKit(secrets: Secrets): Install {
     "  # agents' tokens (setup/setup.ts). It drives compose through the Docker socket, which is why this is for dev only.",
     "  setup:",
     `    image: ${DEV_IMAGES.node}`,
-    '    command: ["sh", "-c", "apk add --no-cache docker-cli docker-cli-compose >/dev/null && exec node setup/setup.ts"]',
+    '    command: ["sh", "-c", "apk add --no-cache docker-cli docker-cli-compose docker-cli-buildx >/dev/null && exec node setup/setup.ts"]',
     "    working_dir: ${PWD}",
     "    volumes:",
     "      - /var/run/docker.sock:/var/run/docker.sock",
@@ -286,11 +282,11 @@ export function buildDevKit(secrets: Secrets): Install {
     "# OPENASY_LOGO=/config/logo.svg",
   ].join("\n");
 
-  // What setup.ts needs to know of each product: where it is, the prefix of its client in .env, its Identity template.
+  // What setup.ts needs to know of each product: where it is, the file for its client, its Identity template.
   const setupProducts = ids.map((id) => ({
     service: svc(id),
     url: url(id),
-    prefix: PARTS[id].prefix,
+    clientFile: clientFile(id),
     ...(PARTS[id].template && { template: PARTS[id].template }),
   }));
 
@@ -342,7 +338,8 @@ export function buildDevKit(secrets: Secrets): Install {
     "What is set up: Identity signs everyone in, with groups that decide the role in each product. VPN has a server on",
     "UDP 1194. Infrastructure's and Logs' agents read the two servers in config/hosts.yaml over SSH; Vulnerabilities,",
     "Posture and Malware show which of them send no scan. Products that take data from CI have their ingest token in",
-    ".env. config/brand.env holds the brand and config/auth.env the sign-in: change them and run docker compose up -d.",
+    ".env, and each product's client is in secrets/oidc. config/brand.env holds the brand and config/auth.env the",
+    "sign-in: change them and run docker compose up -d.",
   ].join("\n");
 
   const ingest = ids.filter((id) => PARTS[id].ingest);
@@ -352,7 +349,7 @@ export function buildDevKit(secrets: Secrets): Install {
     {
       name: ".env",
       content: [
-        "# The dev setup's tokens and clients; setup/setup.ts adds to it. Keep out of git.",
+        "# The dev setup's tokens; setup/setup.ts adds to it. Keep out of git.",
         ...ingest.map((id) => `${PARTS[id].prefix}INGEST_TOKEN=${id === "vulnerabilities" ? secrets.ingest : secrets.tokens[id]}`),
       ].join("\n"),
       secret: true,
@@ -363,6 +360,7 @@ export function buildDevKit(secrets: Secrets): Install {
       content: authFile(
         { OPENASY_OIDC_PROVIDER: "openasy-identity", OPENASY_OIDC_ROLE_MAPPING: ROLES, OPENASY_OIDC_AUTO_REDIRECT: "true" },
         "Every product but Identity signs in through Identity; Identity keeps its own people.",
+        "secrets/oidc, written by setup",
       ),
     },
     { name: "config/hosts.yaml", content: hostsFile },

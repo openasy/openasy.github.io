@@ -5,6 +5,7 @@
 import { execFileSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 
 const STATE = "secrets/dev.json";
 const ENV = ".env";
@@ -15,7 +16,7 @@ const ROLES = ["openasy-admins", "openasy-editors", "openasy-viewers"];
 interface Product {
   service: string;
   url: string;
-  prefix: string;
+  clientFile: string;
   template?: string;
 }
 // Every product in compose.yaml, Identity first: written with this script by openasy.github.io/install.
@@ -27,22 +28,24 @@ type State = { totp: Record<string, string>; tokens: Record<string, string> };
 const state: State = existsSync(STATE) ? JSON.parse(readFileSync(STATE, "utf8")) : { totp: {}, tokens: {} };
 const save = () => writeFileSync(STATE, JSON.stringify(state, null, 2), { mode: 0o600 });
 
-// .env keeps what the site made (the ingest token) and gains what is made here.
-const env = new Map<string, string>(
-  existsSync(ENV)
-    ? readFileSync(ENV, "utf8")
-        .split("\n")
-        .filter((l) => l.includes("=") && !l.startsWith("#"))
-        .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)])
-    : [],
-);
-const setEnv = (k: string, v: string) => {
-  env.set(k, v.includes("\n") || v.includes(" ") ? `'${v.replace(/\n/g, "\\n")}'` : v);
-  writeFileSync(
-    ENV,
-    `# The dev setup's tokens and clients, written by setup/setup.ts. Keep out of git.\n${[...env].map(([a, b]) => `${a}=${b}`).join("\n")}\n`,
-    { mode: 0o600 },
+// .env keeps what the site made (the ingest tokens) and gains what is made here. It is read again before each write,
+// so a line added while setup runs is kept.
+const readEnv = () =>
+  new Map<string, string>(
+    existsSync(ENV)
+      ? readFileSync(ENV, "utf8")
+          .split("\n")
+          .filter((l) => l.includes("=") && !l.startsWith("#"))
+          .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)])
+      : [],
   );
+const env = readEnv();
+const setEnv = (k: string, v: string) => {
+  for (const [a, b] of readEnv()) if (!env.has(a)) env.set(a, b);
+  env.set(k, v.includes("\n") || v.includes(" ") ? `'${v.replace(/\n/g, "\\n")}'` : v);
+  writeFileSync(ENV, `# The dev setup's tokens, written by setup/setup.ts. Keep out of git.\n${[...env].map(([a, b]) => `${a}=${b}`).join("\n")}\n`, {
+    mode: 0o600,
+  });
 };
 
 const compose = (...args: string[]) =>
@@ -155,22 +158,27 @@ for (const name of ROLES) {
   if (name === "openasy-admins") await id(`/api/v1/groups/${g.id}/members`, { userIds: [me.id] }, "PUT");
 }
 const apps = (await id<{ applications: Array<{ name: string }> }>("/api/v1/applications")).applications;
-setEnv("OPENASY_OIDC_ISSUER", byName("identity").url);
 for (const p of PRODUCTS.filter((x) => x.service !== "identity")) {
-  if (apps.some((a) => a.name === p.service) && env.get(`${p.prefix}CLIENT_SECRET`)) continue;
+  if (apps.some((a) => a.name === p.service) && existsSync(p.clientFile)) continue;
   // A product with a template in Identity is added from it; any other as an OpenID Connect application.
   const body = p.template
     ? { name: p.service, template: p.template, url: p.url, everyone: true }
     : {
         name: p.service,
         template: "oidc",
-        redirectUris: [`${p.url}/api/v1/auth/oidc/openasy-identity/callback`],
+        // A provider set in the environment has the id sso (@openasy/auth).
+        redirectUris: [`${p.url}/api/v1/auth/oidc/sso/callback`],
         postLogoutRedirectUris: [p.url],
         everyone: true,
       };
   const r = await id<{ application: { id: string }; clientSecret: string }>("/api/v1/applications", body);
-  setEnv(`${p.prefix}CLIENT_ID`, r.application.id);
-  setEnv(`${p.prefix}CLIENT_SECRET`, r.clientSecret);
+  // compose loads this file into the product alone (env_file), so each product sees only its own secret.
+  mkdirSync(dirname(p.clientFile), { recursive: true });
+  writeFileSync(
+    p.clientFile,
+    `OPENASY_OIDC_ISSUER=${byName("identity").url}\nOPENASY_OIDC_CLIENT_ID=${r.application.id}\nOPENASY_OIDC_CLIENT_SECRET=${r.clientSecret}\n`,
+    { mode: 0o600 },
+  );
   console.log(`  ${p.service}: signs in through Identity`);
 }
 
