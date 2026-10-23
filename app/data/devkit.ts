@@ -184,6 +184,9 @@ export function buildDevKit(secrets: Secrets): Install {
       "    environment:",
       env("VULNS_URL", "http://vulns:8080"),
       env("VULNS_INGEST_TOKEN", "${VULNS_INGEST_TOKEN}"),
+      // Docker Desktop mounts this computer's folders and its own storage in its machine: they are not that machine's
+      // packages, and scanning them takes hours.
+      env("SCAN_EXCLUDE", "Users,Volumes,private,host_mnt,mnt,mutagen-file-shares,containers"),
       "    depends_on: [vulns]",
     ]),
     ...ids
