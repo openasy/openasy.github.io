@@ -7,6 +7,7 @@ import { execFileSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { lookup } from "node:dns/promises";
 
 const STATE = "secrets/dev.json";
 const ENV = ".env";
@@ -235,12 +236,41 @@ for (const [name, service] of [
   }
 }
 
+// Over the VPN (ADR 0054): the products' names point at Caddy on the VPN, an IP group lets this machine reach it, and
+// a device for this machine is written to secrets/dev.ovpn.
+const kit: { overVpn: boolean; domain: string } = existsSync("setup/kit.json")
+  ? JSON.parse(readFileSync("setup/kit.json", "utf8"))
+  : { overVpn: false, domain: "" };
+if (kit.overVpn && !existsSync("secrets/dev.ovpn")) {
+  step(`The products over the VPN, at *.${kit.domain}`);
+  const vpn = api.vpn!;
+  const again = (err: unknown) => {
+    // Made by an earlier run that stopped half way.
+    if (!String(err).includes(": 409 ")) throw err;
+  };
+  const { address } = await lookup("caddy", { family: 4 });
+  for (const p of PRODUCTS) await vpn("/api/v1/internal-names", { name: new URL(p.url).hostname.split(".")[0], type: "A", value: address }).catch(again);
+  await vpn("/api/v1/groups", { name: "dev" }).catch(again);
+  await vpn("/api/v1/ip-groups", { name: "OpenAsy products", networks: [{ cidr: `${address}/32`, ports: "tcp/443" }], allowedGroups: ["dev"] }).catch(again);
+  await vpn("/api/v1/people", { name: "Dev", email: EMAIL, groups: ["dev"] }).catch(again);
+  const person = (await vpn<{ people: Array<{ id: string; email: string }> }>("/api/v1/people")).people.find((x) => x.email === EMAIL)!;
+  // A device's config lists the servers that have reported, so it waits for the VPN server.
+  for (let i = 0; i < 60; i++) {
+    const { servers } = await vpn<{ servers: Array<{ status: string }> }>("/api/v1/servers");
+    if (servers.some((x) => x.status === "online")) break;
+    await sleep(2000);
+  }
+  const { ovpn } = await vpn<{ ovpn: string }>(`/api/v1/people/${person.id}/devices`, { name: "This machine" });
+  writeFileSync("secrets/dev.ovpn", ovpn, { mode: 0o600 });
+  console.log(`  ${PRODUCTS.length} names under ${kit.domain} at ${address}; secrets/dev.ovpn is this machine's VPN config`);
+}
+
 step("Sample data");
 // A separate script, so it runs again by itself: docker compose run --rm --no-deps setup node setup/seed.ts
 execFileSync("node", ["setup/seed.ts"], { stdio: "inherit" });
 
 console.log(`
-Ready. Open these in your browser; trust config/caddy-root.crt first (README.md says how), or accept the warning once per address.
+Ready. ${kit.overVpn ? `First connect with secrets/dev.ovpn and send *.${kit.domain} to 10.8.0.1 (README.md says how). Then o` : "O"}pen these in your browser; trust config/caddy-root.crt first (README.md says how), or accept the warning once per address.
 Sign in to Identity as ${EMAIL} / ${PASSWORD}, with the code from:
   docker compose run --rm --no-deps setup node setup/code.ts
 Every other product then goes straight to Identity.

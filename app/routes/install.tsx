@@ -451,6 +451,7 @@ function TryLocally({ out, ready, dns, onDns }: { out: Install; ready: boolean; 
             <summary className="cursor-pointer text-sm font-medium">
               Names on the VPN: <span className="font-mono">{cleanInternalDomain(dns.dnsDomain) || DEV_DNS.dnsDomain}</span>
               {dns.dnsForward ? ", split-horizon" : ", only inside"}
+              {dns.overVpn && ", the products over the VPN"}
             </summary>
             <div className="mt-3 flex flex-col gap-3">
               <TextField
@@ -466,6 +467,12 @@ function TryLocally({ out, ready, dns, onDns }: { out: Install; ready: boolean; 
                 }
                 spellCheck={false}
                 autoComplete="off"
+              />
+              <Toggle
+                checked={dns.overVpn}
+                onChange={(overVpn) => onDns({ ...dns, overVpn })}
+                title="Open the products over the VPN"
+                text="At https://id.<domain>, https://logs.<domain> and so on, only through the VPN, as an install with its products only on the VPN. setup makes this machine a VPN device in secrets/dev.ovpn; nothing else is published here."
               />
               <Toggle
                 checked={dns.dnsForward}
