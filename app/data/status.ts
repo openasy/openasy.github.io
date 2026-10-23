@@ -570,7 +570,7 @@ sshd -t && systemctl reload ssh`,
   },
   vpn: {
     status: "Preview",
-    version: "0.9.0",
+    version: "0.10.0",
     signIn: true,
     note: "openasy-kek seals the CA key, server keys and sign-in secrets (ADR 0021). Keep it apart from the data volume and with your backups: vpn does not start without it. Serve the UI over HTTPS.",
     features: [

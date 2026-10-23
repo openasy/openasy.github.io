@@ -141,7 +141,8 @@ export function buildDevKit(secrets: Secrets): Install {
     "    depends_on: [caddy]",
     "",
     ...product("identity"),
-    ...product("vpn", { hardened: false, env: [env("VPN_PUBLIC_HOST", "localhost")] }),
+    // Internal names on the VPN (ADR 0054): the demo servers as web.dev.internal and db.dev.internal, added by seed.ts.
+    ...product("vpn", { hardened: false, env: [env("VPN_PUBLIC_HOST", "localhost"), env("VPN_DNS_DOMAIN", "dev.internal"), env("VPN_DNS_FORWARD", "false")] }),
     "  vpn-server:",
     `    image: ghcr.io/openasy/vpn-server:${tag("vpn")}`,
     "    restart: unless-stopped",

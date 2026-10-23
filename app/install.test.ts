@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_CHOICE, INSTALLABLE, PARTS, REALM_PRODUCTS, THIRD_PARTY, buildInstall, cleanDomain, makeSecrets, type InstallChoice } from "./data/install";
+import {
+  DEFAULT_CHOICE,
+  INSTALLABLE,
+  PARTS,
+  REALM_PRODUCTS,
+  THIRD_PARTY,
+  buildInstall,
+  cleanDomain,
+  makeSecrets,
+  type InstallChoice,
+  type Installable,
+} from "./data/install";
 import { statusFor } from "./data/status";
 import { DEV_IMAGES, buildDevKit } from "./data/devkit";
 import SETUP from "../kit/dev/setup.ts?raw";
@@ -108,6 +119,42 @@ describe("install builder", () => {
     expect(file(off, "compose.yaml")).not.toContain("hosts.yaml");
     expect(off.files.map((f) => f.name)).not.toContain("config/inventory/hosts.yaml");
     expect(build().files.map((f) => f.name)).not.toContain("config/inventory/hosts.yaml");
+  });
+
+  it("VPN serves internal names under the domain given, and none without one (ADR 0054)", () => {
+    expect(service(file(build({ products: ["vpn"] }), "compose.yaml"), "vpn")).not.toContain("VPN_DNS_DOMAIN");
+    expect(service(file(build({ products: ["vpn"], internalDomain: " Internal.YR. " }), "compose.yaml"), "vpn")).toContain("VPN_DNS_DOMAIN: internal.yr");
+    expect(service(file(build({ products: ["vpn"], internalDomain: "not a domain" }), "compose.yaml"), "vpn")).not.toContain("VPN_DNS_DOMAIN");
+    // Split-horizon by default; a domain only inside says so.
+    expect(service(file(build({ products: ["vpn"], internalDomain: "youreply.com.tr" }), "compose.yaml"), "vpn")).not.toContain("VPN_DNS_FORWARD");
+    expect(service(file(build({ products: ["vpn"], internalDomain: "internal.yr", internalForward: false }), "compose.yaml"), "vpn")).toContain(
+      "VPN_DNS_FORWARD: false",
+    );
+  });
+
+  it("puts the products only on the VPN, with VPN and Identity public, when asked and Caddy serves them (ADR 0054)", () => {
+    const products: Installable[] = ["identity", "vpn", "logs", "errors"];
+    const off = build({ products, onlyVpn: true, proxy: "nginx" });
+    expect(file(off, "compose.yaml")).not.toContain("OPENASY_ACME_KID");
+    const out = build({ products, onlyVpn: true, insideAddress: "10.20.0.5", domain: "youreply.com.tr" });
+    const compose = file(out, "compose.yaml");
+    // The VPN serves the inside view of the install's own domain, its public names unchanged.
+    expect(service(compose, "vpn")).toContain("VPN_DNS_DOMAIN: youreply.com.tr");
+    expect(service(compose, "vpn")).not.toContain("VPN_DNS_FORWARD");
+    expect(service(compose, "caddy")).toContain("OPENASY_ACME_KID: ${OPENASY_ACME_KID:-pending}");
+    expect(service(compose, "vpn")).toContain("aliases: [vpn.openasy.internal]");
+    const caddyfile = file(out, "config/Caddyfile");
+    expect(caddyfile).toContain("vpn.youreply.com.tr {\n  reverse_proxy vpn:8080\n}");
+    expect(caddyfile).toContain("id.youreply.com.tr {\n  reverse_proxy identity:8080\n}");
+    expect(caddyfile).toMatch(/logs\.youreply\.com\.tr \{\n  tls \{\n    issuer acme \{\n      dir http:\/\/vpn\.openasy\.internal:8080\/acme\/directory/);
+    expect(caddyfile).toContain("  @outside not remote_ip private_ranges\n  abort @outside\n  reverse_proxy logs:8080");
+    // Only VPN and Identity get a public name; the steps add the others as internal names at the inside address.
+    expect(out.hosts).toEqual(["id.youreply.com.tr", "vpn.youreply.com.tr"]);
+    expect(file(out, ".env")).toContain("OPENASY_ACME_KID=");
+    const step = out.steps.find((s) => s.title === "Only on the VPN")!;
+    expect(step.code).toContain('"name":"logs","type":"A","value":"10.20.0.5"');
+    expect(step.code).toContain('"name":"errors"');
+    expect(step.code).not.toContain('"name":"vpn"');
   });
 
   it("every product loads one brand from config/brand.env, and mounts the logo and tab icon when there are any", () => {
