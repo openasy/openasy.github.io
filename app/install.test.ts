@@ -3,6 +3,7 @@ import { DEFAULT_CHOICE, INSTALLABLE, PARTS, REALM_PRODUCTS, THIRD_PARTY, buildI
 import { statusFor } from "./data/status";
 import { DEV_IMAGES, buildDevKit } from "./data/devkit";
 import SETUP from "../kit/dev/setup.ts?raw";
+import SEED from "../kit/dev/seed.ts?raw";
 
 // Counting bytes, so every secret is different and recognisable.
 let n = 0;
@@ -278,6 +279,8 @@ describe("install builder", () => {
     // Every $ meant for the shell in the demo servers is escaped from compose.
     expect(compose).not.toMatch(/[^$]\$(OPENASY_|\()/);
     expect(file(out, "setup/setup.ts")).toBe(SETUP.trimEnd());
+    expect(file(out, "setup/seed.ts")).toBe(SEED.trimEnd());
+    expect(SETUP).toContain('execFileSync("node", ["setup/seed.ts"]');
     // The products read their client from the environment, where @openasy/auth calls the provider sso.
     expect(SETUP).toContain("/api/v1/auth/oidc/sso/callback");
     expect(SETUP).not.toMatch(/auth\/oidc\/(?!sso\/)[a-z-]+\/callback/);

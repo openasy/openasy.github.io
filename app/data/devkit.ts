@@ -3,6 +3,7 @@
 // the code printer are real files in kit/dev, read here as text.
 import SETUP from "../../kit/dev/setup.ts?raw";
 import CODE from "../../kit/dev/code.ts?raw";
+import SEED from "../../kit/dev/seed.ts?raw";
 import { INSTALLABLE, PARTS, THIRD_PARTY, authFile, type Install, type InstallFile, type InstallStep, type Installable, type Secrets } from "./install";
 import { statusFor } from "./status";
 
@@ -320,6 +321,11 @@ export function buildDevKit(secrets: Secrets): Install {
   ];
   const more: InstallStep[] = [
     {
+      title: "Sample data",
+      text: "setup fills every product once. A product it could not fill is tried again with:",
+      code: "docker compose run --rm --no-deps setup node setup/seed.ts",
+    },
+    {
       title: "Trust the local CA",
       text: "Once, so the browser accepts https://*.localhost without a warning. On macOS:",
       code: "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db config/caddy-root.crt",
@@ -391,6 +397,7 @@ export function buildDevKit(secrets: Secrets): Install {
     { name: "setup/setup.ts", content: SETUP.trimEnd() },
     { name: "setup/products.json", content: JSON.stringify(setupProducts, null, 2) },
     { name: "setup/code.ts", content: CODE.trimEnd() },
+    { name: "setup/seed.ts", content: SEED.trimEnd() },
     { name: "secrets/openasy-kek", content: secrets.kek, secret: true },
     { name: "secrets/openasy-agent-kek", content: secrets.agentKek, secret: true },
     { name: "secrets/openasy-logs-agent-kek", content: secrets.logsAgentKek, secret: true },
@@ -399,6 +406,10 @@ export function buildDevKit(secrets: Secrets): Install {
   const wiring = [
     { title: "Identity signs everyone in", text: `as ${DEV_EMAIL}, an admin in every product through openasy-admins.` },
     { title: "setup wires it once", text: "owners, applications and the agents' tokens, then it exits. Running it again skips what is done." },
+    {
+      title: "Sample data in every product",
+      text: "events, findings, scans, runs and spend from setup/seed.ts, sent through each product's API as a CI job would.",
+    },
     {
       title: "Two servers in config/hosts.yaml",
       text: "read over SSH by Infrastructure and Logs; Vulnerabilities, Posture and Malware show they send no scan.",
