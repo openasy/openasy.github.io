@@ -65,5 +65,6 @@ Each record has two statuses:
 | 0050 | [Threat Intel: feeds in, one lookup out, and nothing dropped without a word](./0050-threat-intel.md) | Architecture | Proposed · High | In progress |
 | 0051 | [Cost: spend sent by a pipeline, owners by tag or rule, and anomalies a person decides on](./0051-cost.md) | Architecture | Proposed · Medium | In progress |
 | 0052 | [One list of endpoints and one of servers, in files every product can read](./0052-shared-inventory-files.md) | Architecture | Proposed · High | In progress |
+| 0053 | [One brand for every product, from one env file](./0053-one-brand.md) | Architecture | Proposed · Medium | Not started |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.

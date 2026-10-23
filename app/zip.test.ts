@@ -16,9 +16,11 @@ describe("zip", () => {
       { name: ".env", content: "VPN_CLIENT_SECRET=\n" },
       { name: "openasy-kek", content: "ab".repeat(32) },
     ];
+    const logo = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 255]);
     const dir = mkdtempSync(join(tmpdir(), "oa-zip-"));
-    writeFileSync(join(dir, "openasy.zip"), zip(files, "openasy"));
+    writeFileSync(join(dir, "openasy.zip"), zip([...files, { name: "logo.png", content: logo }], "openasy"));
     execFileSync("unzip", ["-q", "openasy.zip"], { cwd: dir });
     for (const f of files) expect(readFileSync(join(dir, "openasy", f.name), "utf8")).toBe(f.content);
+    expect(new Uint8Array(readFileSync(join(dir, "openasy", "logo.png")))).toEqual(logo);
   });
 });

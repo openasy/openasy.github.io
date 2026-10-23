@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `uptime` and `certificates` read the endpoints file (`OPENASY_ENDPOINTS`) and share the certificate thresholds (`OPENASY_CERT_WARN_DAYS`). The hosts file (`OPENASY_HOSTS`) for `infra` and `logs` is not built yet.
+- **Where:** `uptime` and `certificates` read the endpoints file (`OPENASY_ENDPOINTS`) and share the certificate thresholds (`OPENASY_CERT_WARN_DAYS`). `infra` and `logs` read the hosts file (`OPENASY_HOSTS`) and reach its servers; `vulns`, `posture`, `malware` and `backups` read it to show the servers they have nothing for.
 - **Priority:** High
 - **Area:** Architecture
 
@@ -15,7 +15,9 @@ ADR 0001 says products link with a token and share nothing until linked, but no 
 ## Decision
 
 - **Two files, each with one list, mounted read-only into the products that want them.** `OPENASY_ENDPOINTS` names a YAML file of endpoints (`name`, `url` with `https://`, `http://`, `tcp://`, `dns://` or `tls://`, and optional `group`, `server`, `public`, `every`, `expect`, `tags`). `OPENASY_HOSTS` will name a file of servers (VPS, dedicated or virtual). The variables have the same names in every product, like `OPENASY_PRODUCTS`. Without them a product works as before.
-- **Each product takes what it needs.** Uptime checks every endpoint; Certificates reads the certificate of `https://` and `tls://` ones. Fields one product does not use are left alone by the other.
+- **Each product takes what it needs.** Uptime checks every endpoint; Certificates reads the certificate of `https://` and `tls://` ones. Infrastructure and Logs reach every server over SSH. Vulnerabilities, Posture, Malware and Backups are sent what they know about servers by agents and CI, so they show which servers in the file they have nothing for: one nobody scans or backs up is the gap a list in one place makes visible. Fields one product does not use are left alone by the others.
+- **A server's key can be vouched for in the file.** `hostKey` is a fingerprint as `ssh-keygen -lf` prints it: a host that presents that key is trusted without an admin, one that presents another waits and cannot be accepted in the UI until the file changes. Without it, an admin compares the key as for any host. Whoever can change the file can already change the install, so this adds no new trust.
+- **Each product names its own agents alike.** `agent: dc1` is the agent named dc1 in each product that reaches servers; with one agent it may be left out. A server whose agent is not there yet is added once it is.
 - **The files refer to each other by name.** An endpoint's `server` is a server's `name` in the hosts file. With only the endpoints file, the name is shown as a label; with both, an unknown name is a warning, not an error, because the files change at different times.
 - **The file owns its entries.** An entry is found again by its name. Entries from the file show where they came from and are changed there: the API answers 409 to a change or a delete, while operational actions such as pausing a check or probing an endpoint still work. Entries added in the UI stay as they are, so the file is one way of adding things, not the only one.
 - **A file is applied whole or not at all.** It is read at start and again within a minute of a change. A file with a mistake leaves its last good version in place, and the product says which entry and field to fix in its log and on the page that lists the entries.

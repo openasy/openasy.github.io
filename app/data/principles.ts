@@ -78,6 +78,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0050": { title: "Nothing dropped without a word", text: "Threat Intel imports STIX, CSV and text feeds, names whatever it cannot use, and answers one lookup for every product. TLP:RED stays with the people it was meant for." },
   "0051": { title: "Spend with an owner", text: "Cost reads the bill a pipeline sends, gives every line an owner by tag or rule, forecasts the month and flags spikes for a person to explain. It holds no cloud credentials." },
   "0052": { title: "One list, every product", text: "Endpoints and servers live in two files the install keeps, in git if it likes. Every product reads the same list, so Uptime and Certificates agree on an endpoint and on when its certificate is urgent." },
+  "0053": { title: "Your brand, set once", text: "Your organization, logo and color in one file every product loads. The logo is served by each product itself, so nothing is fetched from elsewhere." },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });

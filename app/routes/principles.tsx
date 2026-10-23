@@ -1,6 +1,6 @@
 import { Badge } from "@openasy/ui";
 import { ADR_INDEX, PRINCIPLES, adrUrl, type ImplementationStatus, type Principle } from "../data/principles";
-import { Section } from "../components/site";
+import { PageTitle, Section } from "../components/site";
 
 export function meta() {
   return [{ title: "Principles · OpenAsy" }, { name: "description", content: "The design decisions every OpenAsy product follows, and how far each one is built." }];
@@ -66,12 +66,7 @@ export default function Principles() {
   const proposed = PRINCIPLES.filter((p) => p.decision === "Proposed");
   return (
     <Section className="py-12" labelledBy="title">
-      <h1 id="title" className="m-0 text-4xl font-semibold tracking-tight">
-        Principles
-      </h1>
-      <p className="mt-3 max-w-2xl text-base text-fg-muted">
-        The decisions every product follows, each a public record with its reasons. A decision says how we build; its status says how much of it ships today. Change one with a pull request.
-      </p>
+      <PageTitle title="Principles">The decisions every product follows, each a public record with its reasons. A decision says how we build; its status says how much of it ships today. Change one with a pull request.</PageTitle>
 
       <Progress />
 

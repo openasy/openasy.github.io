@@ -64,6 +64,9 @@ export function helmFor(id: string): { full: string; agentsOnly?: string } | und
 const vpnEnrols = () => atLeast(statusFor("vpn").version, "0.6.0");
 
 /** docker compose file for a set of products: one container and one SQLite volume each, plus host agents. */
+/** Products that take data only from people and the API, so their compose has no ingest token. */
+const NO_INGEST = ["logs", "incidents", "errors", "risk"];
+
 export function composeFor(ids: string[]): string {
   const lines = ["services:"];
   ids.forEach((id, i) => {
@@ -176,16 +179,50 @@ export function composeFor(ids: string[]): string {
       );
       return;
     }
-    lines.push(`  ${id}:`, `    image: ${p.image}:${tag}`, "    restart: unless-stopped", "    ports:", `      - "${8443 + i}:8443"`);
-    lines.push("    volumes:", `      - ${id}-data:/data   # SQLite database and settings`, "    environment:", `      OPENASY_BACKUP: daily   # snapshot at 02:00, kept 7 daily / 4 weekly / 12 monthly`);
+    // Matches compose.yaml in every other product: one hardened container on 8080, its key, and for most a token for
+    // the scripts and CI jobs that send it data.
+    const env = id.toUpperCase().replace(/-/g, "_");
+    lines.push(
+      `  ${id}:`,
+      `    image: ${p.image}:${tag}`,
+      "    restart: unless-stopped",
+      "    read_only: true",
+      "    cap_drop: [ALL]",
+      '    security_opt: ["no-new-privileges:true"]',
+      "    tmpfs: [/tmp]",
+      "    ports:",
+      `      - "127.0.0.1:${8080 + i}:8080"   # UI and API; put a TLS proxy in front`,
+      ...(id === "logs" ? ['      - "6514:6514"   # Syslog over TLS; remove if no host sends Syslog'] : []),
+      "    volumes:",
+      `      - ${id}-data:/data   # SQLite database`,
+      "    secrets: [openasy-kek]   # seals sign-in secrets (ADR 0021)",
+      "    environment:",
+      `      ${env}_PUBLIC_URL: http://localhost:${8080 + i}   # the https:// address behind your TLS proxy`,
+      ...(NO_INGEST.includes(id) ? [] : [`      ${env}_INGEST_TOKEN: \${${env}_INGEST_TOKEN:-}   # for the scripts and CI jobs that send it data`]),
+    );
+    if (id === "logs")
+      lines.push(
+        "  logs-agent:",
+        `    image: ghcr.io/openasy/logs-agent:${tag}   # always the same version as logs; reads hosts over SSH, nothing installed on them`,
+        "    restart: unless-stopped",
+        "    read_only: true",
+        "    tmpfs: [/tmp]",
+        "    volumes:",
+        "      - logs-agent-data:/data   # its SSH CA and keys, sealed with its own key",
+        "    secrets: [openasy-agent-kek]",
+        "    environment:",
+        "      LOGS_URL: http://logs:8080",
+        "      LOGS_ENROLL_TOKEN: ${LOGS_ENROLL_TOKEN:-}   # one-time, from Settings, Agents",
+      );
   });
   lines.push(
     "volumes:",
     ...ids.map((id) => `  ${id}-data:`),
     ...(ids.includes("vpn") && vpnEnrols() ? ["  vpn-server-data:"] : []),
     ...(ids.includes("infrastructure") ? ["  infra-agent-data:"] : []),
+    ...(ids.includes("logs") ? ["  logs-agent-data:"] : []),
   );
-  if (ids.some((id) => statusFor(id).signIn)) lines.push("secrets:", "  openasy-kek:", "    file: ./openasy-kek", ...(ids.includes("infrastructure") ? ["  openasy-agent-kek:", "    file: ./openasy-agent-kek"] : []));
+  if (ids.some((id) => statusFor(id).signIn)) lines.push("secrets:", "  openasy-kek:", "    file: ./openasy-kek", ...(ids.some((id) => id === "infrastructure" || id === "logs") ? ["  openasy-agent-kek:", "    file: ./openasy-agent-kek"] : []));
   return lines.join("\n");
 }
 
@@ -197,7 +234,7 @@ export function composeRun(ids: string[]): string {
     "",
     "# then",
     ...(signIn.length ? ["openssl rand -hex 32 > openasy-kek   # keep it with your backups"] : []),
-    ...(ids.includes("infrastructure") ? ["openssl rand -hex 32 > openasy-agent-kek   # the agent's own key"] : []),
+    ...(ids.some((id) => id === "infrastructure" || id === "logs") ? ["openssl rand -hex 32 > openasy-agent-kek   # the agent's own key"] : []),
     "docker compose up -d",
     ...signIn.map((id) => `docker compose logs ${id} | grep "no owner yet"   # one-time link that creates the owner`),
     ...(ids.includes("vpn") && vpnEnrols() ? ["# add edge-1 under Servers in vpn, then start it with its one-time token:", "EDGE_1_TOKEN=ove_... docker compose up -d vpn-server"] : []),

@@ -9,7 +9,7 @@ import { storyUrl } from "./data/storybook";
 import { STATUS } from "./data/status";
 import { composeFor } from "./components/cards";
 import { SiteFooter, SiteHeader } from "./components/site";
-import { BREACH_STORY } from "./components/breach";
+import { BREACH_STORY, coverage } from "./components/breach";
 import Home from "./routes/home";
 import Goals from "./routes/goals";
 import GoalPage from "./routes/goal";
@@ -22,7 +22,8 @@ import Support from "./routes/support";
 import SignIn from "./routes/sign-in";
 import Install from "./routes/install";
 import { PLANS, SUPPORT_EMAIL } from "./data/support";
-import { atLeast, readiness } from "./data/status";
+import { atLeast, readiness, withStatus } from "./data/status";
+import { INSTALLABLE } from "./data/install";
 
 const Stub = createRoutesStub([
   { path: "/", Component: Home },
@@ -115,7 +116,7 @@ describe("pages", () => {
     expect(list().children).toHaveLength(1);
     await userEvent.click(screen.getByRole("radio", { name: "All groups" }));
     await userEvent.click(screen.getByRole("radio", { name: /^Ready to try/ }));
-    expect(list().children).toHaveLength(4);
+    expect(list().children).toHaveLength(withStatus(PRODUCT_IDS, "Preview").length);
     expect(list()).toHaveTextContent("Identity");
     expect(list()).toHaveTextContent("VPN");
     expect(list()).toHaveTextContent("Vulnerabilities");
@@ -139,7 +140,9 @@ describe("pages", () => {
     open("/");
     expect(screen.getByRole("list", { name: "ATT&CK stages" }).children).toHaveLength(12);
     expect(screen.getByRole("listitem", { name: /Initial access: covered today by (.*, )?VPN/ })).toBeInTheDocument();
-    expect(screen.getByRole("listitem", { name: /Execution: covered once/ })).toBeInTheDocument();
+    // Every stage says which released products watch it, or which coming product will.
+    const { stages } = coverage(withStatus(PRODUCT_IDS, "Preview") as ProductId[]);
+    for (const s of stages) expect(screen.getByRole("listitem", { name: new RegExp(`^${s.name}: covered ${s.live.length ? "today" : "once"}`) })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Replay a phishing/ })).toHaveAttribute("href", BREACH_STORY);
   });
 
@@ -228,24 +231,36 @@ describe("pages", () => {
     expect(screen.getByRole("link", { name: "samlify" })).toBeInTheDocument();
   });
 
-  it("the install builder writes one setup for the products picked", async () => {
+  it("the install page offers the dev setup first, then a setup for production", async () => {
     open("/install");
     const compose = () => screen.getByLabelText("compose.yaml").textContent ?? "";
-    expect(compose()).toContain("OPENASY_OIDC_PROVIDER: openasy-identity");
-    // Coming products are listed, but only released ones can be picked.
-    await userEvent.click(screen.getByRole("radio", { name: /^All/ }));
-    expect(within(screen.getByRole("list", { name: "Products" })).getAllByRole("checkbox")).toHaveLength(4);
-    await userEvent.click(screen.getByRole("button", { name: /Know your servers/ }));
+    // It opens on the dev setup: everything released, wired by its setup container.
+    expect(screen.getByRole("radio", { name: "Try it locally" })).toBeChecked();
+    expect(compose()).toContain("name: openasy-dev");
+    expect(within(screen.getByRole("list", { name: "Files" })).getByRole("button", { name: "Open setup/setup.ts" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download openasy-dev.zip" })).toBeEnabled();
+    expect(screen.getByRole("list", { name: "Steps to start" })).toHaveTextContent("docker compose up -d && docker compose logs -f setup");
+
+    await userEvent.click(screen.getByRole("radio", { name: "Production" }));
+    expect(compose()).toContain("env_file: [config/brand.env, config/auth.env]");
+    // Only released products can be picked.
+    const products = within(screen.getByRole("group", { name: "Products" }));
+    expect(products.getAllByRole("checkbox")).toHaveLength(INSTALLABLE.length);
+    await userEvent.click(products.getByRole("checkbox", { name: /Infrastructure/ }));
     expect(compose()).toContain("  infra-agent:");
-    expect(compose()).not.toContain("  vpn:");
-    await userEvent.click(screen.getByRole("button", { name: /Sign-in/ }));
     await userEvent.click(screen.getByRole("radio", { name: /Keycloak, ready for OpenAsy/ }));
-    expect(compose()).toContain("OPENASY_OIDC_PROVIDER: keycloak");
-    // Secrets are made in the browser once the page runs.
-    await userEvent.click(screen.getByRole("tab", { name: ".env" }));
-    expect(screen.getByLabelText(".env")).toHaveTextContent(/VULNS_INGEST_TOKEN=[0-9a-f]{48}/);
-    await userEvent.click(screen.getByRole("tab", { name: "Steps" }));
+    expect(compose()).toContain("OPENASY_OIDC_ISSUER: https://auth.example.com/realms/openasy");
+    // Every file is in one folder: pick one to read, copy or download it. Secrets are made once the page runs.
+    const files = within(screen.getByRole("list", { name: "Files" }));
+    await userEvent.click(files.getByRole("button", { name: "Open secrets/openasy-kek" }));
+    expect(screen.getByLabelText("secrets/openasy-kek")).toHaveTextContent(/^[0-9a-f]{64}$/);
+    expect(screen.getByRole("button", { name: "Download secrets/openasy-kek" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Steps to start" })).toHaveTextContent("openasy-realm.json");
+    // The brand goes into brand.env, which every product loads.
+    await userEvent.click(screen.getByText("Your brand"));
+    await userEvent.type(screen.getByLabelText("Organization"), "Acme Corp");
+    await userEvent.click(files.getByRole("button", { name: "Open config/brand.env" }));
+    expect(screen.getByLabelText("config/brand.env")).toHaveTextContent("OPENASY_ORGANIZATION='Acme Corp'");
   });
 
   it("a planned product shows no install steps", () => {
@@ -258,7 +273,7 @@ describe("pages", () => {
   });
 
   it("a product in progress names what it builds on", () => {
-    open("/products/logs");
+    open("/products/uptime");
     expect(screen.getByText("In progress")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Will build on" })).toBeInTheDocument();
     expect(screen.queryByText(/docker compose up/)).not.toBeInTheDocument();

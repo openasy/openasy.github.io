@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { Callout, Tabs, TextField } from "@openasy/ui";
 import { PRESETS } from "@openasy/auth/presets";
-import { CodeBlock, GITHUB, Section } from "../components/site";
+import { CodeBlock, GITHUB, PageTitle, Section } from "../components/site";
 
 export function meta() {
   return [
@@ -106,14 +106,8 @@ function Guide({ id }: { id: string }) {
 export default function SignIn() {
   const [provider, setProvider] = useState("keycloak");
   return (
-    <Section className="py-10" labelledBy="title">
-      <h1 id="title" className="m-0 text-3xl font-semibold">
-        Sign in with your identity provider
-      </h1>
-      <p className="mt-2 max-w-2xl text-base text-fg-muted">
-        Every OpenAsy product signs people in with a password and an authenticator app or a passkey. To use the accounts you already have, connect your identity provider: people sign in with it, its MFA
-        applies, and its groups can decide their role.
-      </p>
+    <Section className="py-12" labelledBy="title">
+      <PageTitle title="Sign in with your identity provider">Every OpenAsy product signs people in with a password and an authenticator app or a passkey. To use the accounts you already have, connect your identity provider: people sign in with it, its MFA applies, and its groups can decide their role.</PageTitle>
       <Tabs label="Identity provider" value={provider} onChange={setProvider} className="mt-6" items={PRESETS.map((p) => ({ value: p.id, label: title(p.id, p.name) }))} />
       <Guide key={provider} id={provider} />
 

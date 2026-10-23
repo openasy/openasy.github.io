@@ -1,7 +1,7 @@
 import { Check, Mail } from "lucide-react";
 import { Badge, cn } from "@openasy/ui";
 import { FAQ, PLANS, RESPONSE_TIMES, contactUrl } from "../data/support";
-import { ButtonLink, Section } from "../components/site";
+import { ButtonLink, PageTitle, Section } from "../components/site";
 
 export function meta() {
   return [
@@ -13,14 +13,8 @@ export function meta() {
 export default function Support() {
   return (
     <>
-      <Section className="pt-10 pb-6" labelledBy="title">
-        <h1 id="title" className="m-0 text-3xl font-semibold">
-          Support
-        </h1>
-        <p className="mt-2 max-w-2xl text-base text-fg-muted">
-          Every product is free and open source. When it runs something you depend on, we stand behind it with you: answers in a guaranteed time, help with installs and upgrades, and someone to call
-          when it matters.
-        </p>
+      <Section className="pt-12 pb-6" labelledBy="title">
+        <PageTitle title="Support">Every product is free and open source. When it runs something you depend on, we stand behind it with you: answers in a guaranteed time, help with installs and upgrades, and someone to call when it matters.</PageTitle>
       </Section>
 
       <Section className="py-2" labelledBy="plans">

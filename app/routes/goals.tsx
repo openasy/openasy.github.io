@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Badge } from "@openasy/ui";
 import { GOALS, type Goal } from "../data/goals";
 import { READINESS_TONE, readiness, type Readiness } from "../data/status";
-import { Section } from "../components/site";
+import { PageTitle, Section } from "../components/site";
 import { GoalCard, product } from "../components/cards";
 
 export function meta() {
@@ -52,10 +52,7 @@ export default function Goals() {
   const rest = GOALS.filter((g) => !ready.includes(g));
   return (
     <Section className="py-12" labelledBy="title">
-      <h1 id="title" className="m-0 text-4xl font-semibold tracking-tight">
-        Start from a goal
-      </h1>
-      <p className="mt-3 max-w-2xl text-base text-fg-muted">Pick what you need done. Each guide names the smallest set of products, how long it takes, and whether you can run it today.</p>
+      <PageTitle title="Start from a goal">Pick what you need done. Each guide names the smallest set of products, how long it takes, and whether you can run it today.</PageTitle>
       <ul aria-label="What the labels mean" className="mt-5 flex list-none flex-wrap gap-x-5 gap-y-2 p-0 text-sm text-fg-muted">
         {LEGEND.map(([r, text]) => (
           <li key={r} className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PRODUCT_IDS, PRODUCTS, SegmentedControl, type ProductGroup } from "@openasy/ui";
-import { Section } from "../components/site";
+import { PageTitle, Section } from "../components/site";
 import { ProductCard } from "../components/cards";
 import { statusFor, type ProductStatus } from "../data/status";
 import { GROUPS } from "./home";
@@ -26,10 +26,7 @@ export default function Products() {
   const ids = SORTED.filter((id) => (status === "all" || statusFor(id).status === status) && (group === "all" || PRODUCTS[id].group === group));
   return (
     <Section className="py-12" labelledBy="title">
-      <h1 id="title" className="m-0 text-4xl font-semibold tracking-tight">
-        Products
-      </h1>
-      <p className="mt-3 max-w-2xl text-base text-fg-muted">Each one is its own container with its own users, data and API. Run one, or link them to share hosts, people and alerts.</p>
+      <PageTitle title="Products">Each one is its own container with its own users, data and API. Run one, or link them to share people and alerts. Products that work with the same servers or endpoints read them from one file you mount in each.</PageTitle>
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <SegmentedControl
           label="Status"

@@ -1,6 +1,6 @@
 /**
- * A ZIP archive of text files, stored without compression. The install files are a few
- * kilobytes, so this keeps the page free of a compression library.
+ * A ZIP archive, stored without compression. The install files are a few kilobytes and a
+ * logo, so this keeps the page free of a compression library. Text is kept as UTF-8.
  */
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
@@ -21,7 +21,7 @@ function dosTime(d: Date): [number, number] {
 }
 
 /** Each file under `folder/`, so unzipping makes one folder. */
-export function zip(files: Array<{ name: string; content: string }>, folder: string, date = new Date()): Uint8Array<ArrayBuffer> {
+export function zip(files: Array<{ name: string; content: string | Uint8Array }>, folder: string, date = new Date()): Uint8Array<ArrayBuffer> {
   const utf8 = new TextEncoder();
   const [time, day] = dosTime(date);
   const local: Uint8Array[] = [];
@@ -29,7 +29,7 @@ export function zip(files: Array<{ name: string; content: string }>, folder: str
   let offset = 0;
   for (const f of files) {
     const name = utf8.encode(`${folder}/${f.name}`);
-    const data = utf8.encode(f.content);
+    const data = typeof f.content === "string" ? utf8.encode(f.content) : f.content;
     const crc = crc32(data);
     const head = new Uint8Array(30 + name.length);
     const h = new DataView(head.buffer);

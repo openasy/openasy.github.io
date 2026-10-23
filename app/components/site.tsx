@@ -176,6 +176,18 @@ export function Section({ children, className, labelledBy }: { children: ReactNo
   );
 }
 
+/** The title and lead of a page, the same on every page that has one: the h1 is what its Section is labelled by. */
+export function PageTitle({ title, children, id = "title" }: { title: ReactNode; children?: ReactNode; id?: string }) {
+  return (
+    <>
+      <h1 id={id} className="m-0 text-4xl font-semibold tracking-tight">
+        {title}
+      </h1>
+      {children && <p className="mt-3 max-w-2xl text-base text-fg-muted">{children}</p>}
+    </>
+  );
+}
+
 export function CodeBlock({ code, label, className }: { code: string; label: string; className?: string }) {
   return (
     <pre tabIndex={0} aria-label={label} className={cn("m-0 overflow-x-auto rounded-md border border-line bg-subtle p-3 font-mono text-xs leading-5 text-fg", className)}>
