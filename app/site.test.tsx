@@ -216,7 +216,7 @@ describe("pages", () => {
     expect(screen.getByText("https://infra.acme.io/api/v1/auth/oidc/keycloak/callback")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "Google" }));
     expect(screen.getByText(/Google sends no groups/)).toBeInTheDocument();
-    expect(screen.getByLabelText("Environment for Google")).toHaveTextContent("VPN_OIDC_ALLOWED_DOMAINS=example.com");
+    expect(screen.getByLabelText("Environment for Google")).toHaveTextContent("OPENASY_OIDC_ALLOWED_DOMAINS=example.com");
     expect(screen.getByRole("link", { name: "OpenAsy Identity" })).toHaveAttribute("href", "/products/identity");
   });
 
@@ -231,7 +231,7 @@ describe("pages", () => {
   it("the install builder writes one setup for the products picked", async () => {
     open("/install");
     const compose = () => screen.getByLabelText("compose.yaml").textContent ?? "";
-    expect(compose()).toContain("VPN_OIDC_PROVIDER: openasy-identity");
+    expect(compose()).toContain("OPENASY_OIDC_PROVIDER: openasy-identity");
     // Coming products are listed, but only released ones can be picked.
     await userEvent.click(screen.getByRole("radio", { name: /^All/ }));
     expect(within(screen.getByRole("list", { name: "Products" })).getAllByRole("checkbox")).toHaveLength(4);
@@ -240,7 +240,7 @@ describe("pages", () => {
     expect(compose()).not.toContain("  vpn:");
     await userEvent.click(screen.getByRole("button", { name: /Sign-in/ }));
     await userEvent.click(screen.getByRole("radio", { name: /Keycloak, ready for OpenAsy/ }));
-    expect(compose()).toContain("INFRA_OIDC_PROVIDER: keycloak");
+    expect(compose()).toContain("OPENASY_OIDC_PROVIDER: keycloak");
     // Secrets are made in the browser once the page runs.
     await userEvent.click(screen.getByRole("tab", { name: ".env" }));
     expect(screen.getByLabelText(".env")).toHaveTextContent(/VULNS_INGEST_TOKEN=[0-9a-f]{48}/);

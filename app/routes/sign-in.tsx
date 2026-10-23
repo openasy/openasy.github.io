@@ -83,18 +83,19 @@ function Guide({ id }: { id: string }) {
           Or in the environment
         </h2>
         <p className="mt-2 text-fg-muted">
-          For installs set up by scripts. The prefix is the product&apos;s: <code className="font-mono">VPN_</code>, <code className="font-mono">INFRA_</code> or <code className="font-mono">VULNS_</code>. A provider set here has
-          the id <code className="font-mono">sso</code>, so its redirect URI ends in <code className="font-mono">/api/v1/auth/oidc/sso/callback</code>.
+          For installs set up by scripts. The names are the same in every product, so an install sets them once; only the client is each product&apos;s. A provider set here has
+          the id <code className="font-mono">sso</code>, so its redirect URI ends in <code className="font-mono">/api/v1/auth/oidc/sso/callback</code>. Add <code className="font-mono">OPENASY_OIDC_AUTO_REDIRECT=true</code> to
+          open the provider straight from the sign-in page.
         </p>
         <CodeBlock
           label={`Environment for ${name}`}
           className="mt-3 p-4"
           code={[
-            `VPN_OIDC_PROVIDER=${p.id}`,
-            `VPN_OIDC_ISSUER=${p.issuerExample}`,
-            "VPN_OIDC_CLIENT_ID=...",
-            "VPN_OIDC_CLIENT_SECRET=...",
-            ...(mapping ? [`VPN_OIDC_ROLE_MAPPING=${mapping.replace(/ = /, "=").replace(/[<>]/g, "")}`] : ["VPN_OIDC_ALLOWED_DOMAINS=example.com", "VPN_OIDC_DEFAULT_ROLE=viewer"]),
+            `OPENASY_OIDC_PROVIDER=${p.id}`,
+            `OPENASY_OIDC_ISSUER=${p.issuerExample}`,
+            "OPENASY_OIDC_CLIENT_ID=...",
+            "OPENASY_OIDC_CLIENT_SECRET=...",
+            ...(mapping ? [`OPENASY_OIDC_ROLE_MAPPING=${mapping.replace(/ = /, "=").replace(/[<>]/g, "")}`] : ["OPENASY_OIDC_ALLOWED_DOMAINS=example.com", "OPENASY_OIDC_DEFAULT_ROLE=viewer"]),
           ].join("\n")}
         />
       </section>

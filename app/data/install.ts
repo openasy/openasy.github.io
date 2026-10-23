@@ -84,7 +84,7 @@ interface Part {
   name: string;
   /** Compose service, also the host it is reached at inside the network. */
   service: string;
-  /** Environment prefix of its settings and of @openasy/auth's OIDC variables. */
+  /** Environment prefix of its settings, and of its sign-in client's keys in .env. */
   prefix: string;
   /** Its name under the reader's domain. */
   sub: string;
@@ -149,10 +149,11 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const tag = (id: Installable) => statusFor(id).version!;
   const env = (k: string, v: string) => `      ${k}: ${v}`;
 
-  // How one product signs people in: through Identity, the ready Keycloak, the reader's provider, or on its own.
+  // How one product signs people in: through Identity, the ready Keycloak, the reader's provider, or on its own. The
+  // variables have the same names in every product (@openasy/auth 0.5.0); only the client is each product's.
   const keycloakEnv = (id: Installable) => {
-    const { prefix: P, client, realmVar } = PARTS[id];
-    return [env(`${P}OIDC_PROVIDER`, "keycloak"), env(`${P}OIDC_ISSUER`, `${url("keycloak")}/realms/openasy`), env(`${P}OIDC_CLIENT_ID`, client), env(`${P}OIDC_CLIENT_SECRET`, `\${OPENASY_${realmVar}_SECRET}`), env(`${P}OIDC_ROLE_MAPPING`, `"${ROLES}"`)];
+    const { client, realmVar } = PARTS[id];
+    return [env("OPENASY_OIDC_PROVIDER", "keycloak"), env("OPENASY_OIDC_ISSUER", `${url("keycloak")}/realms/openasy`), env("OPENASY_OIDC_CLIENT_ID", client), env("OPENASY_OIDC_CLIENT_SECRET", `\${OPENASY_${realmVar}_SECRET}`), env("OPENASY_OIDC_ROLE_MAPPING", `"${ROLES}"`)];
   };
   // A client made after the first start: the issuer comes from .env with it. Until both are there the issuer is empty,
   // which leaves sign-in through it off (@openasy/auth), so the product starts with its own sign-in.
@@ -160,20 +161,21 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     const P = PARTS[id].prefix;
     return [
       "      # Off until .env has the issuer and the client: until then the product signs people in on its own",
-      env(`${P}OIDC_PROVIDER`, provider),
-      env(`${P}OIDC_ISSUER`, `\${${P}OIDC_ISSUER:-}`),
-      env(`${P}OIDC_CLIENT_ID`, `\${${P}CLIENT_ID:-}`),
-      env(`${P}OIDC_CLIENT_SECRET`, `\${${P}CLIENT_SECRET:-}`),
+      env("OPENASY_OIDC_PROVIDER", provider),
+      env("OPENASY_OIDC_ISSUER", `\${${P}ISSUER:-}`),
+      env("OPENASY_OIDC_CLIENT_ID", `\${${P}CLIENT_ID:-}`),
+      env("OPENASY_OIDC_CLIENT_SECRET", `\${${P}CLIENT_SECRET:-}`),
       ...extra,
     ];
   };
   // Google sends no groups: people from the domain join with the default role.
   const providerEnv = (id: Installable, p: Provider) =>
-    laterEnv(id, p, p === "google" ? [env(`${PARTS[id].prefix}OIDC_ALLOWED_DOMAINS`, d), env(`${PARTS[id].prefix}OIDC_DEFAULT_ROLE`, "viewer")] : [env(`${PARTS[id].prefix}OIDC_ROLE_MAPPING`, `"${ROLES}"`)]);
-  const identityEnv = (id: Installable) => laterEnv(id, "openasy-identity", [env(`${PARTS[id].prefix}OIDC_ROLE_MAPPING`, `"${ROLES}"`)]);
+    laterEnv(id, p, p === "google" ? [env("OPENASY_OIDC_ALLOWED_DOMAINS", d), env("OPENASY_OIDC_DEFAULT_ROLE", "viewer")] : [env("OPENASY_OIDC_ROLE_MAPPING", `"${ROLES}"`)]);
+  // Through Identity the sign-in page goes straight there, so one sign-in opens every product.
+  const identityEnv = (id: Installable) => laterEnv(id, "openasy-identity", [env("OPENASY_OIDC_ROLE_MAPPING", `"${ROLES}"`), env("OPENASY_OIDC_AUTO_REDIRECT", '"true"')]);
   const issuerOf = (p: Provider) => (p === "entra" ? "https://login.microsoftonline.com/<tenant id>/v2.0" : p === "okta" ? "https://<your org>.okta.com" : "https://accounts.google.com");
   // The three lines a client made later needs, commented out until it exists.
-  const later = (id: Installable, issuer: string) => [`# ${PARTS[id].prefix}OIDC_ISSUER=${issuer}`, `# ${PARTS[id].prefix}CLIENT_ID=`, `# ${PARTS[id].prefix}CLIENT_SECRET=`];
+  const later = (id: Installable, issuer: string) => [`# ${PARTS[id].prefix}ISSUER=${issuer}`, `# ${PARTS[id].prefix}CLIENT_ID=`, `# ${PARTS[id].prefix}CLIENT_SECRET=`];
   const oidc = (id: Installable): string[] => {
     if (signIn === "own") return [];
     if (id === "identity" && signIn === "identity") return choice.upstream === "none" ? [] : choice.upstream === "keycloak" ? keycloakEnv(id) : providerEnv(id, choice.upstream);

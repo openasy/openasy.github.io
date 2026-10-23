@@ -7,6 +7,8 @@ let n = 0;
 const secrets = makeSecrets((b) => b.forEach((_, i) => (b[i] = n++ % 256)));
 const build = (patch: Partial<InstallChoice> = {}) => buildInstall({ ...DEFAULT_CHOICE, ...patch }, secrets);
 const file = (out: ReturnType<typeof build>, name: string) => out.files.find((f) => f.name === name)?.content ?? "";
+/** One service of compose.yaml, from its name to the next service. */
+const service = (compose: string, name: string) => compose.split(/\n(?= {2}[a-z-]+:\n)/).find((b) => b.startsWith(`  ${name}:`)) ?? "";
 
 describe("install builder", () => {
   it("only offers released products, at their released version", () => {
@@ -20,13 +22,18 @@ describe("install builder", () => {
     const out = build();
     const compose = file(out, "compose.yaml");
     expect(compose).toContain("IDENTITY_PUBLIC_URL: https://id.example.com");
-    expect(compose).toContain("VPN_OIDC_PROVIDER: openasy-identity");
+    const vpn = service(compose, "vpn");
+    expect(vpn).toContain("OPENASY_OIDC_PROVIDER: openasy-identity");
     // The issuer waits in .env with the client, so VPN starts before Identity has made it.
-    expect(compose).toContain("VPN_OIDC_ISSUER: ${VPN_OIDC_ISSUER:-}");
-    expect(file(out, ".env")).toContain("# VPN_OIDC_ISSUER=https://id.example.com");
-    expect(compose).toContain('VPN_OIDC_ROLE_MAPPING: "openasy-admins=admin');
+    expect(vpn).toContain("OPENASY_OIDC_ISSUER: ${VPN_ISSUER:-}");
+    expect(vpn).toContain("OPENASY_OIDC_CLIENT_ID: ${VPN_CLIENT_ID:-}");
+    expect(file(out, ".env")).toContain("# VPN_ISSUER=https://id.example.com");
+    expect(vpn).toContain('OPENASY_OIDC_ROLE_MAPPING: "openasy-admins=admin');
+    // Through Identity, the sign-in page goes straight there.
+    expect(vpn).toContain('OPENASY_OIDC_AUTO_REDIRECT: "true"');
     // Identity keeps its own people: it signs in through nobody.
-    expect(compose).not.toContain("IDENTITY_OIDC_");
+    expect(service(compose, "identity")).toContain("IDENTITY_PUBLIC_URL");
+    expect(service(compose, "identity")).not.toContain("OIDC_");
     // Only Caddy is published, besides VPN's own port.
     expect(compose).not.toMatch(/127\.0\.0\.1:808\d/);
     expect(compose).toContain('"443:443"');
@@ -47,8 +54,9 @@ describe("install builder", () => {
     const env = file(out, ".env");
     expect(compose).toContain(`image: ${THIRD_PARTY.keycloak}`);
     expect(compose).toContain(`image: ${THIRD_PARTY.postgres}`);
-    expect(compose).toContain("INFRA_OIDC_CLIENT_ID: openasy-infrastructure");
-    expect(compose).toContain("IDENTITY_OIDC_ISSUER: https://auth.example.com/realms/openasy");
+    expect(service(compose, "infra")).toContain("OPENASY_OIDC_CLIENT_ID: openasy-infrastructure");
+    expect(service(compose, "identity")).toContain("OPENASY_OIDC_ISSUER: https://auth.example.com/realms/openasy");
+    expect(compose).not.toContain("AUTO_REDIRECT");
     for (const v of ["VPN", "INFRA", "VULNS", "IDENTITY"]) {
       expect(compose).toContain(`OPENASY_${v}_SECRET: \${OPENASY_${v}_SECRET}`);
       expect(env).toMatch(new RegExp(`^OPENASY_${v}_SECRET=[0-9a-f]{48}$`, "m"));
@@ -62,17 +70,17 @@ describe("install builder", () => {
 
   it("Identity can sign its own people in through Keycloak while the products sign in through Identity", () => {
     const compose = file(build({ upstream: "keycloak" }), "compose.yaml");
-    expect(compose).toContain("IDENTITY_OIDC_PROVIDER: keycloak");
-    expect(compose).toContain("IDENTITY_OIDC_CLIENT_ID: openasy-identity");
-    expect(compose).toContain("VPN_OIDC_PROVIDER: openasy-identity");
+    expect(service(compose, "identity")).toContain("OPENASY_OIDC_PROVIDER: keycloak");
+    expect(service(compose, "identity")).toContain("OPENASY_OIDC_CLIENT_ID: openasy-identity");
+    expect(service(compose, "vpn")).toContain("OPENASY_OIDC_PROVIDER: openasy-identity");
     expect(compose).toContain("  keycloak:");
   });
 
   it("Google lets in its domain only, since it sends no groups", () => {
     const out = build({ products: ["vpn"], signIn: "provider", provider: "google", domain: "acme.io" });
     const compose = file(out, "compose.yaml");
-    expect(file(out, ".env")).toContain("# VPN_OIDC_ISSUER=https://accounts.google.com");
-    expect(compose).toContain("VPN_OIDC_ALLOWED_DOMAINS: acme.io");
+    expect(file(out, ".env")).toContain("# VPN_ISSUER=https://accounts.google.com");
+    expect(compose).toContain("OPENASY_OIDC_ALLOWED_DOMAINS: acme.io");
     expect(compose).not.toContain("ROLE_MAPPING");
   });
 
