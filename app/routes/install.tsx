@@ -138,7 +138,7 @@ const TOKEN: Record<Kind, string> = {
 function Code({ name, content }: { name: string; content: string }) {
   const lines = useMemo(() => highlight(content, languageOf(name)), [name, content]);
   return (
-    <pre tabIndex={0} aria-label={name} className="m-0 max-h-[32rem] min-h-72 overflow-auto p-4 font-mono text-xs leading-5 text-fg">
+    <pre tabIndex={0} aria-label={name} className="m-0 max-h-[32rem] min-h-72 overflow-auto p-4 font-mono text-xs leading-5 text-fg md:max-h-none md:min-h-0 md:flex-1">
       <code>
         {lines.map((tokens, i) => (
           <span key={i} className="block min-h-5">
@@ -188,7 +188,8 @@ function Files({ out, folder, logo }: { out: Install; folder: string; logo?: Log
   );
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-surface">
-      <div className="grid md:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)]">
+      {/* On wide screens both columns have the box's height and scroll on their own, so neither ends early. */}
+      <div className="grid md:h-[36rem] md:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)]">
         <div className="max-h-72 overflow-auto border-b border-line p-1.5 md:max-h-none md:border-r md:border-b-0">
           <p className="m-0 flex min-h-9 items-center gap-2 px-2.5 font-mono text-sm font-semibold">
             <FolderOpen aria-hidden className="size-4 shrink-0 text-fg-muted" />
@@ -209,7 +210,7 @@ function Files({ out, folder, logo }: { out: Install; folder: string; logo?: Log
             {top.map((f) => item(f, false))}
           </ul>
         </div>
-        <div className="flex min-w-0 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-col">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-1.5">
             <span className="truncate font-mono text-sm font-semibold">{current.name}</span>
             <div className="flex gap-2">
