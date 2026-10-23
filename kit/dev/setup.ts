@@ -83,15 +83,26 @@ function client(p: Product) {
   return async <T = any>(path: string, body?: unknown, method?: string): Promise<T> => {
     const token = state.tokens[p.service];
     const verb = method ?? (body === undefined ? "GET" : "POST");
-    const res = await fetch(`http://${p.service}:8080${path}`, {
-      method: verb,
-      headers: {
-        origin: p.url,
-        ...(token ? { authorization: `Bearer ${token}` } : { cookie: [...jar].map(([k, v]) => `${k}=${v}`).join("; ") }),
-        ...(body !== undefined && { "content-type": "application/json" }),
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
+    const send = () =>
+      fetch(`http://${p.service}:8080${path}`, {
+        method: verb,
+        headers: {
+          origin: p.url,
+          ...(token ? { authorization: `Bearer ${token}` } : { cookie: [...jar].map(([k, v]) => `${k}=${v}`).join("; ") }),
+          ...(body !== undefined && { "content-type": "application/json" }),
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+    // A product that setup just started again may close the connection while it comes up: ask again, for a minute.
+    let res: Response | undefined;
+    for (let i = 0; !res; i++) {
+      try {
+        res = await send();
+      } catch (err) {
+        if (i >= 30) throw err;
+        await sleep(2000);
+      }
+    }
     for (const c of res.headers.getSetCookie()) jar.set(c.slice(0, c.indexOf("=")), c.slice(c.indexOf("=") + 1, c.indexOf(";")));
     const text = await res.text();
     if (!res.ok) throw new Error(`${p.service} ${verb} ${path}: ${res.status} ${text}`);
@@ -198,6 +209,8 @@ for (const a of AGENTS) {
 
 step("Starting again with sign-in through Identity, and the agents");
 compose("up", "-d", ...PRODUCTS.filter((p) => p.service !== "identity").map((p) => p.service), "vpn-server", ...AGENTS.map((a) => a.service));
+// Each product is running again before anything asks it.
+for (const p of PRODUCTS) await ready(p);
 
 step("The two servers in hosts.yaml");
 for (const a of AGENTS) {
