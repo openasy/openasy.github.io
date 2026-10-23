@@ -286,6 +286,12 @@ describe("pages", () => {
     const menu = screen.getByRole("navigation", { name: "Menu" });
     for (const name of ["Goals", "Products", "Principles", "Storybook", "GitHub"]) expect(menu).toHaveTextContent(name);
     expect(menu).not.toHaveTextContent("Support");
+    // Storybook is another site: it opens in a new tab, and says so.
+    for (const link of screen.getAllByRole("link", { name: /^Storybook ?\(opens in a new tab\)$/ })) {
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    }
+    expect(screen.getAllByRole("link", { name: /^Storybook ?\(opens in a new tab\)$/ })).toHaveLength(2);
     await userEvent.keyboard("{Escape}");
     expect(details.open).toBe(false);
   });

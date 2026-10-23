@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router";
-import { Code, Menu, X } from "lucide-react";
+import { BookOpen, Code, Menu, X } from "lucide-react";
 import { cn, ThemeToggle, type ThemePreference } from "@openasy/ui";
 import { STORYBOOK } from "../data/storybook";
 
@@ -81,8 +81,9 @@ export function SiteHeader({ theme, onThemeChange }: { theme: ThemePreference; o
           ))}
         </nav>
         <div className="hidden items-center gap-4 md:flex">
-          <a href={STORYBOOK} className="py-1 text-sm text-fg-muted no-underline hover:text-fg">
-            Storybook
+          <a href={STORYBOOK} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 py-1 text-sm text-fg-muted no-underline hover:text-fg">
+            <BookOpen aria-hidden className="size-4" />
+            Storybook<span className="sr-only"> (opens in a new tab)</span>
           </a>
           <a href={GITHUB} className="inline-flex items-center gap-1.5 py-1 text-sm text-fg-muted no-underline hover:text-fg">
             <Code aria-hidden className="size-4" />
@@ -116,8 +117,9 @@ export function SiteHeader({ theme, onThemeChange }: { theme: ThemePreference; o
                   {n.label}
                 </NavLink>
               ))}
-              <a href={STORYBOOK} className="flex min-h-12 items-center border-b border-line text-base text-fg no-underline">
-                Storybook
+              <a href={STORYBOOK} target="_blank" rel="noopener noreferrer" className="flex min-h-12 items-center gap-2 border-b border-line text-base text-fg no-underline">
+                <BookOpen aria-hidden className="size-4" />
+                Storybook<span className="sr-only"> (opens in a new tab)</span>
               </a>
               <a href={GITHUB} className="flex min-h-12 items-center gap-2 border-b border-line text-base text-fg no-underline">
                 <Code aria-hidden className="size-4" />
