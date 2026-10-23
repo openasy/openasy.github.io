@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `vpn` and `vpn-server` build for amd64 and arm64 and need no external services. Budgets are not measured in CI yet.
+- **Where:** Every product, agent and server builds for amd64 and arm64. `vpn` and `vpn-server` need no external services. Budgets are not measured in CI yet.
 - **Priority:** Medium
 - **Area:** Operations
 

@@ -1,7 +1,8 @@
 # 0006. Languages: English first, ready for translation
 
 - **Decision:** Accepted
-- **Implementation:** Not started
+- **Implementation:** In progress
+- **Where:** `@openasy/ui` and `@openasy/auth` speak English, Turkish and German, with a language menu in the top bar, and so do the pages of `vpn`. The other products' pages are in English, with their words in `web/src/messages/en.json`, ready for translation.
 - **Area:** Product
 
 ## Context

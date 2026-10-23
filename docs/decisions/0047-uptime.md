@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `uptime` keeps HTTP, TCP, DNS and TLS checks, their state, outages and uptime, and serves a public status page; `uptime-runner.mjs`, served by the product, runs the checks from a CI cron or any machine (github.com/openasy/uptime, to be released as `ghcr.io/openasy/uptime`).
+- **Where:** `uptime` keeps HTTP, TCP, DNS and TLS checks, their state, outages and uptime, and serves a public status page; `uptime-runner.mjs`, served by the product, runs the checks from a CI cron or any machine (`ghcr.io/openasy/uptime`).
 - **Priority:** High
 - **Area:** Architecture
 

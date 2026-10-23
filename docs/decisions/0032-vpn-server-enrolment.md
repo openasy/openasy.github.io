@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `vpn` adds servers under Servers with the address clients connect to and a one-time enrolment token; `vpn-server` trades the token for its own secret, kept in its state volume. Client configs list every server at its address. `VPN_SERVER_TOKEN` still works for servers set up before 0.6.0, until 0.7.0.
+- **Where:** `vpn` adds servers under Servers with the address clients connect to and a one-time enrolment token; `vpn-server` trades the token for its own secret, kept in its state volume. Client configs list every server at its address. `VPN_SERVER_TOKEN` still works for servers set up before 0.6.0, with a warning in the log, until a later release removes it.
 - **Priority:** High
 - **Area:** Architecture
 

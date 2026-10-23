@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `errors` takes events from applications with a project key, groups them into issues and keeps resolution and regressions (github.com/openasy/errors, to be released as `ghcr.io/openasy/errors`). SDKs, source maps and alerts are planned.
+- **Where:** `errors` takes events from applications with a project key, groups them into issues and keeps resolution and regressions (`ghcr.io/openasy/errors`). SDKs, source maps and alerts are planned.
 - **Priority:** High
 - **Area:** Architecture
 

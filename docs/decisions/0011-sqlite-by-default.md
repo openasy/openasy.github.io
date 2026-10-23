@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** Implemented
-- **Where:** `vpn`, `vulns` and `infra`.
+- **Where:** Every product keeps its data in one SQLite file. `logs` keeps the log lines themselves in VictoriaLogs, in the same container (ADR 0035).
 - **Area:** Architecture
 
 ## Context

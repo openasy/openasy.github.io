@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn` runs as non-root in a distroless image. `vpn-server` gets only `NET_ADMIN` and `/dev/net/tun`, pulls its config, validates it against a fixed shape before writing, runs OpenVPN as `nobody` after start, and firewalls each device to the networks and ports its groups allow. The read-only filesystem and `no-new-privileges` are not set yet.
+- **Where:** The products run as a non-root user, all but `logs` in a distroless image. Their `compose.yaml` sets a read-only filesystem, except `vpn`'s, and `no-new-privileges`, except `vpn`'s and `identity`'s. `vpn-server` gets only `NET_ADMIN` and `/dev/net/tun`, pulls its config, validates it against a fixed shape before writing, runs OpenVPN as `nobody` after start, and firewalls each device to the networks and ports its groups allow.
 - **Area:** Security
 
 ## Context

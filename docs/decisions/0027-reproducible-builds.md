@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** Lock files, SHA-pinned actions, tag-only releases, cosign, SBOM and SLSA level 3 in `vpn` and `vpn-server`. Base image digests, image scanning and reproducibility checks are not built yet.
+- **Where:** Lock files, SHA-pinned actions, tag-only releases, cosign, SBOM and SLSA level 3 in every product, agent and server. Base image digests, image scanning and reproducibility checks are not built yet.
 - **Priority:** High
 - **Area:** Engineering
 

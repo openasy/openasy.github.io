@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `threat-intel` keeps indicators from STIX 2.1, CSV and text feeds, answers lookups from the other products, and keeps an allow list with reasons (github.com/openasy/threat-intel, to be released as `ghcr.io/openasy/threat-intel`). Pulling TAXII feeds itself is planned.
+- **Where:** `threat-intel` keeps indicators from STIX 2.1, CSV and text feeds, answers lookups from the other products, and keeps an allow list with reasons (`ghcr.io/openasy/threat-intel`). Pulling TAXII feeds itself is planned.
 - **Priority:** High
 - **Area:** Architecture
 

@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `backups` keeps backup jobs, the runs restic, Velero or a script report, and restore tests, and gives each job a state (github.com/openasy/backups, to be released as `ghcr.io/openasy/backups`).
+- **Where:** `backups` keeps backup jobs, the runs restic, Velero or a script report, and restore tests, and gives each job a state (`ghcr.io/openasy/backups`).
 - **Priority:** High
 - **Area:** Architecture
 

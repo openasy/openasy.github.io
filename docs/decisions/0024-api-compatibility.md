@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn`: OpenAPI 3.1 at `/api/openapi.json`, Swagger UI at `/api/docs/`, contract tests, Problem Details errors. Pagination and `Idempotency-Key` are not needed by its endpoints yet.
+- **Where:** Every product: OpenAPI 3.1 at `/api/openapi.json`, Swagger UI at `/api/docs/`, contract tests that call every operation, Problem Details errors. `Idempotency-Key` is not built yet.
 - **Area:** Architecture
 
 ## Context

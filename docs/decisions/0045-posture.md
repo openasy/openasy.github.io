@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `posture` reads SARIF from Trivy, kubescape, checkov, Prowler or any checker, keeps failed controls per target with decisions and a score over time (github.com/openasy/posture, to be released as `ghcr.io/openasy/posture`). Checkers that run for you are planned.
+- **Where:** `posture` reads SARIF from Trivy, kubescape, checkov, Prowler or any checker, keeps failed controls per target with decisions and a score over time (`ghcr.io/openasy/posture`). Checkers that run for you are planned.
 - **Priority:** High
 - **Area:** Architecture
 

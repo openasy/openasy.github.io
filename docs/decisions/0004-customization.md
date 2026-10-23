@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** White-label is implemented in `@openasy/ui` (`BrandProvider`). Feature switches are not started.
+- **Where:** White-label is implemented: `BrandProvider` in `@openasy/ui`, and the install's organization, accent and logo in every product from `OPENASY_ORGANIZATION`, `OPENASY_ACCENT` and `OPENASY_LOGO` (ADR 0053). Feature switches are not started.
 - **Area:** Product
 
 ## Context

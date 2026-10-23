@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `audit` reads osv-scanner JSON and SARIF from Trivy, Grype or osv-scanner, compares each scan with the default branch, keeps decisions and a package inventory (github.com/openasy/audit, to be released as `ghcr.io/openasy/audit`).
+- **Where:** `audit` reads osv-scanner JSON and SARIF from Trivy, Grype or osv-scanner, compares each scan with the default branch, keeps decisions and a package inventory (`ghcr.io/openasy/audit`).
 - **Priority:** High
 - **Area:** Architecture
 

@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vulns` and `vpn` print a one-time link that creates the owner, encrypt TOTP secrets with a mounted key, and log every sign-in and change to members and tokens (`@openasy/auth`). `vpn-server` authenticates to `vpn` with a token; the VPN CA key is not encrypted yet (ADR 0021). TLS between products and an append-only audit log are not built yet.
+- **Where:** Every product prints a one-time link that creates the owner, encrypts sign-in secrets with a mounted key, and logs every sign-in and change to members and tokens (`@openasy/auth`). `vpn-server`, `infra-agent` and `logs-agent` enrol with a one-time token and then use a secret of their own (ADR 0032); `vulns-agent` still shares one token per product. `vpn` seals its CA key (ADR 0021). Identity keeps an audit log of sign-ins and changes for 400 days. TLS between products, and an append-only audit log in every product, are not built yet.
 - **Area:** Security
 
 ## Context

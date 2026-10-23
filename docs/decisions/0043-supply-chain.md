@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `supply-chain` keeps the SBOM, the signature result and the provenance summary CI reports for each image, judges every image against one policy and answers whether it may run (github.com/openasy/supply-chain, to be released as `ghcr.io/openasy/supply-chain`). Verifying signatures in the product, and admission control in the cluster, are planned.
+- **Where:** `supply-chain` keeps the SBOM, the signature result and the provenance summary CI reports for each image, judges every image against one policy and answers whether it may run (`ghcr.io/openasy/supply-chain`). Verifying signatures in the product, and admission control in the cluster, are planned.
 - **Priority:** High
 - **Area:** Architecture
 

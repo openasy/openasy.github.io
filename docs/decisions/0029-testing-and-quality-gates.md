@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** Type checks, unit and contract tests, accessibility tests (`@openasy/ui`), container smoke tests, and an end-to-end VPN test in CI: a real OpenVPN client connects over UDP and TCP, reaches an allowed port and is blocked on another, appears in sessions, is disconnected, and is refused after revoke. Migration, upgrade and restore tests are not built yet.
+- **Where:** Type checks, lint, unit and contract tests in every repository, accessibility tests (`@openasy/ui`), container smoke tests, and end-to-end tests in CI: a real OpenVPN client connects over UDP and TCP, reaches an allowed port and is blocked on another, appears in sessions, is disconnected, and is refused after revoke; Infrastructure reads hosts, a jump host, Docker and Kubernetes; Vulnerabilities scans a host and an image. Each pair is tested at one version. Migration, upgrade and restore tests are not built yet.
 - **Area:** Quality
 
 ## Context

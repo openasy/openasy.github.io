@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `secrets` takes SARIF from gitleaks, TruffleHog and other scanners, compares it with the default branch and keeps triage (github.com/openasy/secrets, to be released as `ghcr.io/openasy/secrets`). Scanning of repositories, images and CI logs by an agent is planned.
+- **Where:** `secrets` takes SARIF from gitleaks, TruffleHog and other scanners, compares it with the default branch and keeps triage (`ghcr.io/openasy/secrets`). Scanning of repositories, images and CI logs by an agent is planned.
 - **Priority:** High
 - **Area:** Architecture
 

@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn` and `vpn-server` expose `/healthz`, `/readyz`, `/metrics` and JSON logs. Trace ids are not added yet.
+- **Where:** Every product, agent and server exposes `/healthz`, `/readyz`, `/metrics` and JSON logs. Trace ids are not added yet.
 - **Area:** Operations
 
 ## Context

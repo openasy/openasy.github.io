@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `certificates` keeps an inventory of X.509 certificates sent as PEM or read from public endpoints with a TLS handshake, with their state, warnings, chain and where they were seen (github.com/openasy/certificates, to be released as `ghcr.io/openasy/certificates`). ACME renewal is planned.
+- **Where:** `certificates` keeps an inventory of X.509 certificates sent as PEM or read from public endpoints with a TLS handshake, with their state, warnings, chain and where they were seen (`ghcr.io/openasy/certificates`). ACME renewal is planned.
 - **Priority:** High
 - **Area:** Architecture
 

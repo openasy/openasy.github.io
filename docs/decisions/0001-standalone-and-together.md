@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** VPN runs alone (`vpn` 0.4.0: people, devices, IP groups, OpenVPN servers). Linking products is not built yet, except the product switcher: every product reads the install's products and their addresses from `OPENASY_PRODUCTS` and serves them at `GET /api/v1/products`.
+- **Where:** Every product runs alone, with its own `compose.yaml`. Linking them has begun: the product switcher (`OPENASY_PRODUCTS`, served at `GET /api/v1/products`), sign-in through Identity (ADR 0033), one hosts file and one endpoints file (ADR 0052) and one brand (ADR 0053). Links between records, such as a finding that opens an incident, are not built yet.
 - **Area:** Architecture
 
 ## Context

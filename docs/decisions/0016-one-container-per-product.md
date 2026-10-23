@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** Every release since `vpn-manager` 0.1.0 (now `vpn`) is signed, has an SBOM and SLSA level 3 provenance. `vulns` has a Helm chart, published as a signed OCI artifact and tested on a kind cluster in CI; `vpn` has none yet.
+- **Where:** Every release of every product, agent and server is signed with cosign and has an SBOM and SLSA level 3 provenance. `vulns` has a Helm chart, published as a signed OCI artifact and tested on a kind cluster in CI; the other products have none yet.
 - **Area:** Operations
 
 ## Context

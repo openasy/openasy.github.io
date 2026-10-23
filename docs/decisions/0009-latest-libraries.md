@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** Dependabot runs on `vpn` and `vpn-server`.
+- **Where:** Dependabot runs on every product, agent and server, and on `@openasy/auth`.
 - **Area:** Engineering
 
 ## Context

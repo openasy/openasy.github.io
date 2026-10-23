@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `vpn` migrates forward on start. The backup before an upgrade is not built yet.
+- **Where:** Every product migrates its database forward on start. The backup before an upgrade is not built yet.
 - **Area:** Engineering
 
 ## Context
