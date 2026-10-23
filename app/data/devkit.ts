@@ -4,7 +4,18 @@
 import SETUP from "../../kit/dev/setup.ts?raw";
 import CODE from "../../kit/dev/code.ts?raw";
 import SEED from "../../kit/dev/seed.ts?raw";
-import { INSTALLABLE, PARTS, THIRD_PARTY, authFile, type Install, type InstallFile, type InstallStep, type Installable, type Secrets } from "./install";
+import {
+  INSTALLABLE,
+  PARTS,
+  THIRD_PARTY,
+  authFile,
+  cleanInternalDomain,
+  type Install,
+  type InstallFile,
+  type InstallStep,
+  type Installable,
+  type Secrets,
+} from "./install";
 import { statusFor } from "./status";
 
 /** Images the dev setup adds to the ones in THIRD_PARTY, pinned the same way (ADR 0027). */
@@ -51,7 +62,16 @@ const HOST_DOCKERFILE = `# syntax=docker/dockerfile:1
         EOF
         ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]`;
 
-export function buildDevKit(secrets: Secrets): Install {
+/** The VPN's internal names in the dev kit (ADR 0054): a domain only inside by default, or yours, split-horizon. */
+export interface DevKitOptions {
+  dnsDomain: string;
+  /** The domain's other names come from public DNS: on for a real domain, off for one that exists only inside. */
+  dnsForward: boolean;
+}
+export const DEV_DNS: DevKitOptions = { dnsDomain: "dev.internal", dnsForward: false };
+
+export function buildDevKit(secrets: Secrets, dns: DevKitOptions = DEV_DNS): Install {
+  const dnsDomain = cleanInternalDomain(dns.dnsDomain) || DEV_DNS.dnsDomain;
   const ids = INSTALLABLE;
   const tag = (id: Installable) => statusFor(id).version!;
   const svc = (id: Installable) => PARTS[id].service;
@@ -141,8 +161,11 @@ export function buildDevKit(secrets: Secrets): Install {
     "    depends_on: [caddy]",
     "",
     ...product("identity"),
-    // Internal names on the VPN (ADR 0054): the demo servers as web.dev.internal and db.dev.internal, added by seed.ts.
-    ...product("vpn", { hardened: false, env: [env("VPN_PUBLIC_HOST", "localhost"), env("VPN_DNS_DOMAIN", "dev.internal"), env("VPN_DNS_FORWARD", "false")] }),
+    // Internal names on the VPN (ADR 0054): the demo servers as web and db under the domain, added by seed.ts.
+    ...product("vpn", {
+      hardened: false,
+      env: [env("VPN_PUBLIC_HOST", "localhost"), env("VPN_DNS_DOMAIN", dnsDomain), ...(dns.dnsForward ? [] : [env("VPN_DNS_FORWARD", "false")])],
+    }),
     "  vpn-server:",
     `    image: ghcr.io/openasy/vpn-server:${tag("vpn")}`,
     "    restart: unless-stopped",

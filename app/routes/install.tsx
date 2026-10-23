@@ -43,7 +43,7 @@ import {
   type SignIn,
   type Upstream,
 } from "../data/install";
-import { DEV_EMAIL, DEV_FOLDER, DEV_PASSWORD, buildDevKit } from "../data/devkit";
+import { DEV_DNS, DEV_EMAIL, DEV_FOLDER, DEV_PASSWORD, buildDevKit, type DevKitOptions } from "../data/devkit";
 import { highlight, languageOf, type Kind } from "../data/highlight";
 import { statusFor } from "../data/status";
 import { zip } from "../data/zip";
@@ -426,7 +426,7 @@ function Options({ title, summary, children }: { title: string; summary: string;
 }
 
 /** Every released product on this machine: nothing to choose, one folder and one command. */
-function TryLocally({ out, ready }: { out: Install; ready: boolean }) {
+function TryLocally({ out, ready, dns, onDns }: { out: Install; ready: boolean; dns: DevKitOptions; onDns: (d: DevKitOptions) => void }) {
   return (
     <>
       <section aria-labelledby="dev-title" className="mt-6 flex flex-wrap overflow-hidden rounded-2xl border border-line bg-surface">
@@ -447,6 +447,34 @@ function TryLocally({ out, ready }: { out: Install; ready: boolean }) {
             </Button>
             <span className="text-sm text-fg-subtle">{out.files.length} files, made in your browser</span>
           </div>
+          <details className="group rounded-lg border border-line bg-canvas px-4 py-3">
+            <summary className="cursor-pointer text-sm font-medium">
+              Names on the VPN: <span className="font-mono">{cleanInternalDomain(dns.dnsDomain) || DEV_DNS.dnsDomain}</span>
+              {dns.dnsForward ? ", split-horizon" : ", only inside"}
+            </summary>
+            <div className="mt-3 flex flex-col gap-3">
+              <TextField
+                label="VPN's internal domain"
+                mono
+                value={dns.dnsDomain}
+                onChange={(e) => onDns({ ...dns, dnsDomain: e.target.value })}
+                placeholder={DEV_DNS.dnsDomain}
+                hint={
+                  dns.dnsDomain && !cleanInternalDomain(dns.dnsDomain)
+                    ? `A domain name, such as youreply.com.tr; ${DEV_DNS.dnsDomain} until then.`
+                    : "On the VPN, web and db under it resolve to the two demo servers (ADR 0054). Your own domain shows split-horizon."
+                }
+                spellCheck={false}
+                autoComplete="off"
+              />
+              <Toggle
+                checked={dns.dnsForward}
+                onChange={(dnsForward) => onDns({ ...dns, dnsForward })}
+                title="Its other names stay public"
+                text="Split-horizon: names without an inside record, such as www, come from public DNS on the VPN too. Off for a domain only inside, such as dev.internal."
+              />
+            </div>
+          </details>
         </div>
         <div aria-hidden className="flex min-w-0 flex-[1_1_22rem] flex-col gap-3 bg-[#0f1724] p-7 font-mono text-[13px] leading-7 text-[#e8eef7]">
           <span className="flex gap-1.5">
@@ -630,7 +658,8 @@ export default function InstallPage() {
   }, []);
 
   const out = useMemo(() => buildInstall(choice, secrets), [choice, secrets]);
-  const dev = useMemo(() => buildDevKit(secrets), [secrets]);
+  const [devDns, setDevDns] = useState<DevKitOptions>(DEV_DNS);
+  const dev = useMemo(() => buildDevKit(secrets, devDns), [secrets, devDns]);
   const ready = secrets.kek !== PENDING;
   const has = (id: Installable) => choice.products.includes(id);
 
@@ -664,7 +693,7 @@ export default function InstallPage() {
       />
 
       {mode === "dev" ? (
-        <TryLocally out={dev} ready={ready} />
+        <TryLocally out={dev} ready={ready} dns={devDns} onDns={setDevDns} />
       ) : (
         <>
           <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">

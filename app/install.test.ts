@@ -298,6 +298,19 @@ describe("install builder", () => {
     expect(cleanDomain("  ")).toBe("example.com");
   });
 
+  it("the dev setup serves names on the VPN under dev.internal, or under your domain, split-horizon (ADR 0054)", () => {
+    const plain = service(file(buildDevKit(secrets), "compose.yaml"), "vpn");
+    expect(plain).toContain("VPN_DNS_DOMAIN: dev.internal");
+    expect(plain).toContain("VPN_DNS_FORWARD: false");
+    const yours = service(file(buildDevKit(secrets, { dnsDomain: " YouReply.com.tr ", dnsForward: true }), "compose.yaml"), "vpn");
+    expect(yours).toContain("VPN_DNS_DOMAIN: youreply.com.tr");
+    expect(yours).not.toContain("VPN_DNS_FORWARD");
+    // A name that is not a domain keeps the default.
+    expect(service(file(buildDevKit(secrets, { dnsDomain: "not a domain", dnsForward: false }), "compose.yaml"), "vpn")).toContain(
+      "VPN_DNS_DOMAIN: dev.internal",
+    );
+  });
+
   it("the dev setup runs every released product from released images, and a setup container wires them", () => {
     const out = buildDevKit(secrets);
     const compose = file(out, "compose.yaml");
