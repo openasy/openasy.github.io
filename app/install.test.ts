@@ -87,7 +87,9 @@ describe("install builder", () => {
     expect(steps).not.toContain("so Caddy can get their certificates");
     // Caddy starts before the products, so its CA is there when they read it.
     const order = out.steps.map((s) => s.code ?? "");
-    expect(order.findIndex((c) => c.startsWith("docker compose up -d caddy"))).toBeLessThan(order.findIndex((c) => c.startsWith("docker compose up -d identity")));
+    expect(order.findIndex((c) => c.startsWith("docker compose up -d caddy"))).toBeLessThan(
+      order.findIndex((c) => c.startsWith("docker compose up -d identity")),
+    );
   });
 
   it("the certificates choice changes nothing without Caddy, or with Let's Encrypt", () => {
