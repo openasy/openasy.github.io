@@ -12,6 +12,7 @@ Many incidents start with a port published by accident, for example a Docker `-p
 ## Decision
 
 - Products listen on HTTPS (8443) only. Plain HTTP, if enabled, only redirects (ADR 0013). On first start a product creates a self-signed certificate and shows its fingerprint; you replace it with your own certificate or enable ACME.
+- On a network the internet cannot reach, the install builder's Caddy can use its own CA in place of ACME. Every computer that opens the products trusts its root once, and the products trust it too.
 - Examples publish ports on `127.0.0.1` unless the port is meant for the public, such as the VPN's 1194/udp or 443/tcp. The docs explain that Docker-published ports bypass host firewalls.
 - Products work behind a reverse proxy. `X-Forwarded-*` headers are trusted only from addresses listed in `OPENASY_TRUSTED_PROXIES`; by default none are trusted.
 - `/metrics` and other management endpoints can be bound to a separate address or port, and are not public by default.

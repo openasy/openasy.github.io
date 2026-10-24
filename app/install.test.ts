@@ -64,6 +64,38 @@ describe("install builder", () => {
     expect(out.hosts).toEqual(["id.example.com", "vpn.example.com"]);
   });
 
+  it("on an internal network Caddy uses its own CA, and the products trust it", () => {
+    const out = build({ domain: "openasy.internal", certificates: "internal", products: ["identity", "vpn", "sast"] });
+    const compose = file(out, "compose.yaml");
+    expect(file(out, "config/Caddyfile")).toMatch(/^\{\n {2}local_certs\n {2}skip_install_trust\n\}\n\nid\.openasy\.internal \{/);
+    const caddy = service(compose, "caddy");
+    // No ACME check, so port 80 stays closed, and inside the network the names reach Caddy.
+    expect(caddy).not.toContain('"80:80"');
+    expect(caddy).toContain('"443:443"');
+    expect(caddy).toContain("aliases: [id.openasy.internal, vpn.openasy.internal, sast.openasy.internal]");
+    for (const name of ["identity", "vpn", "sast"]) {
+      expect(service(compose, name)).toContain("NODE_EXTRA_CA_CERTS: /caddy/caddy/pki/authorities/local/root.crt");
+      expect(service(compose, name)).toContain("- caddy-data:/caddy:ro");
+    }
+    // The agent talks to its product over plain HTTP inside the network.
+    expect(service(compose, "sast-agent")).not.toContain("NODE_EXTRA_CA_CERTS");
+    const steps = out.steps.map((s) => `${s.text}\n${s.code ?? ""}`).join("\n");
+    expect(steps).toContain("<this host's address>  id.openasy.internal vpn.openasy.internal sast.openasy.internal");
+    expect(steps).toContain("chmod o+r root.crt");
+    expect(steps).toContain("docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt config/caddy-root.crt");
+    expect(steps).toContain("certutil -addstore -user Root caddy-root.crt");
+    expect(steps).not.toContain("so Caddy can get their certificates");
+    // Caddy starts before the products, so its CA is there when they read it.
+    const order = out.steps.map((s) => s.code ?? "");
+    expect(order.findIndex((c) => c.startsWith("docker compose up -d caddy"))).toBeLessThan(order.findIndex((c) => c.startsWith("docker compose up -d identity")));
+  });
+
+  it("the certificates choice changes nothing without Caddy, or with Let's Encrypt", () => {
+    expect(build({ certificates: "internal", proxy: "nginx" })).toEqual(build({ proxy: "nginx" }));
+    expect(build({ certificates: "internal", proxy: "own" })).toEqual(build({ proxy: "own" }));
+    expect(file(build({ certificates: "public" }), "compose.yaml")).not.toContain("NODE_EXTRA_CA_CERTS");
+  });
+
   it("every other released product is one hardened container with its own address, key and ingest token", () => {
     const out = build({ products: [...INSTALLABLE], signIn: "own" });
     const compose = file(out, "compose.yaml");

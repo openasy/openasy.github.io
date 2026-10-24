@@ -392,7 +392,7 @@ export function buildDevKit(secrets: Secrets): Install {
     },
     {
       title: "Trust the local CA",
-      text: "Once, so the browser accepts https://*.localhost without a warning. On macOS:",
+      text: "Once, so the browser accepts https://*.localhost without a warning, and again after starting over, which makes a new CA. Firefox reads it from macOS once security.enterprise_roots.enabled is true in about:config. On macOS:",
       code: "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db config/caddy-root.crt",
     },
     {

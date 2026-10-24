@@ -34,6 +34,7 @@ export type Provider = "entra" | "okta" | "google";
 /** Where Identity's own people come from when it signs everyone else in. */
 export type Upstream = "none" | "keycloak" | Provider;
 export type Proxy = "caddy" | "nginx" | "apache" | "own";
+export type Certificates = "public" | "internal";
 
 export interface InstallChoice {
   products: Installable[];
@@ -47,6 +48,8 @@ export interface InstallChoice {
    * leaves the local ports for any other proxy.
    */
   proxy: Proxy;
+  /** Where Caddy gets the certificates: Let's Encrypt for public names, or its own CA on a network the internet cannot reach. */
+  certificates: Certificates;
   prometheus: boolean;
   /** A second vpn-server on TCP, for networks that allow only HTTPS. */
   vpnTcp: boolean;
@@ -71,6 +74,7 @@ export const DEFAULT_CHOICE: InstallChoice = {
   provider: "entra",
   domain: "example.com",
   proxy: "caddy",
+  certificates: "public",
   prometheus: true,
   vpnTcp: false,
   vulnsHost: true,
@@ -279,6 +283,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const picked = INSTALLABLE.filter((id) => choice.products.includes(id));
   const has = (id: Installable) => picked.includes(id);
   const caddy = choice.proxy === "caddy";
+  const internal = caddy && choice.certificates === "internal";
   const viaIdentity = choice.signIn === "identity" && has("identity");
   const signIn: SignIn = choice.signIn === "identity" && !has("identity") ? "own" : choice.signIn;
   const keycloak = picked.length > 0 && (signIn === "keycloak" || (viaIdentity && choice.upstream === "keycloak"));
@@ -360,6 +365,9 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   // A folder, not the file: an editor that saves by replacing the file would leave the product with the old one.
   const hostsMount = hostsFile ? ["      - ./config/inventory:/config/inventory:ro   # your servers, shared with the other products"] : [];
   const hostsEnv = hostsFile ? [env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")] : [];
+  // With Caddy's own CA the products trust it, so they reach Identity's https issuer through Caddy like a browser does.
+  const caMount = internal ? ["      - caddy-data:/caddy:ro   # Caddy's CA, to trust the other products' https names"] : [];
+  const caEnv = internal ? [env("NODE_EXTRA_CA_CERTS", "/caddy/caddy/pki/authorities/local/root.crt")] : [];
   // The brand every product shows (ADR 0053) and how people sign in, each in a file of its own that every product loads.
   const envFiles = (id: Installable) => [
     `    env_file: [config/brand.env${ownAuthFile(id) ? "" : ", config/auth.env"}]   # your brand${ownAuthFile(id) ? "" : " and sign-in"}, the same in every product`,
@@ -389,10 +397,12 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    volumes:",
           "      - identity-data:/data",
           ...brandMount,
+          ...caMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
           env("IDENTITY_PUBLIC_URL", `${url(id)}   # the issuer: keep it fixed once applications use it`),
+          ...caEnv,
           ...oidc(id),
         ],
         ["identity-data"],
@@ -407,10 +417,12 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    volumes:",
           "      - vpn-data:/data   # SQLite database, CA and settings",
           ...brandMount,
+          ...caMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
           env("VPN_PUBLIC_URL", url(id)),
+          ...caEnv,
           env("VPN_PUBLIC_HOST", `${host(id)}   # the name clients connect to`),
           ...oidc(id),
         ],
@@ -451,10 +463,12 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "      - infra-data:/data   # agents, hosts, clusters, collections and changes",
           ...hostsMount,
           ...brandMount,
+          ...caMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
           env("INFRA_PUBLIC_URL", url(id)),
+          ...caEnv,
           ...hostsEnv,
           ...oidc(id),
         ],
@@ -491,10 +505,12 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "      - vulns-data:/data   # SQLite, SBOMs and the vulnerability data (3 GB)",
           ...hostsMount,
           ...brandMount,
+          ...caMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
           env("VULNS_PUBLIC_URL", url(id)),
+          ...caEnv,
           env("VULNS_INGEST_TOKEN", "${VULNS_INGEST_TOKEN}"),
           ...hostsEnv,
           ...oidc(id),
@@ -531,10 +547,12 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           `      - ${service}-data:/data   # SQLite database`,
           ...(hosts ? hostsMount : []),
           ...brandMount,
+          ...caMount,
           ...kek,
           ...envFiles(id),
           "    environment:",
           env(`${prefix}PUBLIC_URL`, url(id)),
+          ...caEnv,
           ...(ingest ? [env(`${prefix}INGEST_TOKEN`, `\${${prefix}INGEST_TOKEN}   # for the scripts and CI jobs that send it data`)] : []),
           ...(hosts ? hostsEnv : []),
           ...oidc(id),
@@ -686,14 +704,23 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     add(
       "caddy",
       [
-        `    image: ${THIRD_PARTY.caddy}   # makes and renews the HTTPS certificates`,
+        `    image: ${THIRD_PARTY.caddy}   # makes and renews the HTTPS certificates${internal ? " with its own CA" : ""}`,
         "    restart: unless-stopped",
         "    ports:",
-        '      - "80:80"',
+        // Let's Encrypt checks a name over port 80; Caddy's own CA needs no such check.
+        ...(internal ? [] : ['      - "80:80"']),
         '      - "443:443"',
         "    volumes:",
         "      - ./config/Caddyfile:/etc/caddy/Caddyfile:ro",
         "      - caddy-data:/data",
+        ...(internal
+          ? [
+              "    networks:",
+              "      default:",
+              "        # Inside the network the same names reach Caddy, whatever this host's DNS says.",
+              `        aliases: [${fronted.map(host).join(", ")}]`,
+            ]
+          : []),
       ],
       ["caddy-data"],
     );
@@ -820,7 +847,11 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   if (withCaddy)
     files.push({
       name: "config/Caddyfile",
-      content: fronted.map((id) => `${host(id)} {\n  reverse_proxy ${id === "keycloak" ? "keycloak" : PARTS[id].service}:8080\n}`).join("\n\n"),
+      content: [
+        // Certificates from Caddy's own CA; computers trust its root, which the steps copy to config/caddy-root.crt.
+        ...(internal ? ["{\n  local_certs\n  skip_install_trust\n}"] : []),
+        ...fronted.map((id) => `${host(id)} {\n  reverse_proxy ${id === "keycloak" ? "keycloak" : PARTS[id].service}:8080\n}`),
+      ].join("\n\n"),
     });
   // Plain HTTP sites that certbot then turns into HTTPS with a redirect. The scheme is passed on as it is, so after
   // certbot the products see https: Identity builds its issuer URLs from it.
@@ -885,7 +916,22 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     });
     if (keycloak)
       steps.push({ text: "Fetch the Keycloak realm in which every product is already a client:", code: `curl -fsSL -o config/openasy-realm.json ${REALM}` });
-    if (withCaddy || onHost)
+    if (internal) {
+      steps.push({
+        text: "Give these names this host's address on your network, in your DNS or in the hosts file of each computer that opens them:",
+        code: `<this host's address>  ${fronted.map(host).join(" ")}`,
+      });
+      // The products read the CA when they start, so it must exist first. They run as a non-root user: they may read
+      // the root certificate, never the CA's keys.
+      steps.push({
+        text: "Start Caddy first, so its CA exists before the products start, let the products read its root certificate, and copy it out:",
+        code: [
+          "docker compose up -d caddy && sleep 5",
+          `docker compose exec caddy sh -c "cd /data/caddy/pki/authorities/local && chmod o+x /data/caddy/pki /data/caddy/pki/authorities . && chmod o+r root.crt"`,
+          "docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt config/caddy-root.crt",
+        ].join("\n"),
+      });
+    } else if (withCaddy || onHost)
       steps.push({ text: `Point ${fronted.map(host).join(", ")} at this host, so ${withCaddy ? "Caddy" : "certbot"} can get their certificates.` });
     // Agents that enrol with a one-time token start once they have it.
     const waiting = ["vpn-server", "vpn-server-tcp", "infra-agent", "sast-agent", "dast-agent", "logs-agent"];
@@ -894,6 +940,15 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       text: first.length < services.length ? "Start everything but the agents that wait for a token:" : "Start everything:",
       code: first.length < services.length ? `docker compose up -d ${first.join(" ")}` : "docker compose up -d",
     });
+    if (internal)
+      steps.push({
+        text: "On each computer that opens the products, trust config/caddy-root.crt once. macOS, Windows and Linux, one line each. Firefox on macOS and Windows reads it once security.enterprise_roots.enabled is true in about:config:",
+        code: [
+          "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db caddy-root.crt",
+          "certutil -addstore -user Root caddy-root.crt",
+          "sudo cp caddy-root.crt /usr/local/share/ca-certificates/openasy.crt && sudo update-ca-certificates",
+        ].join("\n"),
+      });
     const certbot = `sudo certbot --${choice.proxy} ${fronted.map((id) => `-d ${host(id)}`).join(" ")}`;
     if (onHost && choice.proxy === "nginx")
       steps.push({

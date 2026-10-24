@@ -34,6 +34,7 @@ import {
   type Install,
   type InstallFile,
   type Installable,
+  type Certificates,
   type InstallChoice,
   type InstallStep,
   type Provider,
@@ -100,10 +101,19 @@ const UPSTREAM_HINT: Record<Upstream, string> = {
 };
 
 const PROXIES: Array<{ value: Proxy; title: string; text: string }> = [
-  { value: "caddy", title: "Caddy, in the compose file", text: "Gets and renews the certificates from Let's Encrypt by itself." },
+  { value: "caddy", title: "Caddy, in the compose file", text: "Gets and renews the certificates by itself, from Let's Encrypt or its own CA." },
   { value: "nginx", title: "nginx on this host", text: "A site for each product; certbot adds HTTPS." },
   { value: "apache", title: "Apache on this host", text: "A virtual host for each product; certbot adds HTTPS." },
   { value: "own", title: "Another proxy", text: "Products listen on 127.0.0.1; point your proxy at them." },
+];
+
+const CERTIFICATES: Array<{ value: Certificates; title: string; text: string }> = [
+  { value: "public", title: "Let's Encrypt", text: "The names are public and this host answers on ports 80 and 443." },
+  {
+    value: "internal",
+    title: "Caddy's own CA",
+    text: "A network the internet cannot reach, such as openasy.internal. Each computer that opens the products trusts its root once.",
+  },
 ];
 
 const installable = (id: string): id is Installable => (INSTALLABLE as readonly string[]).includes(id);
@@ -766,6 +776,20 @@ export default function InstallPage() {
                     />
                   ))}
                 </div>
+                {choice.proxy === "caddy" && (
+                  <div role="radiogroup" aria-label="Certificates" className="grid gap-3 sm:grid-cols-2">
+                    {CERTIFICATES.map((o) => (
+                      <Choice
+                        key={o.value}
+                        name="certificates"
+                        checked={choice.certificates === o.value}
+                        onChange={() => set({ certificates: o.value })}
+                        title={o.title}
+                        text={o.text}
+                      />
+                    ))}
+                  </div>
+                )}
               </Part>
 
               <Part n={4} title="Options" hint="Each is set up well already: change only what you need.">
