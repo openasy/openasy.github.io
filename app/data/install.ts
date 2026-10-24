@@ -84,7 +84,7 @@ export const DEFAULT_CHOICE: InstallChoice = {
 /** Made in the reader's browser; the names are the .env variables or files they end up in. */
 export interface Secrets {
   kek: string;
-  /** infra-agent's own key, and logs-agent's. */
+  /** infra-agent's and sast-agent's own key, and logs-agent's. */
   agentKek: string;
   logsAgentKek: string;
   /** Vulnerabilities' ingest token, which its agents send. */
@@ -542,6 +542,25 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         [`${service}-data`],
       );
     }
+    if (id === "sast")
+      add(
+        "sast-agent",
+        [
+          `    image: ghcr.io/openasy/sast-agent:${tag(id)}   # clones and scans repositories from GitHub; sast holds no code`,
+          "    restart: unless-stopped",
+          ...hardened,
+          "    tmpfs: [/scan:size=2g]   # the clone of one repository, deleted after its scan",
+          "    mem_limit: 3g",
+          "    volumes:",
+          "      - sast-agent-data:/data   # its secret, sealed with its own key",
+          "    secrets: [openasy-agent-kek]",
+          "    environment:",
+          env("SAST_URL", "http://sast:8080"),
+          env("SAST_ENROLL_TOKEN", "${SAST_ENROLL_TOKEN:-}   # one-time, from GitHub, Agents"),
+          "    depends_on: [sast]",
+        ],
+        ["sast-agent-data"],
+      );
     if (id === "logs")
       add(
         "logs-agent",
@@ -645,7 +664,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       "secrets:",
       "  openasy-kek:",
       "    file: ./secrets/openasy-kek",
-      ...(has("infrastructure") ? ["  openasy-agent-kek:", "    file: ./secrets/openasy-agent-kek"] : []),
+      ...(has("infrastructure") || has("sast") ? ["  openasy-agent-kek:", "    file: ./secrets/openasy-agent-kek"] : []),
       ...(has("logs") ? ["  openasy-logs-agent-kek:", "    file: ./secrets/openasy-logs-agent-kek"] : []),
     );
 
@@ -687,6 +706,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     ...(has("vpn") ? ["VPN_ENROLL_TOKEN="] : []),
     ...(has("vpn") && choice.vpnTcp ? ["VPN_TCP_ENROLL_TOKEN="] : []),
     ...(has("infrastructure") ? ["INFRA_ENROLL_TOKEN="] : []),
+    ...(has("sast") ? ["SAST_ENROLL_TOKEN="] : []),
     ...(has("logs") ? ["LOGS_ENROLL_TOKEN="] : []),
   ]);
 
@@ -728,7 +748,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     for (const picture of [choice.logo, choice.favicon]) if (picture) files.push({ name: `config/brand/${picture}`, content: "", binary: true });
     files.push({ name: "secrets/openasy-kek", content: secrets.kek, secret: true });
   }
-  if (has("infrastructure")) files.push({ name: "secrets/openasy-agent-kek", content: secrets.agentKek, secret: true });
+  if (has("infrastructure") || has("sast")) files.push({ name: "secrets/openasy-agent-kek", content: secrets.agentKek, secret: true });
   if (has("logs")) files.push({ name: "secrets/openasy-logs-agent-kek", content: secrets.logsAgentKek, secret: true });
   if (hostsFile)
     files.push({
@@ -827,7 +847,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     if (withCaddy || onHost)
       steps.push({ text: `Point ${fronted.map(host).join(", ")} at this host, so ${withCaddy ? "Caddy" : "certbot"} can get their certificates.` });
     // Agents that enrol with a one-time token start once they have it.
-    const waiting = ["vpn-server", "vpn-server-tcp", "infra-agent", "logs-agent"];
+    const waiting = ["vpn-server", "vpn-server-tcp", "infra-agent", "sast-agent", "logs-agent"];
     const first = services.filter((sv) => !waiting.includes(sv));
     steps.push({
       text: first.length < services.length ? "Start everything but the agents that wait for a token:" : "Start everything:",
@@ -883,6 +903,11 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       });
     if (has("infrastructure"))
       steps.push({ text: "In Infrastructure, Settings, Agents, make a token. Put it in INFRA_ENROLL_TOKEN, then:", code: "docker compose up -d infra-agent" });
+    if (has("sast"))
+      steps.push({
+        text: "In SAST, GitHub, connect your account and add an agent. Put its token in SAST_ENROLL_TOKEN, then:",
+        code: "docker compose up -d sast-agent",
+      });
     if (has("logs"))
       steps.push({ text: "In Logs, Settings, Agents, make a token. Put it in LOGS_ENROLL_TOKEN, then:", code: "docker compose up -d logs-agent" });
     if (hostsFile)

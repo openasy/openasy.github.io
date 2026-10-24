@@ -201,6 +201,17 @@ export function buildDevKit(secrets: Secrets): Install {
           ],
         });
       }),
+    // Clones the repositories of a GitHub account connected under SAST, GitHub, into its tmpfs and scans them.
+    ...agent("sast-agent", `ghcr.io/openasy/sast-agent:${tag("sast")}`, "openasy-agent-kek", [
+      "    volumes:",
+      "      - sast-agent-data:/data",
+      "environment",
+      "    environment:",
+      env("SAST_URL", "http://sast:8080"),
+      env("SAST_ENROLL_TOKEN", "${SAST_ENROLL_TOKEN:-}"),
+      env("WORK_DIR", "/tmp"),
+      "    depends_on: [sast]",
+    ]),
     ...agent("logs-agent", `ghcr.io/openasy/logs-agent:${tag("logs")}`, "openasy-logs-agent-kek", [
       "    volumes:",
       "      - logs-agent-data:/data",
@@ -250,7 +261,15 @@ export function buildDevKit(secrets: Secrets): Install {
     "      - prometheus-data:/prometheus",
     "",
     "volumes:",
-    ...["caddy-data", ...ids.map((id) => `${svc(id)}-data`), "vpn-server-data", "infra-agent-data", "logs-agent-data", "prometheus-data"].map((v) => `  ${v}:`),
+    ...[
+      "caddy-data",
+      ...ids.map((id) => `${svc(id)}-data`),
+      "vpn-server-data",
+      "infra-agent-data",
+      "sast-agent-data",
+      "logs-agent-data",
+      "prometheus-data",
+    ].map((v) => `  ${v}:`),
     "",
     "secrets:",
     "  openasy-kek:",
@@ -419,7 +438,19 @@ export function buildDevKit(secrets: Secrets): Install {
     { name: "secrets/openasy-agent-kek", content: secrets.agentKek, secret: true },
     { name: "secrets/openasy-logs-agent-kek", content: secrets.logsAgentKek, secret: true },
   ];
-  const services = ["caddy", "setup", ...ids.map(svc), "vpn-server", "infra-agent", "vulns-agent", "logs-agent", "host-web", "host-db", "prometheus"];
+  const services = [
+    "caddy",
+    "setup",
+    ...ids.map(svc),
+    "vpn-server",
+    "infra-agent",
+    "vulns-agent",
+    "sast-agent",
+    "logs-agent",
+    "host-web",
+    "host-db",
+    "prometheus",
+  ];
   const wiring = [
     { title: "Identity signs everyone in", text: `as ${DEV_EMAIL}, an admin in every product through openasy-admins.` },
     { title: "setup wires it once", text: "owners, applications and the agents' tokens, then it exits. Running it again skips what is done." },

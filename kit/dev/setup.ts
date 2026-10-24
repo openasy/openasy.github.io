@@ -207,8 +207,12 @@ for (const a of AGENTS) {
   if (!env.get(a.token)) setEnv(a.token, (await api[a.product]!<{ enrollToken: string }>("/api/v1/agents", { name: "local" })).enrollToken);
 }
 
+// SAST's agent scans repositories of a GitHub account connected under SAST, GitHub; it reads no servers.
+step("sast: an agent");
+if (!env.get("SAST_ENROLL_TOKEN")) setEnv("SAST_ENROLL_TOKEN", (await api.sast!<{ enrollToken: string }>("/api/v1/agents", { name: "local" })).enrollToken);
+
 step("Starting again with sign-in through Identity, and the agents");
-compose("up", "-d", ...PRODUCTS.filter((p) => p.service !== "identity").map((p) => p.service), "vpn-server", ...AGENTS.map((a) => a.service));
+compose("up", "-d", ...PRODUCTS.filter((p) => p.service !== "identity").map((p) => p.service), "vpn-server", ...AGENTS.map((a) => a.service), "sast-agent");
 // Each product is running again before anything asks it.
 for (const p of PRODUCTS) await ready(p);
 
