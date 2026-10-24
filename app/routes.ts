@@ -8,6 +8,7 @@ export default [
   route("products/:id", "routes/product.tsx"),
   route("products/:id/api", "routes/product-api.tsx"),
   route("principles", "routes/principles.tsx"),
+  route("evidence", "routes/evidence.tsx"),
   route("install", "routes/install.tsx"),
   route("sign-in", "routes/sign-in.tsx"),
   route("support", "routes/support.tsx"),

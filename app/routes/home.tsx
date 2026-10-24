@@ -1,8 +1,9 @@
 import { Link } from "react-router";
 import { ArrowRight, Check } from "lucide-react";
-import { PRODUCT_IDS, PRODUCTS, cn, type ProductGroup } from "@openasy/ui";
+import { Badge, PRODUCT_IDS, PRODUCTS, cn, type ProductGroup } from "@openasy/ui";
 import { GOALS } from "../data/goals";
 import { PRINCIPLES } from "../data/principles";
+import { CLAIMS, GRADES, GRADE_TONE, JUDGMENT, type Grade } from "../data/evidence";
 import { statusFor, withStatus } from "../data/status";
 import { storyUrl } from "../data/storybook";
 import { ButtonLink, Section } from "../components/site";
@@ -25,6 +26,9 @@ export const GROUPS: Array<{ id: ProductGroup; name: string; text: string }> = [
   { id: "identity", name: "Identity", text: "Who people are and what they may do." },
   { id: "platform", name: "Platform", text: "Automate and ask questions across all of it." },
 ];
+
+// The claims shown on the home page; the rest are on /evidence.
+const FEATURED = ["one-signal", "new-findings", "passkeys"];
 
 const WHY = [
   { title: "Start with one", text: "Every product runs on its own in one container. Add others when you need them." },
@@ -316,6 +320,41 @@ export default function Home() {
         <p className="mt-6 mb-0">
           <Link to="/principles" className="inline-flex min-h-11 items-center sm:min-h-0">
             All {PRINCIPLES.length} design decisions, and how far each is built
+          </Link>
+        </p>
+      </Section>
+
+      <Section className="pt-20" labelledBy="evidence">
+        <h2 id="evidence" className="m-0 text-3xl font-semibold tracking-tight">
+          Why it is built this way
+        </h2>
+        <p className="mt-3 max-w-2xl text-base text-fg-muted">
+          Each decision says what it rests on: a study, a standard, published practice, or our own judgment, called that.
+        </p>
+        <ul aria-label="Evidence by grade" className="mt-6 flex list-none flex-wrap gap-x-6 gap-y-2 p-0">
+          {(Object.keys(GRADES) as Grade[]).map((g) => (
+            <li key={g} className="flex items-center gap-2">
+              <Badge tone={GRADE_TONE[g]}>{g}</Badge>
+              <strong>{CLAIMS.filter((c) => c.grade === g).length}</strong>
+            </li>
+          ))}
+          <li className="flex items-center gap-2">
+            <Badge>Our judgment</Badge>
+            <strong>{JUDGMENT.length}</strong>
+          </li>
+        </ul>
+        <ul className="mt-8 grid list-none gap-x-10 gap-y-8 p-0 sm:grid-cols-2 lg:grid-cols-3">
+          {CLAIMS.filter((c) => FEATURED.includes(c.id)).map((c) => (
+            <li key={c.id} className="border-t-2 border-fg pt-4">
+              <p className="m-0 text-lg font-semibold">{c.claim}</p>
+              <p className="mt-2 mb-0 text-fg-muted">{c.shows}</p>
+              <p className="mt-2 mb-0 text-sm text-fg-subtle">{c.sources.map((s) => (s.year ? `${s.by}, ${s.year}` : s.by)).join("; ")}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 mb-0">
+          <Link to="/evidence" className="inline-flex min-h-11 items-center sm:min-h-0">
+            All {CLAIMS.length} claims and their sources
           </Link>
         </p>
       </Section>

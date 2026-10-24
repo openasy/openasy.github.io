@@ -18,6 +18,8 @@ import ProductPage from "./routes/product";
 import ProductApi from "./routes/product-api";
 import { APIS } from "./data/apis";
 import Principles from "./routes/principles";
+import Evidence from "./routes/evidence";
+import { CLAIMS, JUDGMENT } from "./data/evidence";
 import Support from "./routes/support";
 import SignIn from "./routes/sign-in";
 import Install from "./routes/install";
@@ -33,6 +35,7 @@ const Stub = createRoutesStub([
   { path: "/products/:id", Component: ProductPage },
   { path: "/products/:id/api", Component: ProductApi },
   { path: "/principles", Component: Principles },
+  { path: "/evidence", Component: Evidence },
   { path: "/support", Component: Support },
   { path: "/sign-in", Component: SignIn },
   { path: "/install", Component: Install },
@@ -342,6 +345,38 @@ describe("pages", () => {
     const table = screen.getByRole("table", { name: /Accepted decisions/ });
     expect(within(table).getAllByRole("row")).toHaveLength(accepted + 1);
     expect(screen.getByRole("list", { name: "Proposed decisions" }).children).toHaveLength(PRINCIPLES.length - accepted);
+  });
+
+  it("evidence names decisions in force, and every claim has a source", () => {
+    const inForce = new Set(PRINCIPLES.map((p) => p.n));
+    expect(new Set(CLAIMS.map((c) => c.id)).size).toBe(CLAIMS.length);
+    for (const c of CLAIMS) {
+      for (const n of c.adrs) expect(inForce).toContain(n);
+      expect(c.sources.length).toBeGreaterThan(0);
+      for (const s of c.sources) expect(s.url).toMatch(/^https:\/\//);
+    }
+    // A decision is either backed by a claim or said to be our judgment, never both.
+    for (const n of JUDGMENT) {
+      expect(inForce).toContain(n);
+      expect(CLAIMS.flatMap((c) => c.adrs)).not.toContain(n);
+    }
+  });
+
+  it("the evidence page lists every claim with its sources, and the decisions that are our judgment", () => {
+    open("/evidence");
+    expect(h1()).toHaveTextContent("Evidence");
+    expect(screen.getByRole("list", { name: "Claims and their sources" }).children).toHaveLength(CLAIMS.length);
+    expect(screen.getByRole("link", { name: "99% False Positives: A Qualitative Study of SOC Analysts' Perspectives on Security Alarms" })).toHaveAttribute(
+      "href",
+      "https://www.usenix.org/conference/usenixsecurity22/presentation/alahmadi",
+    );
+    expect(screen.getByRole("list", { name: "Decisions that are our judgment" }).children).toHaveLength(JUDGMENT.length);
+  });
+
+  it("the home page says what the decisions rest on and leads to the evidence", () => {
+    open("/");
+    expect(screen.getByRole("heading", { name: "Why it is built this way" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: `All ${CLAIMS.length} claims and their sources` })).toHaveAttribute("href", "/evidence");
   });
 
   it("every decision record has a valid decision and implementation status", () => {

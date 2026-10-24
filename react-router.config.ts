@@ -11,6 +11,7 @@ export default {
     "/goals",
     "/products",
     "/principles",
+    "/evidence",
     "/install",
     "/sign-in",
     "/support",

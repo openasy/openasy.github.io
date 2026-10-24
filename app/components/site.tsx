@@ -173,6 +173,7 @@ const FOOTER_GROUPS = [
       { href: "/goals", label: "Goals" },
       { href: "/products", label: "Products" },
       { href: "/principles", label: "Principles" },
+      { href: "/evidence", label: "Evidence" },
       { href: "/install", label: "Install" },
     ],
   },
