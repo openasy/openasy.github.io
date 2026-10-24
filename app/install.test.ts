@@ -323,7 +323,9 @@ describe("install builder", () => {
     expect(compose).not.toMatch(/[^$]\$(OPENASY_|\()/);
     expect(file(out, "setup/setup.ts")).toBe(SETUP.trimEnd());
     expect(file(out, "setup/seed.ts")).toBe(SEED.trimEnd());
-    expect(SETUP).toContain('execFileSync("node", ["setup/seed.ts"]');
+    // Sample data is asked for, never filled by setup.
+    expect(SETUP).not.toContain('"setup/seed.ts"]');
+    expect(SETUP).toContain("docker compose run --rm --no-deps setup node setup/seed.ts");
     // The products read their client from the environment, where @openasy/auth calls the provider sso.
     expect(SETUP).toContain("/api/v1/auth/oidc/sso/callback");
     expect(SETUP).not.toMatch(/auth\/oidc\/(?!sso\/)[a-z-]+\/callback/);

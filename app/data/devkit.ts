@@ -425,8 +425,8 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
   ];
   const more: InstallStep[] = [
     {
-      title: "Sample data",
-      text: "setup fills every product once. A product it could not fill is tried again with:",
+      title: "Sample data, if you want it",
+      text: "Events, findings, scans, runs and spend in every product, sent through each product's API as a CI job would. Each product is filled once; one that could not be is tried again the next time.",
       code: "docker compose run --rm --no-deps setup node setup/seed.ts",
     },
     network === undefined
@@ -530,8 +530,8 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     { title: "Identity signs everyone in", text: `as ${DEV_EMAIL}, an admin in every product through openasy-admins.` },
     { title: "setup wires it once", text: "owners, applications and the agents' tokens, then it exits. Running it again skips what is done." },
     {
-      title: "Sample data in every product",
-      text: "events, findings, scans, runs and spend from setup/seed.ts, sent through each product's API as a CI job would.",
+      title: "Sample data when you ask",
+      text: "setup leaves the products empty; setup/seed.ts fills them with events, findings, scans, runs and spend.",
     },
     {
       title: "Two servers in config/inventory/hosts.yaml",

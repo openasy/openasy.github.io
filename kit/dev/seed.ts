@@ -1,5 +1,5 @@
 // Sample data for the dev setup, so every page has something to show: events, findings, scans, runs and records sent
-// through each product's own API, as a script or CI job would. setup.ts runs it at the end; run it again with
+// through each product's own API, as a script or CI job would. Only when you want it, after setup is done:
 //   docker compose run --rm --no-deps setup node setup/seed.ts
 // Each product is filled once and remembered in secrets/dev.json; a product that fails is said so and tried next time.
 // Everything here is made up: example.com names, documentation addresses and fake keys.
