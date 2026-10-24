@@ -178,7 +178,7 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_API_TOKEN" -H 'content-type: ap
   },
   infrastructure: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     note: "infra-agent holds the SSH certificate authority your hosts trust, sealed with its own key: keep openasy-agent-kek apart from its volume, and run one agent per network. Serve Infrastructure over HTTPS.",
     guides: [
@@ -201,7 +201,7 @@ sshd -t && systemctl reload ssh`,
       },
       {
         title: "Check the host key",
-        text: "Add the host in the UI. The agent reports the fingerprint the host presents; compare it on the host before accepting. If the key changes later, collection stops until an admin accepts the new one.",
+        text: "List the host in config/inventory/hosts.yaml. The agent reports the fingerprint the host presents; compare it on the host before accepting, or name it there with hostKey. If the key changes later, collection stops until an admin accepts the new one.",
         code: "ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub",
       },
       {
@@ -242,7 +242,7 @@ sshd -t && systemctl reload ssh`,
   },
   logs: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     features: [
       { title: "Syslog over TLS, OpenTelemetry, Loki, Elasticsearch bulk and JSON lines, each source with its own token", done: true },
@@ -423,7 +423,7 @@ sshd -t && systemctl reload ssh`,
   },
   certificates: {
     status: "Preview",
-    version: "0.4.0",
+    version: "0.5.0",
     signIn: true,
     features: [
       { title: "Send certificates as PEM from cron, CI or a collector; a private key is refused whole", done: true },
@@ -440,7 +440,7 @@ sshd -t && systemctl reload ssh`,
   },
   uptime: {
     status: "Preview",
-    version: "0.4.0",
+    version: "0.5.0",
     signIn: true,
     features: [
       { title: "HTTP, TCP, DNS and TLS checks, run by a runner from a CI cron or any machine", done: true },
@@ -529,7 +529,7 @@ sshd -t && systemctl reload ssh`,
   },
   dast: {
     status: "Preview",
-    version: "0.7.0",
+    version: "0.8.0",
     signIn: true,
     features: [
       { title: "Targets, with the owner's proof that the address is theirs", done: true },

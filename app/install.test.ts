@@ -72,7 +72,7 @@ describe("install builder", () => {
     // No ACME check, so port 80 stays closed, and inside the network the names reach Caddy.
     expect(caddy).not.toContain('"80:80"');
     expect(caddy).toContain('"443:443"');
-    expect(caddy).toContain("aliases: [id.openasy.internal, vpn.openasy.internal, sast.openasy.internal]");
+    expect(caddy).toContain("aliases:\n          - id.openasy.internal\n          - vpn.openasy.internal\n          - sast.openasy.internal\n");
     for (const name of ["identity", "vpn", "sast"]) {
       expect(service(compose, name)).toContain("NODE_EXTRA_CA_CERTS: /caddy/caddy/pki/authorities/local/root.crt");
       expect(service(compose, name)).toContain("- caddy-data:/caddy:ro");
@@ -108,7 +108,7 @@ describe("install builder", () => {
       expect(svc).toContain(`image: ghcr.io/openasy/${name}:${statusFor(id).version}`);
       expect(svc).toContain("read_only: true");
       expect(svc).toContain(`${prefix}PUBLIC_URL: https://${PARTS[id].sub}.example.com`);
-      expect(svc).toContain("env_file: [config/brand.env, config/auth.env]");
+      expect(svc).toContain(`env_file: [config/brand.env, config/auth.env${id === "dast" ? ", secrets/dast.env" : ""}]`);
       if (ingest) expect(env).toMatch(new RegExp(`^${prefix}INGEST_TOKEN=[0-9a-f]{48}$`, "m"));
       else expect(svc).not.toContain("INGEST_TOKEN");
       expect(svc.includes("OPENASY_HOSTS")).toBe(!!hosts);
@@ -127,7 +127,7 @@ describe("install builder", () => {
     expect(text).toContain("add VPN from its template, and SIEM as OpenID Connect applications");
   });
 
-  it("Infrastructure and Vulnerabilities read one hosts.yaml, mounted read-only, unless it is turned off", () => {
+  it("Infrastructure and Vulnerabilities read one hosts.yaml, mounted read-only, the only way to add servers", () => {
     const out = build({ products: ["infrastructure", "vulnerabilities"], signIn: "own" });
     const compose = file(out, "compose.yaml");
     for (const name of ["infra", "vulns"]) {
@@ -138,10 +138,29 @@ describe("install builder", () => {
     expect(service(compose, "infra-agent")).not.toContain("hosts.yaml");
     expect(file(out, "config/inventory/hosts.yaml")).toMatch(/^# Your servers, read by Infrastructure and Vulnerabilities[\s\S]*\nhosts: \[\]$/);
     expect(out.wiring.map((w) => w.title)).toContain("One list of servers");
-    const off = build({ products: ["infrastructure", "vulnerabilities"], signIn: "own", hostsFile: false });
-    expect(file(off, "compose.yaml")).not.toContain("hosts.yaml");
-    expect(off.files.map((f) => f.name)).not.toContain("config/inventory/hosts.yaml");
+    expect(file(out, "config/inventory/hosts.yaml")).toContain("the only place servers are added");
     expect(build().files.map((f) => f.name)).not.toContain("config/inventory/hosts.yaml");
+  });
+
+  it("Uptime, Certificates and DAST read one endpoints.yaml, and DAST's logins take their secrets from a file of its own", () => {
+    const out = build({ products: ["uptime", "certificates", "dast"], signIn: "own" });
+    const compose = file(out, "compose.yaml");
+    for (const name of ["uptime", "certificates", "dast"]) {
+      expect(service(compose, name)).toContain("- ./config/inventory:/config/inventory:ro");
+      expect(service(compose, name)).toContain("OPENASY_ENDPOINTS: /config/inventory/endpoints.yaml");
+      expect(service(compose, name)).not.toContain("OPENASY_HOSTS");
+    }
+    // Only DAST gets the secrets its logins name.
+    expect(service(compose, "dast")).toContain("secrets/dast.env");
+    for (const name of ["uptime", "certificates", "dast-agent"]) expect(service(compose, name)).not.toContain("dast.env");
+    expect(file(out, "config/inventory/endpoints.yaml")).toMatch(/^# Your endpoints, read by Certificates, Uptime and DAST|^# Your endpoints, read by/);
+    expect(file(out, "config/inventory/endpoints.yaml")).toMatch(/#     dast:[\s\S]*\nendpoints: \[\]$/);
+    expect(out.files.find((f) => f.name === "secrets/dast.env")).toMatchObject({ secret: true });
+    expect(out.wiring.map((w) => w.title)).toContain("One list of endpoints");
+    const uptime = build({ products: ["uptime"], signIn: "own" });
+    expect(file(uptime, "config/inventory/endpoints.yaml")).not.toContain("dast:");
+    expect(uptime.files.map((f) => f.name)).not.toContain("secrets/dast.env");
+    expect(build().files.map((f) => f.name)).not.toContain("config/inventory/endpoints.yaml");
   });
 
   it("every product loads one brand from config/brand.env, and mounts the logo and tab icon when there are any", () => {
@@ -174,6 +193,7 @@ describe("install builder", () => {
       "secrets/openasy-kek",
       "secrets/openasy-agent-kek",
       "secrets/openasy-logs-agent-kek",
+      "secrets/dast.env",
     ]);
     expect(file(build({ accent: "blue" }), "config/brand.env")).toMatch(/^# OPENASY_ACCENT=/m);
   });
@@ -310,7 +330,9 @@ describe("install builder", () => {
     expect(service(compose, "setup")).toContain("docker-cli-buildx");
     // Each product loads its own client from the file setup writes, and none is in compose or .env.
     for (const name of ["vpn", "infra", "vulns"])
-      expect(service(compose, name)).toContain(`env_file: [config/brand.env, config/auth.env, { path: secrets/oidc/${name}.env, required: false }]`);
+      expect(service(compose, name)).toContain(
+        `env_file: [config/brand.env, config/auth.env, { path: secrets/oidc/${name}.env, required: false }${name === "dast" ? ", secrets/dast.env" : ""}]`,
+      );
     expect(service(compose, "identity")).toContain("env_file: [config/brand.env]");
     expect(compose).not.toContain("OIDC_");
     expect(file(out, ".env")).not.toContain("CLIENT");
@@ -331,8 +353,13 @@ describe("install builder", () => {
     expect(SETUP).not.toMatch(/auth\/oidc\/(?!sso\/)[a-z-]+\/callback/);
     expect(file(out, ".env")).toContain(`VULNS_INGEST_TOKEN=${secrets.ingest}`);
     expect(file(out, "config/inventory/hosts.yaml")).toContain("address: host-web");
+    // The sample endpoints: Uptime's checks and DAST's target come from the file, as nothing else adds them.
+    expect(file(out, "config/inventory/endpoints.yaml")).toMatch(/- name: shop-staging\n {4}url: https:\/\/shop-staging\.example\.com\n[\s\S]*dast:/);
+    for (const name of ["uptime", "certificates", "dast"]) expect(service(compose, name)).toContain("OPENASY_ENDPOINTS: /config/inventory/endpoints.yaml");
+    expect(service(compose, "dast")).toContain("secrets/dast.env");
     expect(out.files.filter((f) => f.secret).map((f) => f.name)).toEqual([
       ".env",
+      "secrets/dast.env",
       "secrets/openasy-kek",
       "secrets/openasy-agent-kek",
       "secrets/openasy-logs-agent-kek",
@@ -341,7 +368,9 @@ describe("install builder", () => {
     const products = JSON.parse(file(out, "setup/products.json")) as Array<{ service: string; clientFile: string; template?: string }>;
     expect(products.map((p) => p.service)).toEqual(INSTALLABLE.map((id) => PARTS[id].service));
     for (const p of products.filter((p) => p.service !== "identity"))
-      expect(service(compose, p.service)).toContain(`config/auth.env, { path: ${p.clientFile}, required: false }]`);
+      expect(service(compose, p.service)).toContain(
+        `config/auth.env, { path: ${p.clientFile}, required: false }${p.service === "dast" ? ", secrets/dast.env" : ""}]`,
+      );
     for (const id of INSTALLABLE.filter((id) => PARTS[id].ingest))
       expect(file(out, ".env")).toMatch(new RegExp(`^${PARTS[id].prefix}INGEST_TOKEN=[0-9a-f]{48}$`, "m"));
     // The agents read keys a host names with keyFile from secrets/ssh, and every product reads the logo from config/brand.
@@ -363,7 +392,7 @@ describe("install builder", () => {
     // Caddy answers on every address, under the same names inside the network and out.
     expect(service(compose, "caddy")).toContain('- "8443:8443"');
     expect(service(compose, "caddy")).not.toContain("127.0.0.1:8443");
-    expect(service(compose, "caddy")).toContain("aliases: [id.openasy.internal, vpn.openasy.internal,");
+    expect(service(compose, "caddy")).toContain("aliases:\n          - id.openasy.internal\n          - vpn.openasy.internal\n");
     expect(compose).not.toContain(".localhost");
     expect(service(compose, "identity")).toContain("IDENTITY_PUBLIC_URL: https://id.openasy.internal:8443");
     expect(service(compose, "vpn")).toContain("VPN_PUBLIC_HOST: vpn.openasy.internal");

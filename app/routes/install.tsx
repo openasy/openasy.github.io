@@ -25,7 +25,6 @@ import {
   FAVICON_MAX_BYTES,
   FAVICON_TYPES,
   LOGO_MAX_BYTES,
-  PARTS,
   LOGO_TYPES,
   buildInstall,
   cleanAccent,
@@ -891,16 +890,6 @@ export default function InstallPage() {
                     </div>
                   </div>
                 </Options>
-                {INSTALLABLE.some((id) => has(id) && PARTS[id].hosts) && (
-                  <Options title="Servers" summary={choice.hostsFile ? "From hosts.yaml" : "Added in each product"}>
-                    <Toggle
-                      checked={choice.hostsFile}
-                      onChange={(hostsFile) => set({ hostsFile })}
-                      title="One file for your servers"
-                      text="Adds config/inventory/hosts.yaml, which every product you picked that works with servers reads. You can still add servers in their UI."
-                    />
-                  </Options>
-                )}
                 {has("vpn") && (
                   <Options title="VPN" summary={choice.vpnTcp ? "UDP 1194 and TCP" : "UDP 1194"}>
                     <Toggle

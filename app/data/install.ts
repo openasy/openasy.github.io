@@ -55,8 +55,6 @@ export interface InstallChoice {
   vpnTcp: boolean;
   /** vulns-agent on this host too. */
   vulnsHost: boolean;
-  /** One hosts.yaml that Infrastructure and Vulnerabilities both read (OPENASY_HOSTS, ADR 0052). */
-  hostsFile: boolean;
   /** Shown under each product's name; empty leaves the line out. */
   organization: string;
   /** #rrggbb for buttons and links; empty keeps OpenAsy's blue. */
@@ -78,7 +76,6 @@ export const DEFAULT_CHOICE: InstallChoice = {
   prometheus: true,
   vpnTcp: false,
   vulnsHost: true,
-  hostsFile: true,
   organization: "",
   accent: "",
   logo: null,
@@ -146,6 +143,8 @@ export interface Part {
   ingest?: boolean;
   /** Reads the servers in hosts.yaml (ADR 0052). */
   hosts?: boolean;
+  /** Reads the endpoints in endpoints.yaml (ADR 0052). */
+  endpoints?: boolean;
 }
 
 /** The products in the ready Keycloak realm (auth/examples/keycloak). */
@@ -181,15 +180,15 @@ export const PARTS: Record<Installable, Part> = {
   siem: { name: "SIEM", service: "siem", prefix: "SIEM_", sub: "siem", ingest: true },
   audit: { name: "Audit", service: "audit", prefix: "AUDIT_", sub: "audit", ingest: true },
   sast: { name: "SAST", service: "sast", prefix: "SAST_", sub: "sast", ingest: true },
-  dast: { name: "DAST", service: "dast", prefix: "DAST_", sub: "dast", ingest: true },
+  dast: { name: "DAST", service: "dast", prefix: "DAST_", sub: "dast", ingest: true, endpoints: true },
   malware: { name: "Malware", service: "malware", prefix: "MALWARE_", sub: "malware", ingest: true, hosts: true },
   posture: { name: "Posture", service: "posture", prefix: "POSTURE_", sub: "posture", ingest: true, hosts: true },
   secrets: { name: "Secrets", service: "secrets", prefix: "SECRETS_", sub: "secrets", ingest: true },
   incidents: { name: "Incidents", service: "incidents", prefix: "INCIDENTS_", sub: "incidents" },
   errors: { name: "Errors", service: "errors", prefix: "ERRORS_", sub: "errors" },
   "supply-chain": { name: "Supply Chain", service: "supply-chain", prefix: "SUPPLY_CHAIN_", sub: "supply-chain", ingest: true },
-  certificates: { name: "Certificates", service: "certificates", prefix: "CERTIFICATES_", sub: "certificates", ingest: true },
-  uptime: { name: "Uptime", service: "uptime", prefix: "UPTIME_", sub: "uptime", ingest: true },
+  certificates: { name: "Certificates", service: "certificates", prefix: "CERTIFICATES_", sub: "certificates", ingest: true, endpoints: true },
+  uptime: { name: "Uptime", service: "uptime", prefix: "UPTIME_", sub: "uptime", ingest: true, endpoints: true },
   backups: { name: "Backups", service: "backups", prefix: "BACKUPS_", sub: "backups", ingest: true, hosts: true },
   risk: { name: "Risk", service: "risk", prefix: "RISK_", sub: "risk" },
   "threat-intel": { name: "Threat Intelligence", service: "threat-intel", prefix: "THREAT_INTEL_", sub: "threat-intel", ingest: true },
@@ -359,18 +358,23 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const portOf = (id: Installable | "keycloak") => (id === "keycloak" ? 8180 : 8081 + picked.indexOf(id));
   const proxyName = choice.proxy === "nginx" ? "nginx" : choice.proxy === "apache" ? "Apache" : "your TLS proxy";
   const ports = (i: number) => (caddy ? [] : ["    ports:", `      - "127.0.0.1:${8081 + i}:8080"   # ${proxyName} forwards here`]);
-  // The servers in one file, mounted read-only in each product that reads it (ADR 0052).
+  // The servers and the endpoints in two files, mounted read-only in each product that reads them, and the only way
+  // to give a product either (ADR 0052).
   const readers = picked.filter((id) => PARTS[id].hosts);
-  const hostsFile = choice.hostsFile && readers.length > 0;
+  const hostsFile = readers.length > 0;
+  const endpointReaders = picked.filter((id) => PARTS[id].endpoints);
+  const endpointsFile = endpointReaders.length > 0;
   // A folder, not the file: an editor that saves by replacing the file would leave the product with the old one.
-  const hostsMount = hostsFile ? ["      - ./config/inventory:/config/inventory:ro   # your servers, shared with the other products"] : [];
+  const inventoryMount = ["      - ./config/inventory:/config/inventory:ro   # your servers and endpoints, shared with the other products"];
+  const hostsMount = hostsFile ? inventoryMount : [];
   const hostsEnv = hostsFile ? [env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")] : [];
+  const endpointsEnv = [env("OPENASY_ENDPOINTS", "/config/inventory/endpoints.yaml")];
   // With Caddy's own CA the products trust it, so they reach Identity's https issuer through Caddy like a browser does.
   const caMount = internal ? ["      - caddy-data:/caddy:ro   # Caddy's CA, to trust the other products' https names"] : [];
   const caEnv = internal ? [env("NODE_EXTRA_CA_CERTS", "/caddy/caddy/pki/authorities/local/root.crt")] : [];
   // The brand every product shows (ADR 0004) and how people sign in, each in a file of its own that every product loads.
   const envFiles = (id: Installable) => [
-    `    env_file: [config/brand.env${ownAuthFile(id) ? "" : ", config/auth.env"}]   # your brand${ownAuthFile(id) ? "" : " and sign-in"}, the same in every product`,
+    `    env_file: [config/brand.env${ownAuthFile(id) ? "" : ", config/auth.env"}${id === "dast" ? ", secrets/dast.env" : ""}]   # your brand${ownAuthFile(id) ? "" : " and sign-in"}, the same in every product${id === "dast" ? "; the secrets its logins name" : ""}`,
   ];
   const brandMount = choice.logo || choice.favicon ? ["      - ./config/brand:/config/brand:ro   # your logo and tab icon, in every product"] : [];
   const hardened = ["    read_only: true", "    cap_drop: [ALL]", '    security_opt: ["no-new-privileges:true"]'];
@@ -534,7 +538,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     }
     // Every other product is one hardened container like these, as compose.yaml in its repository has it.
     if (!(REALM_PRODUCTS as readonly string[]).includes(id)) {
-      const { service, prefix, ingest, hosts } = PARTS[id];
+      const { service, prefix, ingest, hosts, endpoints } = PARTS[id];
       add(
         service,
         [
@@ -545,7 +549,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           ...ports(i),
           "    volumes:",
           `      - ${service}-data:/data   # SQLite database`,
-          ...(hosts ? hostsMount : []),
+          ...(hosts || endpoints ? inventoryMount : []),
           ...brandMount,
           ...caMount,
           ...kek,
@@ -555,6 +559,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           ...caEnv,
           ...(ingest ? [env(`${prefix}INGEST_TOKEN`, `\${${prefix}INGEST_TOKEN}   # for the scripts and CI jobs that send it data`)] : []),
           ...(hosts ? hostsEnv : []),
+          ...(endpoints ? endpointsEnv : []),
           ...oidc(id),
         ],
         [`${service}-data`],
@@ -718,7 +723,8 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
               "    networks:",
               "      default:",
               "        # Inside the network the same names reach Caddy, whatever this host's DNS says.",
-              `        aliases: [${fronted.map(host).join(", ")}]`,
+              "        aliases:",
+              ...fronted.map((id) => `          - ${host(id)}`),
             ]
           : []),
       ],
@@ -825,6 +831,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       name: "config/inventory/hosts.yaml",
       content: [
         `# Your servers, read by ${readers.map((id) => PARTS[id].name).join(" and ")} (ADR 0052). A change is picked up within a minute.`,
+        "# This file is the only place servers are added: no product has a form for them.",
         ...(readers.includes("infrastructure")
           ? ["# Infrastructure reads each one over SSH through infra-agent: prepare it first, as Setup in Infrastructure shows."]
           : []),
@@ -845,6 +852,47 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         "#     tags: { env: prod }",
         "hosts: []",
       ].join("\n"),
+    });
+  if (endpointsFile)
+    files.push({
+      name: "config/inventory/endpoints.yaml",
+      content: [
+        `# Your endpoints, read by ${names(endpointReaders)} (ADR 0052). A change is picked up within a minute.`,
+        "# This file is the only place endpoints are added: no product has a form for them.",
+        ...(endpointReaders.includes("uptime") ? ["# Uptime checks every entry, from the runners you start."] : []),
+        ...(endpointReaders.includes("certificates") ? ["# Certificates reads the certificate of each https:// and tls:// entry on a public address."] : []),
+        ...(endpointReaders.includes("dast")
+          ? ["# DAST tests each entry with a dast block, once you prove the address is yours. A login's secret is in secrets/dast.env."]
+          : []),
+        "#",
+        "# endpoints:",
+        "#   - name: Shop                 # unique: how every product knows it",
+        "#     url: https://shop.example.com   # or http://, tcp://host:port, dns://name, tls://host:port",
+        "#     server: web-1              # the server it runs on, by its name in hosts.yaml",
+        "#     group: Customer",
+        "#     public: true               # on Uptime's status page",
+        "#     every: 1m                  # how often Uptime checks it; 5m when left out",
+        "#     expect: { status: 200 }",
+        ...(endpointReaders.includes("dast")
+          ? [
+              "#     dast:                      # a DAST target",
+              "#       schedule: weekly         # none, daily or weekly",
+              "#       login: { kind: header, header: Authorization, secret: DAST_SHOP_TOKEN }",
+            ]
+          : []),
+        "endpoints: []",
+      ].join("\n"),
+    });
+  if (has("dast"))
+    files.push({
+      name: "secrets/dast.env",
+      content: [
+        "# The secrets the logins of DAST's targets name in config/inventory/endpoints.yaml, and nothing else (ADR 0052).",
+        "# Only DAST reads this file. After a change: docker compose up -d dast",
+        "# DAST_SHOP_TOKEN='Bearer ...'",
+        "",
+      ].join("\n"),
+      secret: true,
     });
   if (withCaddy)
     files.push({
@@ -1022,6 +1070,10 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       steps.push({
         text: `List your servers in config/inventory/hosts.yaml. ${readers.map((id) => PARTS[id].name).join(" and ")} pick them up within a minute, with no restart.`,
       });
+    if (endpointsFile)
+      steps.push({
+        text: `List your endpoints in config/inventory/endpoints.yaml. ${names(endpointReaders)} pick them up within a minute, with no restart.${has("dast") ? " Put the secrets of DAST's logins in secrets/dast.env." : ""}`,
+      });
   }
 
   const wiring: Wire[] = [];
@@ -1091,6 +1143,14 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         : "in config/brand.env, which every product loads. Set your name, logo and color there, now or later.",
     });
   }
+  if (endpointsFile)
+    wiring.push({
+      title: "One list of endpoints",
+      text:
+        endpointReaders.length > 1
+          ? `in endpoints.yaml, read by ${names(endpointReaders)}, so they agree on every endpoint.`
+          : `in endpoints.yaml, read by ${PARTS[endpointReaders[0]!].name}. The other products that watch endpoints read the same file.`,
+    });
   if (hostsFile)
     wiring.push({
       title: "One list of servers",

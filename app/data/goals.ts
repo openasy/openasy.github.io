@@ -245,7 +245,10 @@ export const GOALS: Goal[] = [
       { id: "incidents", why: "Coordinate the response and keep customers informed." },
     ],
     steps: [
-      { title: "Add checks", body: "In Uptime, add the URLs and ports customers depend on. Certificates are checked automatically." },
+      {
+        title: "List your endpoints",
+        body: "In config/inventory/endpoints.yaml, the URLs and ports customers depend on. Uptime checks each one and Certificates reads its certificate.",
+      },
       { title: "Set up on-call", body: "In Alerts → On-call, add a rotation and connect email, Slack, Teams or a phone provider." },
     ],
     timeToValue: "About 15 minutes",

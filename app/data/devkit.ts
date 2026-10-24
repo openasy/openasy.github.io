@@ -80,7 +80,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
   const hosts = ["      - ./config/inventory:/config/inventory:ro"];
 
   /** A product's service: its image, data, Caddy's CA to trust, its key, the brand and, but for Identity, the sign-in. */
-  const product = (id: Installable, extra: { volumes?: string[]; env?: string[]; hardened?: boolean } = {}) => {
+  const product = (id: Installable, extra: { volumes?: string[]; env?: string[]; hardened?: boolean; envFile?: string } = {}) => {
     const { prefix } = PARTS[id];
     const sso = id !== "identity";
     return [
@@ -97,7 +97,9 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
       "    secrets: [openasy-kek]",
       // Its own client, issuer, ID and secret, in a file setup writes once it has made the clients; until then the
       // product starts without sign-in through Identity.
-      sso ? `    env_file: [config/brand.env, config/auth.env, { path: ${clientFile(id)}, required: false }]` : "    env_file: [config/brand.env]",
+      sso
+        ? `    env_file: [config/brand.env, config/auth.env, { path: ${clientFile(id)}, required: false }${extra.envFile ? `, ${extra.envFile}` : ""}]`
+        : "    env_file: [config/brand.env]",
       "    environment:",
       "      <<: [*trust, *products]",
       env(`${prefix}PUBLIC_URL`, url(id)),
@@ -147,7 +149,8 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "    networks:",
     "      default:",
     "        # Inside the network the same names reach Caddy, so issuer and callback URLs are the same everywhere.",
-    `        aliases: [${ids.map(name).join(", ")}]`,
+    "        aliases:",
+    ...ids.map((id) => `          - ${name(id)}`),
     "",
     "  # Runs once: starts the products after Caddy's CA exists, then makes the owners, Identity's applications and the",
     "  # agents' tokens (setup/setup.ts). It drives compose through the Docker socket, which is why this is for dev only.",
@@ -212,13 +215,16 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     ...ids
       .filter((id) => !OWN.includes(id))
       .flatMap((id) => {
-        const { prefix, ingest, hosts: reads } = PARTS[id];
+        const { prefix, ingest, hosts: reads, endpoints } = PARTS[id];
         return product(id, {
-          volumes: reads ? hosts : [],
+          volumes: reads || endpoints ? hosts : [],
           env: [
             ...(ingest ? [env(`${prefix}INGEST_TOKEN`, `\${${prefix}INGEST_TOKEN}`)] : []),
             ...(reads ? [env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")] : []),
+            ...(endpoints ? [env("OPENASY_ENDPOINTS", "/config/inventory/endpoints.yaml")] : []),
           ],
+          // The secrets DAST's logins name in the endpoints file, apart from every other product's.
+          envFile: id === "dast" ? "secrets/dast.env" : undefined,
         });
       }),
     // Clones the repositories of a GitHub account connected under SAST, GitHub, into its tmpfs and scans them.
@@ -232,7 +238,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
       env("WORK_DIR", "/tmp"),
       "    depends_on: [sast]",
     ]),
-    // Runs ZAP and Nuclei for DAST against the targets added there, by hand or on a schedule.
+    // Runs ZAP and Nuclei for DAST against the targets in the endpoints file, by hand or on a schedule.
     ...agent("dast-agent", `ghcr.io/openasy/dast-agent:${tag("dast")}`, "openasy-agent-kek", [
       "    volumes:",
       "      - dast-agent-data:/data",
@@ -339,6 +345,31 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     ...ids.map((id) => `\n${url(id)} {\n\treverse_proxy ${svc(id)}:8080\n}`),
   ].join("\n");
 
+  const endpointsFile = [
+    "# The endpoints Uptime checks, Certificates reads the certificate of, and DAST tests when they have a dast block",
+    "# (ADR 0052). A change is picked up within a minute. This file is the only place endpoints are added.",
+    "endpoints:",
+    "  - name: Shop",
+    "    url: https://shop.example.com",
+    "    group: Customer",
+    "    public: true",
+    "    expect: { status: 200 }",
+    "  - name: API",
+    "    url: https://api.example.com/healthz",
+    "    group: Customer",
+    "    public: true",
+    "    expect: { status: 200 }",
+    "  - name: Status page",
+    "    url: https://status.example.com",
+    "    group: Internal",
+    "    expect: { status: 200 }",
+    "  - name: shop-staging",
+    "    url: https://shop-staging.example.com",
+    "    group: Internal",
+    "    dast:",
+    "      schedule: weekly",
+    "      # login: { kind: header, header: Authorization, secret: DAST_SHOP_TOKEN }   # its value in secrets/dast.env",
+  ].join("\n");
   const hostsFile = [
     "# The servers Infrastructure and Logs read over SSH, that malware-agent scans, and that Vulnerabilities, Posture and",
     "# Malware check for scans (ADR 0052). A change is picked up within a minute. hostKey: first trusts the key each one",
@@ -493,6 +524,17 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
       ),
     },
     { name: "config/inventory/hosts.yaml", content: hostsFile },
+    { name: "config/inventory/endpoints.yaml", content: endpointsFile },
+    {
+      name: "secrets/dast.env",
+      content: [
+        "# The secrets the logins of DAST's targets name in config/inventory/endpoints.yaml (ADR 0052). Only DAST reads it.",
+        "# After a change: docker compose --profile wired up -d dast",
+        "# DAST_SHOP_TOKEN='Bearer ...'",
+        "",
+      ].join("\n"),
+      secret: true,
+    },
     { name: "config/Caddyfile", content: caddyfile },
     {
       name: "config/prometheus.yml",

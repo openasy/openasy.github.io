@@ -179,7 +179,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   },
   "0052": {
     title: "One list, every product",
-    text: "Endpoints and servers live in two files the install keeps, in git if it likes. Every product reads the same list, so Uptime and Certificates agree on an endpoint and on when its certificate is urgent.",
+    text: "Endpoints, servers and DAST's targets live only in two files the install keeps, in git if it likes, and no product has a form for them. Every product reads the same list, so Uptime, Certificates and DAST agree on an endpoint.",
   },
 };
 

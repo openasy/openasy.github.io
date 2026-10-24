@@ -14,9 +14,9 @@ Two ways to find them are common. Scanners connect to addresses and read what th
 
 ## Decision
 
-- **Certificates arrive two ways.** Cron jobs, CI and collectors send PEM text, one certificate or a chain, with where it was found. And an admin can add a public endpoint, which the server reads with a TLS handshake every 6 hours.
+- **Certificates arrive two ways.** Cron jobs, CI and collectors send PEM text, one certificate or a chain, with where it was found. And the endpoints file the install keeps names public endpoints (ADR 0052), which the server reads with a TLS handshake every 6 hours.
 - **A private key is never accepted.** A body that holds a private key of any kind is refused whole, before it is read and without repeating any of it. Only public certificates are kept.
-- **Endpoints are public addresses only.** A name that resolves to a private, loopback or link-local address is refused when it is added and again at every probe, so a name that changes its address later cannot be used to reach inside. Certificates on private networks are sent by a collector there.
+- **Endpoints are public addresses only.** A name that resolves to a private, loopback or link-local address is refused at every probe, so a name that changes its address later cannot be used to reach inside. Certificates on private networks are sent by a collector there.
 - **A certificate is its SHA-256 fingerprint.** The same certificate seen in many places is one entry with each place and its position in the chain. What signed it is shown as its chain, among the certificates seen here.
 - **State** is expired, critical (under 7 days), expiring (under the largest threshold, 30 days by default), not yet valid or valid. **Warnings** are a weak key (RSA under 2048 bits), a weak signature (SHA-1 or MD5), a wildcard, a self-signed leaf and a leaf valid for more than 398 days.
 - **Each crossing is reported once.** A certificate is reported for the tightest threshold it has crossed (30, 14, 7, 1 and 0 days by default), not again for the wider ones, so a scheduled alert that asks with `since` sends one message per step.

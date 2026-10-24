@@ -53,6 +53,20 @@ const cyclonedx = (components: Array<[string, string]>) => ({
   components: components.map(([name, version]) => ({ type: "library", name, version, purl: `pkg:npm/${name}@${version}` })),
 });
 
+/**
+ * What a product made from the endpoints file (ADR 0052), once it has: it reads the file at start, so the entries may
+ * take a moment to be there. Gives up after a minute, saying which ones are missing.
+ */
+async function fromFile(call: Call, path: string, key: string, names: string[]): Promise<Array<{ id: string; name: string }>> {
+  for (let i = 0; ; i++) {
+    const rows = (await call<Record<string, Array<{ id: string; name: string }>>>(path))[key]!;
+    const found = names.map((n) => rows.find((r) => r.name === n));
+    if (found.every(Boolean)) return found as Array<{ id: string; name: string }>;
+    if (i === 30) throw new Error(`${names.filter((_, n) => !found[n]).join(", ")} not in ${path} yet: is config/inventory/endpoints.yaml mounted?`);
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+}
+
 const SEEDS: Record<string, (call: Call) => Promise<string>> = {
   async vpn(call) {
     for (const name of ["Backend engineers", "Support"]) await call("/api/v1/groups", { name }, { again: true });
@@ -237,7 +251,8 @@ const SEEDS: Record<string, (call: Call) => Promise<string>> = {
   },
 
   async dast(call) {
-    await call("/api/v1/targets", { name: "shop-staging", url: "https://shop-staging.example.com/" }, { again: true });
+    // The target is in config/inventory/endpoints.yaml (ADR 0052); DAST reads it at start.
+    await fromFile(call, "/api/v1/targets", "targets", ["shop-staging"]);
     const zap = (ruleId: string, level: string, text: string, path: string, score?: number) => ({
       ruleId,
       level,
@@ -385,18 +400,8 @@ const SEEDS: Record<string, (call: Call) => Promise<string>> = {
   },
 
   async uptime(call) {
-    // Checks from an earlier run that stopped half way are used again.
-    const had = (await call<{ checks: Array<{ id: string; name: string }> }>("/api/v1/checks")).checks;
-    const checks: Array<{ id: string }> = [];
-    for (const [name, target, group] of [
-      ["Shop", "https://shop.example.com", "Customer"],
-      ["API", "https://api.example.com/healthz", "Customer"],
-      ["Status page", "https://status.example.com", "Internal"],
-    ])
-      checks.push(
-        had.find((c) => c.name === name) ??
-          (await call("/api/v1/checks", { name, group, type: "http", target, expect: { status: 200 }, intervalSeconds: 300, public: group === "Customer" })),
-      );
+    // The checks are the entries of config/inventory/endpoints.yaml (ADR 0052); Uptime reads it at start.
+    const checks = await fromFile(call, "/api/v1/checks", "checks", ["Shop", "API", "Status page"]);
     // A day of results every 5 minutes, sent as a runner would; the API had an outage of half an hour this morning.
     const results = checks.flatMap((c, n) =>
       Array.from({ length: 288 }, (_, i) => {
