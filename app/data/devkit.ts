@@ -44,6 +44,7 @@ const HOST_DOCKERFILE = `# syntax=docker/dockerfile:1
         set -e
         ssh-keygen -A >/dev/null
         printf '%s\\n%s\\n' "$$OPENASY_CA" "$$OPENASY_CA_LOGS" > /etc/ssh/openasy_ca.pub
+        if [ -n "$$OPENASY_AUTHORIZED_KEYS" ]; then install -d -m 700 -o openasy /home/openasy/.ssh && printf '%s\\n' "$$OPENASY_AUTHORIZED_KEYS" > /home/openasy/.ssh/authorized_keys && chown openasy /home/openasy/.ssh/authorized_keys && chmod 600 /home/openasy/.ssh/authorized_keys; fi
         if [ -n "$$OPENASY_SUDOERS" ]; then printf '%b\\n' "$$OPENASY_SUDOERS" > /etc/sudoers.d/openasy && chmod 440 /etc/sudoers.d/openasy && (visudo -cf /etc/sudoers.d/openasy || rm /etc/sudoers.d/openasy); fi
         if [ -n "$$OPENASY_DOCKER" ] && [ -S /var/run/docker.sock ]; then groupadd -g "$$(stat -c %g /var/run/docker.sock)" -o dockerhost && usermod -aG dockerhost openasy; fi
         python3 -m http.server 8088 >/dev/null 2>&1 &
@@ -212,6 +213,29 @@ export function buildDevKit(secrets: Secrets): Install {
       env("WORK_DIR", "/tmp"),
       "    depends_on: [sast]",
     ]),
+    // Runs ZAP and Nuclei for DAST against the targets added there, by hand or on a schedule.
+    ...agent("dast-agent", `ghcr.io/openasy/dast-agent:${tag("dast")}`, "openasy-agent-kek", [
+      "    volumes:",
+      "      - dast-agent-data:/data",
+      "environment",
+      "    environment:",
+      env("DAST_URL", "http://dast:8080"),
+      env("DAST_ENROLL_TOKEN", "${DAST_ENROLL_TOKEN:-}"),
+      "    depends_on: [dast]",
+    ]),
+    // Scans the Linux machine Docker runs in and the two servers below with ClamAV and YARA, read-only.
+    ...agent("malware-agent", `ghcr.io/openasy/malware-agent:${tag("malware")}`, "", [
+      "    hostname: docker-vm   # the Linux machine Docker runs in",
+      "    volumes:",
+      "      - malware-agent-data:/data",
+      '      - "/:/host:ro"',
+      "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
+      "environment",
+      "    environment:",
+      env("MALWARE_URL", "http://malware:8080"),
+      env("MALWARE_INGEST_TOKEN", "${MALWARE_INGEST_TOKEN}"),
+      "    depends_on: [malware]",
+    ]),
     ...agent("logs-agent", `ghcr.io/openasy/logs-agent:${tag("logs")}`, "openasy-logs-agent-kek", [
       "    volumes:",
       "      - logs-agent-data:/data",
@@ -222,8 +246,8 @@ export function buildDevKit(secrets: Secrets): Install {
       env("LOGS_ENROLL_TOKEN", "${LOGS_ENROLL_TOKEN:-}"),
       "    depends_on: [logs]",
     ]),
-    "  # Two servers for Infrastructure and Logs to read, prepared as Infrastructure's Setup page says. web can also",
-    "  # list this machine's containers through Docker.",
+    "  # Two servers for Infrastructure and Logs to read, prepared as Infrastructure's Setup page says, and for",
+    "  # malware-agent to scan with its own key. web can also list this machine's containers through Docker.",
     "  host-web:",
     "    build:",
     "      context: .",
@@ -239,6 +263,7 @@ export function buildDevKit(secrets: Secrets): Install {
     env("OPENASY_CA", "${INFRA_AGENT_CA:-}"),
     env("OPENASY_CA_LOGS", "${LOGS_AGENT_CA:-}"),
     env("OPENASY_SUDOERS", "${INFRA_AGENT_SUDOERS:-}"),
+    env("OPENASY_AUTHORIZED_KEYS", "${MALWARE_AGENT_KEY:-}"),
     env("OPENASY_DOCKER", '"1"'),
     "  host-db:",
     `    image: ${DEV_FOLDER}-host`,
@@ -249,6 +274,7 @@ export function buildDevKit(secrets: Secrets): Install {
     "    environment:",
     env("OPENASY_CA", "${INFRA_AGENT_CA:-}"),
     env("OPENASY_CA_LOGS", "${LOGS_AGENT_CA:-}"),
+    env("OPENASY_AUTHORIZED_KEYS", "${MALWARE_AGENT_KEY:-}"),
     "    depends_on: [host-web]",
     "",
     "  prometheus:",
@@ -267,6 +293,8 @@ export function buildDevKit(secrets: Secrets): Install {
       "vpn-server-data",
       "infra-agent-data",
       "sast-agent-data",
+      "dast-agent-data",
+      "malware-agent-data",
       "logs-agent-data",
       "prometheus-data",
     ].map((v) => `  ${v}:`),
@@ -293,8 +321,9 @@ export function buildDevKit(secrets: Secrets): Install {
   ].join("\n");
 
   const hostsFile = [
-    "# The servers Infrastructure and Logs read over SSH, and that Vulnerabilities, Posture and Malware check for scans",
-    "# (ADR 0052). A change is picked up within a minute. hostKey: first trusts the key each one presents the first time.",
+    "# The servers Infrastructure and Logs read over SSH, that malware-agent scans, and that Vulnerabilities, Posture and",
+    "# Malware check for scans (ADR 0052). A change is picked up within a minute. hostKey: first trusts the key each one",
+    "# presents the first time. A tag malware-paths: /srv,/home names the folders malware-agent scans on a server.",
     "hosts:",
     "  - name: web",
     "    address: host-web",
@@ -446,6 +475,8 @@ export function buildDevKit(secrets: Secrets): Install {
     "infra-agent",
     "vulns-agent",
     "sast-agent",
+    "dast-agent",
+    "malware-agent",
     "logs-agent",
     "host-web",
     "host-db",

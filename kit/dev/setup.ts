@@ -211,8 +211,21 @@ for (const a of AGENTS) {
 step("sast: an agent");
 if (!env.get("SAST_ENROLL_TOKEN")) setEnv("SAST_ENROLL_TOKEN", (await api.sast!<{ enrollToken: string }>("/api/v1/agents", { name: "local" })).enrollToken);
 
+// DAST's agent runs ZAP and Nuclei against the targets added in DAST.
+step("dast: an agent");
+if (!env.get("DAST_ENROLL_TOKEN")) setEnv("DAST_ENROLL_TOKEN", (await api.dast!<{ enrollToken: string }>("/api/v1/agents", { name: "local" })).enrollToken);
+
 step("Starting again with sign-in through Identity, and the agents");
-compose("up", "-d", ...PRODUCTS.filter((p) => p.service !== "identity").map((p) => p.service), "vpn-server", ...AGENTS.map((a) => a.service), "sast-agent");
+compose(
+  "up",
+  "-d",
+  ...PRODUCTS.filter((p) => p.service !== "identity").map((p) => p.service),
+  "vpn-server",
+  ...AGENTS.map((a) => a.service),
+  "sast-agent",
+  "dast-agent",
+  "malware-agent",
+);
 // Each product is running again before anything asks it.
 for (const p of PRODUCTS) await ready(p);
 
@@ -227,6 +240,14 @@ for (const a of AGENTS) {
   const setup = await api[a.product]!<{ caPublicKey: string; sudoers?: string }>(`/api/v1/agents/${agent.id}/setup`);
   setEnv(a.ca, setup.caPublicKey);
   if (setup.sudoers) setEnv("INFRA_AGENT_SUDOERS", setup.sudoers);
+}
+// malware-agent logs in with a key of its own, which the two servers put in authorized_keys.
+for (let i = 0; i < 30 && !env.get("MALWARE_AGENT_KEY"); i++) {
+  try {
+    setEnv("MALWARE_AGENT_KEY", compose("exec", "-T", "malware-agent", "cat", "/data/agent_key.pub").trim());
+  } catch {
+    await sleep(2000);
+  }
 }
 compose("up", "-d", "--build", "host-web", "host-db");
 for (const [name, service] of [
@@ -251,6 +272,9 @@ for (const [name, service] of [
     }
   }
 }
+
+// Its first round ran before the servers had its key: a new round scans them too.
+compose("restart", "malware-agent");
 
 step("Sample data");
 // A separate script, so it runs again by itself: docker compose run --rm --no-deps setup node setup/seed.ts

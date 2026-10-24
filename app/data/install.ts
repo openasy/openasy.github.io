@@ -84,7 +84,7 @@ export const DEFAULT_CHOICE: InstallChoice = {
 /** Made in the reader's browser; the names are the .env variables or files they end up in. */
 export interface Secrets {
   kek: string;
-  /** infra-agent's and sast-agent's own key, and logs-agent's. */
+  /** infra-agent's, sast-agent's and dast-agent's own key, and logs-agent's. */
   agentKek: string;
   logsAgentKek: string;
   /** Vulnerabilities' ingest token, which its agents send. */
@@ -542,6 +542,46 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         [`${service}-data`],
       );
     }
+    if (id === "dast")
+      add(
+        "dast-agent",
+        [
+          `    image: ghcr.io/openasy/dast-agent:${tag(id)}   # runs ZAP and Nuclei, only against targets proven to be yours`,
+          "    restart: unless-stopped",
+          ...hardened,
+          "    tmpfs: [/tmp:size=1g]   # ZAP's and Nuclei's home for one scan",
+          "    mem_limit: 3g",
+          "    volumes:",
+          "      - dast-agent-data:/data   # its secret, sealed with its own key",
+          "    secrets: [openasy-agent-kek]",
+          "    environment:",
+          env("DAST_URL", "http://dast:8080"),
+          env("DAST_ENROLL_TOKEN", "${DAST_ENROLL_TOKEN:-}   # one-time, from Agents"),
+          "    depends_on: [dast]",
+        ],
+        ["dast-agent-data"],
+      );
+    if (id === "malware")
+      add(
+        "malware-agent",
+        [
+          `    image: ghcr.io/openasy/malware-agent:${tag(id)}   # ClamAV and YARA over this host and the servers in the hosts file, read-only`,
+          "    restart: unless-stopped",
+          ...hardened,
+          "    tmpfs: [/tmp:size=2g]   # one server's files at a time, deleted after its scan",
+          "    hostname: ${HOSTNAME:-host}   # this host's name in malware",
+          "    mem_limit: 2g",
+          "    volumes:",
+          "      - malware-agent-data:/data   # its SSH key, trusted host keys and ClamAV's signatures",
+          "      - /:/host:ro   # this host, read-only",
+          "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
+          "    environment:",
+          env("MALWARE_URL", "http://malware:8080"),
+          env("MALWARE_INGEST_TOKEN", "${MALWARE_INGEST_TOKEN}"),
+          "    depends_on: [malware]",
+        ],
+        ["malware-agent-data"],
+      );
     if (id === "sast")
       add(
         "sast-agent",
@@ -664,7 +704,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       "secrets:",
       "  openasy-kek:",
       "    file: ./secrets/openasy-kek",
-      ...(has("infrastructure") || has("sast") ? ["  openasy-agent-kek:", "    file: ./secrets/openasy-agent-kek"] : []),
+      ...(has("infrastructure") || has("sast") || has("dast") ? ["  openasy-agent-kek:", "    file: ./secrets/openasy-agent-kek"] : []),
       ...(has("logs") ? ["  openasy-logs-agent-kek:", "    file: ./secrets/openasy-logs-agent-kek"] : []),
     );
 
@@ -707,6 +747,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     ...(has("vpn") && choice.vpnTcp ? ["VPN_TCP_ENROLL_TOKEN="] : []),
     ...(has("infrastructure") ? ["INFRA_ENROLL_TOKEN="] : []),
     ...(has("sast") ? ["SAST_ENROLL_TOKEN="] : []),
+    ...(has("dast") ? ["DAST_ENROLL_TOKEN="] : []),
     ...(has("logs") ? ["LOGS_ENROLL_TOKEN="] : []),
   ]);
 
@@ -748,7 +789,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     for (const picture of [choice.logo, choice.favicon]) if (picture) files.push({ name: `config/brand/${picture}`, content: "", binary: true });
     files.push({ name: "secrets/openasy-kek", content: secrets.kek, secret: true });
   }
-  if (has("infrastructure") || has("sast")) files.push({ name: "secrets/openasy-agent-kek", content: secrets.agentKek, secret: true });
+  if (has("infrastructure") || has("sast") || has("dast")) files.push({ name: "secrets/openasy-agent-kek", content: secrets.agentKek, secret: true });
   if (has("logs")) files.push({ name: "secrets/openasy-logs-agent-kek", content: secrets.logsAgentKek, secret: true });
   if (hostsFile)
     files.push({
@@ -847,7 +888,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     if (withCaddy || onHost)
       steps.push({ text: `Point ${fronted.map(host).join(", ")} at this host, so ${withCaddy ? "Caddy" : "certbot"} can get their certificates.` });
     // Agents that enrol with a one-time token start once they have it.
-    const waiting = ["vpn-server", "vpn-server-tcp", "infra-agent", "sast-agent", "logs-agent"];
+    const waiting = ["vpn-server", "vpn-server-tcp", "infra-agent", "sast-agent", "dast-agent", "logs-agent"];
     const first = services.filter((sv) => !waiting.includes(sv));
     steps.push({
       text: first.length < services.length ? "Start everything but the agents that wait for a token:" : "Start everything:",
@@ -907,6 +948,16 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       steps.push({
         text: "In SAST, GitHub, connect your account and add an agent. Put its token in SAST_ENROLL_TOKEN, then:",
         code: "docker compose up -d sast-agent",
+      });
+    if (has("dast"))
+      steps.push({
+        text: "In DAST, Agents, add an agent. Put its token in DAST_ENROLL_TOKEN, then:",
+        code: "docker compose up -d dast-agent",
+      });
+    if (has("malware"))
+      steps.push({
+        text: "malware-agent scans this host right away. For the servers in the hosts file, put the key it logs in ~openasy/.ssh/authorized_keys on each:",
+        code: "docker compose logs malware-agent | grep authorizedKey",
       });
     if (has("logs"))
       steps.push({ text: "In Logs, Settings, Agents, make a token. Put it in LOGS_ENROLL_TOKEN, then:", code: "docker compose up -d logs-agent" });
