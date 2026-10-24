@@ -378,6 +378,8 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "# OPENASY_LOGO=/config/brand/logo.svg",
     "# The browser tab's icon: a square SVG, PNG or ICO, up to 128 KB.",
     "# OPENASY_FAVICON=/config/brand/favicon.png",
+    "# Where people get help, in the help menu and on About: an email address or an https address. OpenAsy's own when unset.",
+    "# OPENASY_SUPPORT=help@example.com",
   ].join("\n");
 
   // What setup.ts needs to know of each product: where it is, the file for its client, its Identity template.

@@ -18,6 +18,7 @@ Security tools must be inspectable, and nobody should be locked in. A permissive
 - "OpenAsy" and its logo are trademarks. Neither licence grants the right to use them; forks must use another name.
 - Issues, roadmaps and decisions (these ADRs) are public. Changes go through pull requests.
 - Each repository has a SECURITY.md with a private disclosure address and response times.
+- Every product says what it is built on. Its About page, and the help menu in its top bar, name its version and licence, link to its source code, and list the open-source software it uses with each one's version and licence, read from the build so the list never falls behind.
 
 ## Consequences
 

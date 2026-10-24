@@ -34,7 +34,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0003": { title: "Least privilege", text: "Roles per product, custom roles, scoped and expiring API tokens. New members start as Viewers." },
   "0004": {
     title: "Your brand, set once",
-    text: "Your organization, logo, tab icon and color in one file every product loads, each serving the pictures itself. Switch off the features you do not use.",
+    text: "Your organization, logo, tab icon, color and support address in one file every product loads, each serving the pictures itself. Switch off the features you do not use.",
   },
   "0005": { title: "Accessible", text: "WCAG 2.2 AA, full keyboard use, levels readable without colour. Every screen is tested with axe in CI." },
   "0006": { title: "Ready for your language", text: "English first; ICU messages, locale-aware formats and right-to-left layouts for translations." },

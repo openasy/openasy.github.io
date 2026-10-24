@@ -802,6 +802,8 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         line(!!choice.logo, "OPENASY_LOGO", `/config/brand/${choice.logo ?? "logo.svg"}`),
         "# The browser tab's icon: a square SVG, PNG or ICO, up to 128 KB.",
         line(!!choice.favicon, "OPENASY_FAVICON", `/config/brand/${choice.favicon ?? "favicon.png"}`),
+        "# Where people get help, in the help menu and on About: an email address or an https address. OpenAsy's own when unset.",
+        "# OPENASY_SUPPORT=help@example.com",
       ].join("\n"),
     });
     files.push({
