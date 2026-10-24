@@ -354,4 +354,27 @@ describe("install builder", () => {
     expect(out.files.filter((f) => !f.name.includes("/")).map((f) => f.name)).toEqual(["compose.yaml", "README.md", ".env"]);
     expect(out.steps[1]!.code).toBe("docker compose up -d && docker compose logs -f setup");
   });
+
+  it("the dev setup can be opened from the other computers on the network, under names of its own", () => {
+    const out = buildDevKit(secrets, "openasy.internal");
+    const compose = file(out, "compose.yaml");
+    // Caddy answers on every address, under the same names inside the network and out.
+    expect(service(compose, "caddy")).toContain('- "8443:8443"');
+    expect(service(compose, "caddy")).not.toContain("127.0.0.1:8443");
+    expect(service(compose, "caddy")).toContain("aliases: [id.openasy.internal, vpn.openasy.internal,");
+    expect(compose).not.toContain(".localhost");
+    expect(service(compose, "identity")).toContain("IDENTITY_PUBLIC_URL: https://id.openasy.internal:8443");
+    expect(service(compose, "vpn")).toContain("VPN_PUBLIC_HOST: vpn.openasy.internal");
+    expect(file(out, "config/Caddyfile")).toContain("https://sast.openasy.internal:8443 {");
+    expect(file(out, "setup/products.json")).toContain('"url": "https://id.openasy.internal:8443"');
+    // Each computer names this one in its hosts file and trusts the CA.
+    const steps = out.steps.map((s) => `${s.text}\n${s.code ?? ""}`).join("\n");
+    expect(steps).toContain("<this computer's address>  id.openasy.internal vpn.openasy.internal");
+    expect(steps).toContain("certutil -addstore -user Root caddy-root.crt");
+    expect(out.steps).toHaveLength(4);
+    expect(file(out, "README.md")).toContain("| SAST | https://sast.openasy.internal:8443 |");
+    // Without a network it stays on this computer, as before.
+    expect(service(file(buildDevKit(secrets), "compose.yaml"), "caddy")).toContain('- "127.0.0.1:8443:8443"');
+    expect(buildDevKit(secrets).steps).toHaveLength(3);
+  });
 });

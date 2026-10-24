@@ -247,6 +247,13 @@ describe("pages", () => {
     expect(within(screen.getByRole("list", { name: "Files" })).getByRole("button", { name: "Open setup/setup.ts" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download openasy-dev.zip" })).toBeEnabled();
     expect(screen.getByRole("list", { name: "Steps to start" })).toHaveTextContent("docker compose up -d && docker compose logs -f setup");
+    // Opened from the other computers on the network, the products get names under a domain of its own.
+    await userEvent.click(screen.getByRole("radio", { name: "Other computers too" }));
+    expect(screen.getByLabelText("Domain")).toHaveValue("openasy.internal");
+    expect(compose()).toContain("IDENTITY_PUBLIC_URL: https://id.openasy.internal:8443");
+    expect(screen.getByRole("heading", { name: "Four steps" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "This computer" }));
+    expect(compose()).toContain("IDENTITY_PUBLIC_URL: https://id.localhost:8443");
 
     await userEvent.click(screen.getByRole("radio", { name: "Production" }));
     expect(compose()).toContain("env_file: [config/brand.env, config/auth.env]");

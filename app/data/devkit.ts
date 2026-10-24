@@ -1,10 +1,21 @@
 // The dev setup (/install, "Try it locally"): every released product with every setting, wired together on
-// *.localhost by a one-shot setup container, from released images only. Pure, like install.ts; the setup script and
+// *.localhost, or on names under a domain of the reader's own network, by a one-shot setup container, from released images only. Pure, like install.ts; the setup script and
 // the code printer are real files in kit/dev, read here as text.
 import SETUP from "../../kit/dev/setup.ts?raw";
 import CODE from "../../kit/dev/code.ts?raw";
 import SEED from "../../kit/dev/seed.ts?raw";
-import { INSTALLABLE, PARTS, THIRD_PARTY, authFile, type Install, type InstallFile, type InstallStep, type Installable, type Secrets } from "./install";
+import {
+  INSTALLABLE,
+  PARTS,
+  THIRD_PARTY,
+  authFile,
+  cleanDomain,
+  type Install,
+  type InstallFile,
+  type InstallStep,
+  type Installable,
+  type Secrets,
+} from "./install";
 import { statusFor } from "./status";
 
 /** Images the dev setup adds to the ones in THIRD_PARTY, pinned the same way (ADR 0027). */
@@ -17,7 +28,8 @@ const PORT = 8443;
 /** The products are in the wired profile, so a plain up -d leaves them as they are. */
 const APPLY = "docker compose --profile wired up -d";
 const ROLES = "openasy-admins=admin,openasy-editors=editor,openasy-viewers=viewer";
-const url = (id: Installable) => `https://${PARTS[id].sub}.localhost:${PORT}`;
+/** The domain the dev setup suggests for opening it from other computers; .internal is kept for private networks. */
+export const DEV_NETWORK_DOMAIN = "openasy.internal";
 /** Where setup writes a product's client, under the names the product reads (OPENASY_OIDC_*). */
 export const clientFile = (id: Installable) => `secrets/oidc/${PARTS[id].service}.env`;
 /** The products with a service of their own below; every other one is the same hardened container. */
@@ -52,8 +64,15 @@ const HOST_DOCKERFILE = `# syntax=docker/dockerfile:1
         EOF
         ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]`;
 
-export function buildDevKit(secrets: Secrets): Install {
+/**
+ * With `network`, the products are named under that domain and Caddy answers on every address of this computer, so
+ * other computers on the network open them once their hosts file names this one and they trust its CA.
+ */
+export function buildDevKit(secrets: Secrets, network?: string): Install {
   const ids = INSTALLABLE;
+  const base = network === undefined ? "localhost" : cleanDomain(network);
+  const name = (id: Installable) => `${PARTS[id].sub}.${base}`;
+  const url = (id: Installable) => `https://${name(id)}:${PORT}`;
   const tag = (id: Installable) => statusFor(id).version!;
   const svc = (id: Installable) => PARTS[id].service;
   const env = (k: string, v: string) => `      ${k}: ${v}`;
@@ -121,14 +140,14 @@ export function buildDevKit(secrets: Secrets): Install {
     `    image: ${THIRD_PARTY.caddy}`,
     "    restart: unless-stopped",
     "    ports:",
-    `      - "127.0.0.1:${PORT}:${PORT}"`,
+    network === undefined ? `      - "127.0.0.1:${PORT}:${PORT}"` : `      - "${PORT}:${PORT}"   # on every address, for the other computers on your network`,
     "    volumes:",
     "      - ./config/Caddyfile:/etc/caddy/Caddyfile:ro",
     "      - caddy-data:/data",
     "    networks:",
     "      default:",
     "        # Inside the network the same names reach Caddy, so issuer and callback URLs are the same everywhere.",
-    `        aliases: [${ids.map((id) => `${PARTS[id].sub}.localhost`).join(", ")}]`,
+    `        aliases: [${ids.map(name).join(", ")}]`,
     "",
     "  # Runs once: starts the products after Caddy's CA exists, then makes the owners, Identity's applications and the",
     "  # agents' tokens (setup/setup.ts). It drives compose through the Docker socket, which is why this is for dev only.",
@@ -142,7 +161,7 @@ export function buildDevKit(secrets: Secrets): Install {
     "    depends_on: [caddy]",
     "",
     ...product("identity"),
-    ...product("vpn", { hardened: false, env: [env("VPN_PUBLIC_HOST", "localhost")] }),
+    ...product("vpn", { hardened: false, env: [env("VPN_PUBLIC_HOST", network === undefined ? "localhost" : name("vpn"))] }),
     "  vpn-server:",
     `    image: ghcr.io/openasy/vpn-server:${tag("vpn")}`,
     "    restart: unless-stopped",
@@ -369,14 +388,32 @@ export function buildDevKit(secrets: Secrets): Install {
     ...(PARTS[id].template && { template: PARTS[id].template }),
   }));
 
+  const trust = [
+    "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db caddy-root.crt",
+    "certutil -addstore -user Root caddy-root.crt",
+    "sudo cp caddy-root.crt /usr/local/share/ca-certificates/openasy-dev.crt && sudo update-ca-certificates",
+  ].join("\n");
   const steps: InstallStep[] = [
     { title: "Download and unzip", text: "The folder holds its own keys, made in this browser and never sent." },
     {
       title: "Start it",
       text: "setup wires the products together and says when it is done.",
       code: "docker compose up -d && docker compose logs -f setup",
-      note: "The first start pulls the images and takes a few minutes.",
+      note:
+        network === undefined
+          ? "The first start pulls the images and takes a few minutes."
+          : "The first start pulls the images and takes a few minutes. If the firewall asks, let Docker accept connections.",
     },
+    ...(network === undefined
+      ? []
+      : [
+          {
+            title: "Name this computer on the others",
+            text: "In the hosts file of each computer that opens the products, this one too (/etc/hosts, or C:\\Windows\\System32\\drivers\\etc\\hosts on Windows), add one line with this computer's address on your network. Then copy config/caddy-root.crt to each of them and trust it once: macOS, Windows and Linux, one line each. Firefox on macOS and Windows reads it once security.enterprise_roots.enabled is true in about:config.",
+            code: `<this computer's address>  ${ids.map(name).join(" ")}\n\n${trust}`,
+            note: "Give this computer a fixed address in your router, so the line stays right. ipconfig getifaddr en0 prints it on macOS, ipconfig on Windows.",
+          },
+        ]),
     {
       title: "Open Identity and sign in",
       text: `Go to ${url("identity")} as ${DEV_EMAIL} with the password "${DEV_PASSWORD}". Every other product then signs you in by itself.`,
@@ -390,11 +427,16 @@ export function buildDevKit(secrets: Secrets): Install {
       text: "setup fills every product once. A product it could not fill is tried again with:",
       code: "docker compose run --rm --no-deps setup node setup/seed.ts",
     },
-    {
-      title: "Trust the local CA",
-      text: "Once, so the browser accepts https://*.localhost without a warning, and again after starting over, which makes a new CA. Firefox reads it from macOS once security.enterprise_roots.enabled is true in about:config. On macOS:",
-      code: "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db config/caddy-root.crt",
-    },
+    network === undefined
+      ? {
+          title: "Trust the local CA",
+          text: "Once, so the browser accepts https://*.localhost without a warning, and again after starting over, which makes a new CA. Firefox reads it from macOS once security.enterprise_roots.enabled is true in about:config. On macOS:",
+          code: "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db config/caddy-root.crt",
+        }
+      : {
+          title: "Trust the local CA again",
+          text: "Starting over makes a new CA: copy config/caddy-root.crt to the other computers again and trust it as before.",
+        },
     {
       title: "Stop, or start over",
       text: "The first keeps the data. The second deletes it: unzip again to start from nothing.",
@@ -403,7 +445,7 @@ export function buildDevKit(secrets: Secrets): Install {
   ];
 
   const readme = [
-    "# OpenAsy on this machine",
+    network === undefined ? "# OpenAsy on this machine" : "# OpenAsy on this machine, for your network",
     "",
     "Every released OpenAsy product, wired together the way a real install is, to try. Not for production: the dev",
     "account has a fixed password, HTTPS comes from a local CA, and setup drives Docker through its socket.",
@@ -493,7 +535,10 @@ export function buildDevKit(secrets: Secrets): Install {
       title: "Two servers in config/inventory/hosts.yaml",
       text: "read over SSH by Infrastructure and Logs; Vulnerabilities, Posture and Malware show they send no scan.",
     },
-    { title: "Caddy serves HTTPS", text: `on *.localhost:${PORT}, with a local CA you trust once.` },
+    {
+      title: "Caddy serves HTTPS",
+      text: `on *.${base}:${PORT}, with a local CA you trust once${network === undefined ? "" : " on each computer"}.`,
+    },
     { title: "Released images only", text: `${ids.map((id) => `${PARTS[id].name} ${tag(id)}`).join(", ")}.` },
   ];
   return { files, steps, more, wiring, addresses: ids.map(url), hosts: [], services };

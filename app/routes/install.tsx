@@ -43,7 +43,7 @@ import {
   type SignIn,
   type Upstream,
 } from "../data/install";
-import { DEV_EMAIL, DEV_FOLDER, DEV_PASSWORD, buildDevKit } from "../data/devkit";
+import { DEV_EMAIL, DEV_FOLDER, DEV_NETWORK_DOMAIN, DEV_PASSWORD, buildDevKit } from "../data/devkit";
 import { highlight, languageOf, type Kind } from "../data/highlight";
 import { statusFor } from "../data/status";
 import { zip } from "../data/zip";
@@ -434,8 +434,21 @@ function Options({ title, summary, children }: { title: string; summary: string;
   );
 }
 
-/** Every released product on this machine: nothing to choose, one folder and one command. */
-function TryLocally({ out, ready }: { out: Install; ready: boolean }) {
+const COUNT = ["Zero", "One", "Two", "Three", "Four", "Five"];
+
+/** Every released product on this machine: only where it is opened from to choose, one folder and one command. */
+function TryLocally({
+  out,
+  ready,
+  network,
+  onNetwork,
+}: {
+  out: Install;
+  ready: boolean;
+  /** The domain the products are named under for the other computers on the network; null keeps them on this one. */
+  network: string | null;
+  onNetwork: (network: string | null) => void;
+}) {
   return (
     <>
       <section aria-labelledby="dev-title" className="mt-6 flex flex-wrap overflow-hidden rounded-2xl border border-line bg-surface">
@@ -449,6 +462,29 @@ function TryLocally({ out, ready }: { out: Install; ready: boolean }) {
               Every product signs in through Identity. A VPN server, two agents reading demo servers, and every scanner ready for your CI, wired together for
               you. Docker is all it needs.
             </p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <SegmentedControl
+              label="Opened from"
+              className="max-w-full flex-wrap"
+              value={network === null ? "here" : "network"}
+              onChange={(v) => onNetwork(v === "here" ? null : DEV_NETWORK_DOMAIN)}
+              options={[
+                { value: "here", label: "This computer" },
+                { value: "network", label: "Other computers too" },
+              ]}
+            />
+            {network !== null && (
+              <TextField
+                label="Domain"
+                mono
+                value={network}
+                onChange={(e) => onNetwork(e.target.value)}
+                hint={`Names such as ${out.addresses[0]?.replace(/^https:\/\//, "")}, which each computer finds in its hosts file. Run it on a computer that stays on, and open it from your laptop.`}
+                spellCheck={false}
+                autoComplete="off"
+              />
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="primary" icon={<FolderDown />} onClick={() => downloadZip(out, DEV_FOLDER)} disabled={!ready}>
@@ -475,14 +511,14 @@ function TryLocally({ out, ready }: { out: Install; ready: boolean }) {
             <br />▸ Identity: groups and applications
             <br />▸ Infrastructure: the two servers
           </span>
-          <span className="text-[#4cc38a]">Ready. Open https://id.localhost:8443</span>
+          <span className="text-[#4cc38a]">Ready. Open {out.addresses[0]}</span>
         </div>
       </section>
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section aria-labelledby="dev-steps" className="rounded-xl border border-line bg-surface p-6 sm:p-8">
           <h2 id="dev-steps" className="mt-0 mb-5 text-lg font-semibold">
-            Three steps
+            {COUNT[out.steps.length]} steps
           </h2>
           <Steps steps={out.steps} />
           {out.more && (
@@ -639,7 +675,8 @@ export default function InstallPage() {
   }, []);
 
   const out = useMemo(() => buildInstall(choice, secrets), [choice, secrets]);
-  const dev = useMemo(() => buildDevKit(secrets), [secrets]);
+  const [network, setNetwork] = useState<string | null>(null);
+  const dev = useMemo(() => buildDevKit(secrets, network ?? undefined), [secrets, network]);
   const ready = secrets.kek !== PENDING;
   const has = (id: Installable) => choice.products.includes(id);
 
@@ -673,7 +710,7 @@ export default function InstallPage() {
       />
 
       {mode === "dev" ? (
-        <TryLocally out={dev} ready={ready} />
+        <TryLocally out={dev} ready={ready} network={network} onNetwork={setNetwork} />
       ) : (
         <>
           <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
