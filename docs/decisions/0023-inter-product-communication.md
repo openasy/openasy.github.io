@@ -11,7 +11,7 @@ Products link to each other (ADR 0001) and agents report to their product (ADR 0
 
 ## Decision
 
-- All traffic is HTTPS (ADR 0013, 0026). Products call each other only through public APIs (ADR 0014) with scoped tokens (ADR 0003); a link token is limited to the entities and actions the link needs and expires.
+- Traffic between hosts is HTTPS, through the proxy in front of the products (ADR 0013, 0026). An agent in the same compose network as its product calls it by service name over plain HTTP, which never leaves the host. Products call each other only through public APIs (ADR 0014) with scoped tokens (ADR 0003); a link token is limited to the entities and actions the link needs and expires.
 - Agents authenticate with a per-agent identity: a client certificate issued by their product at enrolment, or a per-agent token. A shared token for all agents is only for first enrolment.
 - Calls have a timeout (default 10 seconds), retries with exponential backoff and jitter for safe requests, and an `Idempotency-Key` header on every write that may be retried. The receiver keeps keys for 24 hours.
 - Events between products are signed webhooks (ADR 0001) with a timestamp and an id, delivered at least once; receivers ignore duplicates.

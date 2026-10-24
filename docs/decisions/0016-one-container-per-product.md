@@ -13,7 +13,7 @@ Installing should take minutes, and you should be able to verify what you run.
 
 - Each product is one container image (`ghcr.io/openasy/<product>`), started with `docker compose up` or a Helm chart. Agents and servers (ADR 0018) have their own image, for example `ghcr.io/openasy/vpn` and `ghcr.io/openasy/vpn-server`.
 - Images are built and pushed to GitHub Container Registry by GitHub Actions when a version tag is pushed, for `linux/amd64` and `linux/arm64`.
-- Images are signed with cosign, ship an SBOM and carry SLSA level 3 provenance.
+- Images are signed, ship an SBOM and carry provenance, built as ADR 0027 says.
 
 ## Consequences
 

@@ -16,7 +16,7 @@ Each record has two statuses:
 | 0001 | [Every product runs alone, with the others and with third-party tools](./0001-standalone-and-together.md) | Architecture | Accepted | In progress |
 | 0002 | [Authentication: local accounts, MFA and single sign-on](./0002-authentication.md) | Security | Accepted | In progress |
 | 0003 | [Authorization: per-product roles and scoped tokens](./0003-authorization.md) | Security | Accepted | In progress |
-| 0004 | [Customization: white-label and feature switches](./0004-customization.md) | Product | Accepted | In progress |
+| 0004 | [Customization: one brand for every product, and feature switches](./0004-customization.md) | Product | Accepted | In progress |
 | 0005 | [Accessibility: WCAG 2.2 AA, tested in CI](./0005-accessibility.md) | Quality | Accepted | In progress |
 | 0006 | [Languages: English first, ready for translation](./0006-languages.md) | Product | Accepted | Not started |
 | 0007 | [Theme: light, dark and follow the system](./0007-theme.md) | Product | Accepted | Implemented |
@@ -24,9 +24,9 @@ Each record has two statuses:
 | 0009 | [Current, supported libraries](./0009-latest-libraries.md) | Engineering | Accepted | In progress |
 | 0010 | [Forward-only upgrades, no backward compatibility](./0010-forward-only-upgrades.md) | Engineering | Accepted | In progress |
 | 0011 | [SQLite by default](./0011-sqlite-by-default.md) | Architecture | Accepted | Implemented |
-| 0012 | [Daily backups and point-in-time restore](./0012-backups.md) | Operations | Accepted | Not started |
+| 0012 | [Backups, point-in-time restore and disaster recovery](./0012-backups.md) | Operations | Accepted | Not started |
 | 0013 | [Secure by default](./0013-secure-by-default.md) | Security | Accepted | In progress |
-| 0014 | [API-first](./0014-api-first.md) | Architecture | Accepted | In progress |
+| 0014 | [API-first: one public REST API per product, and how it changes](./0014-api-first.md) | Architecture | Accepted | In progress |
 | 0015 | [Your data stays yours](./0015-data-ownership.md) | Privacy | Accepted | In progress |
 | 0016 | [One container per product, signed](./0016-one-container-per-product.md) | Operations | Accepted | In progress |
 | 0017 | [Every product can be monitored](./0017-self-observability.md) | Operations | Accepted | In progress |
@@ -36,9 +36,9 @@ Each record has two statuses:
 | 0021 | [Secrets and key management](./0021-secrets-and-keys.md) | Security | Proposed · Critical | In progress |
 | 0022 | [Privilege separation](./0022-privilege-separation.md) | Security | Accepted | In progress |
 | 0023 | [Communication between products and agents](./0023-inter-product-communication.md) | Architecture | Accepted | In progress |
-| 0024 | [API design and compatibility](./0024-api-compatibility.md) | Architecture | Accepted | In progress |
-| 0025 | [Disaster recovery](./0025-disaster-recovery.md) | Operations | Proposed · Critical | Not started |
-| 0026 | [Network exposure and TLS](./0026-network-exposure-and-tls.md) | Security | Proposed · Critical | Not started |
+| 0024 | [API design and compatibility](./0024-api-compatibility.md) | Architecture | Superseded by 0014 | In progress |
+| 0025 | [Disaster recovery](./0025-disaster-recovery.md) | Operations | Superseded by 0012 | Not started |
+| 0026 | [Network exposure and TLS](./0026-network-exposure-and-tls.md) | Security | Proposed · Critical | In progress |
 | 0027 | [Build integrity and supply chain](./0027-reproducible-builds.md) | Engineering | Proposed · High | In progress |
 | 0028 | [Resource budgets](./0028-resource-budgets.md) | Operations | Proposed · Medium | In progress |
 | 0029 | [Testing and quality gates](./0029-testing-and-quality-gates.md) | Quality | Accepted | In progress |
@@ -65,6 +65,6 @@ Each record has two statuses:
 | 0050 | [Threat Intel: feeds in, one lookup out, and nothing dropped without a word](./0050-threat-intel.md) | Architecture | Proposed · High | In progress |
 | 0051 | [Cost: spend sent by a pipeline, owners by tag or rule, and anomalies a person decides on](./0051-cost.md) | Architecture | Proposed · Medium | In progress |
 | 0052 | [One list of endpoints and one of servers, in files every product can read](./0052-shared-inventory-files.md) | Architecture | Proposed · High | In progress |
-| 0053 | [One brand for every product, from one env file](./0053-one-brand.md) | Architecture | Proposed · Medium | Not started |
+| 0053 | [One brand for every product, from one env file](./0053-one-brand.md) | Product | Superseded by 0004 | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.

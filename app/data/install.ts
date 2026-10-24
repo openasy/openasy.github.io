@@ -241,7 +241,7 @@ export const cleanDomain = (d: string) =>
     .replace(/[/:].*$/, "")
     .replace(/\.$/, "") || "example.com";
 
-/** Logos the products show, in their own shape at a fixed height (ADR 0053). */
+/** Logos the products show, in their own shape at a fixed height (ADR 0004). */
 export const LOGO_TYPES = { "image/svg+xml": "svg", "image/png": "png", "image/webp": "webp" } as const;
 export const LOGO_MAX_BYTES = 512 * 1024;
 export const FAVICON_TYPES = { "image/svg+xml": "svg", "image/png": "png", "image/x-icon": "ico", "image/vnd.microsoft.icon": "ico" } as const;
@@ -368,7 +368,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   // With Caddy's own CA the products trust it, so they reach Identity's https issuer through Caddy like a browser does.
   const caMount = internal ? ["      - caddy-data:/caddy:ro   # Caddy's CA, to trust the other products' https names"] : [];
   const caEnv = internal ? [env("NODE_EXTRA_CA_CERTS", "/caddy/caddy/pki/authorities/local/root.crt")] : [];
-  // The brand every product shows (ADR 0053) and how people sign in, each in a file of its own that every product loads.
+  // The brand every product shows (ADR 0004) and how people sign in, each in a file of its own that every product loads.
   const envFiles = (id: Installable) => [
     `    env_file: [config/brand.env${ownAuthFile(id) ? "" : ", config/auth.env"}]   # your brand${ownAuthFile(id) ? "" : " and sign-in"}, the same in every product`,
   ];
@@ -791,7 +791,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     files.push({
       name: "config/brand.env",
       content: [
-        "# The brand every product shows, loaded by each of them (ADR 0053). After a change: docker compose up -d",
+        "# The brand every product shows, loaded by each of them (ADR 0004). After a change: docker compose up -d",
         "",
         "# Under each product's name, such as your company.",
         line(!!org, "OPENASY_ORGANIZATION", org ? `'${org}'` : "'Acme Corp'"),

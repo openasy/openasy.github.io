@@ -21,5 +21,5 @@ A VPN product holds the most sensitive material in the system: the CA private ke
 
 ## Consequences
 
-- Restoring a backup on a new server needs the KEK or the recovery key; ADR 0025 describes the steps.
+- Restoring a backup on a new server needs the KEK or the recovery key; ADR 0012 describes the steps.
 - Reading a secret, rotating a key and exporting a certificate are audit-logged (ADR 0013).

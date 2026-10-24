@@ -32,7 +32,10 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   },
   "0002": { title: "Sign in your way", text: "Local accounts with MFA and passkeys, or OIDC, SAML and LDAP. Identity gives single sign-on across products." },
   "0003": { title: "Least privilege", text: "Roles per product, custom roles, scoped and expiring API tokens. New members start as Viewers." },
-  "0004": { title: "Make it yours", text: "White-label name, logo, colour and font. Switch off the features you do not use." },
+  "0004": {
+    title: "Your brand, set once",
+    text: "Your organization, logo, tab icon and color in one file every product loads, each serving the pictures itself. Switch off the features you do not use.",
+  },
   "0005": { title: "Accessible", text: "WCAG 2.2 AA, full keyboard use, levels readable without colour. Every screen is tested with axe in CI." },
   "0006": { title: "Ready for your language", text: "English first; ICU messages, locale-aware formats and right-to-left layouts for translations." },
   "0007": { title: "Light and dark", text: "Every colour has a light and a dark value. Follows the system setting unless you pick one." },
@@ -48,10 +51,16 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0011": { title: "SQLite by default", text: "One file per product, no database server to run." },
   "0012": {
     title: "Back in time",
-    text: "Daily snapshots with configurable retention (by default 7 daily, 4 weekly, 12 monthly), and optional continuous replication to restore to any second.",
+    text: "Daily snapshots with configurable retention (by default 7 daily, 4 weekly, 12 monthly), optional continuous replication to restore to any second, and tested runbooks for the worst day.",
   },
-  "0013": { title: "Secure by default", text: "TLS everywhere, no default passwords, secrets encrypted at rest, every admin action audited." },
-  "0014": { title: "API-first", text: "Every screen has a public REST API and a CLI. The UI has no private endpoints." },
+  "0013": {
+    title: "Secure by default",
+    text: "TLS on every connection that leaves a host, no default passwords, secrets encrypted at rest, every admin action audited.",
+  },
+  "0014": {
+    title: "An API you can rely on",
+    text: "Every screen has a public REST API and a CLI, described with OpenAPI, additive within a major and deprecated before removal.",
+  },
   "0015": { title: "Your data stays yours", text: "No telemetry, air-gapped installs, GDPR export and delete, retention you control." },
   "0016": { title: "One signed container", text: "docker compose up or Helm. Images are signed, ship an SBOM and carry SLSA provenance." },
   "0017": { title: "Observable", text: "/healthz, /readyz and /metrics on every product, structured logs on stdout." },
@@ -76,17 +85,9 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
     title: "Products talk safely",
     text: "Scoped tokens, per-agent identities, timeouts, retries, idempotency keys, and agents that keep working when the product is down.",
   },
-  "0024": {
-    title: "An API you can rely on",
-    text: "OpenAPI for every product, additive changes within a major, deprecation before removal, standard error responses.",
-  },
-  "0025": {
-    title: "Recover from the worst day",
-    text: "Recovery targets, tested runbooks for lost servers, corrupted databases, lost keys and failed upgrades.",
-  },
   "0026": {
     title: "Nothing exposed by accident",
-    text: "HTTPS only, ports on localhost unless meant to be public, trusted proxies, management endpoints kept private.",
+    text: "HTTPS through a proxy in front of the products, only the proxy published, trusted proxies, management endpoints kept private.",
   },
   "0027": { title: "Builds you can verify", text: "Pinned dependencies, releases only from CI, immutable signed images with SBOM and provenance." },
   "0028": { title: "Runs on a small server", text: "Memory, CPU and image size budgets, amd64 and arm64, no required external services." },
@@ -180,10 +181,6 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
     title: "One list, every product",
     text: "Endpoints and servers live in two files the install keeps, in git if it likes. Every product reads the same list, so Uptime and Certificates agree on an endpoint and on when its certificate is urgent.",
   },
-  "0053": {
-    title: "Your brand, set once",
-    text: "Your organization, logo, tab icon and color in one file every product loads. The pictures are served by each product itself, so nothing is fetched from elsewhere.",
-  },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });
@@ -194,13 +191,15 @@ export function parseRecord(file: string, md: string): Principle {
   const head = md.match(/^# (\d{4})\. (.+)$/m);
   if (!head) throw new Error(`${file}: missing "# NNNN. Title"`);
   const [, n, record] = head as unknown as [string, string, string];
-  const summary = SUMMARIES[n];
+  const decision = (field(md, "Decision") ?? "Proposed") as DecisionStatus;
+  // A superseded record is not on the site, so it needs no summary.
+  const summary = SUMMARIES[n] ?? (decision.startsWith("Superseded") ? { title: record, text: "" } : undefined);
   if (!summary) throw new Error(`${file}: add a summary to SUMMARIES`);
   return {
     n,
     record,
     ...summary,
-    decision: (field(md, "Decision") ?? "Proposed") as DecisionStatus,
+    decision,
     implementation: (field(md, "Implementation") ?? "Not started") as ImplementationStatus,
     where: field(md, "Where")?.replaceAll("`", ""),
     priority: field(md, "Priority") as Priority | undefined,
@@ -209,8 +208,10 @@ export function parseRecord(file: string, md: string): Principle {
   };
 }
 
-export const PRINCIPLES: Principle[] = Object.entries(RECORDS)
+export const RECORDS_ALL: Principle[] = Object.entries(RECORDS)
   .map(([path, md]) => parseRecord(path.split("/").pop()!, md))
   .sort((a, b) => a.n.localeCompare(b.n));
+/** The decisions in force. A superseded record stays in docs/decisions, so the commits and links that name it still lead to its successor. */
+export const PRINCIPLES = RECORDS_ALL.filter((p) => !p.decision.startsWith("Superseded"));
 
 export const adrUrl = (file: string) => REPO + file;

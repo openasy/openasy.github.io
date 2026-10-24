@@ -347,7 +347,7 @@ export function buildDevKit(secrets: Secrets): Install {
   ].join("\n");
 
   const brand = [
-    "# The brand every product shows, loaded by each of them (ADR 0053).",
+    "# The brand every product shows, loaded by each of them (ADR 0004).",
     `# After a change: ${APPLY}`,
     "",
     "# Under each product's name, such as your company.",

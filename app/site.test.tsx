@@ -4,7 +4,7 @@ import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 import { PRODUCT_IDS, PRODUCTS, type ProductId } from "@openasy/ui";
 import { GOALS } from "./data/goals";
-import { PRINCIPLES } from "./data/principles";
+import { PRINCIPLES, RECORDS_ALL } from "./data/principles";
 import { storyUrl } from "./data/storybook";
 import { STATUS } from "./data/status";
 import { composeFor } from "./components/cards";
@@ -339,9 +339,13 @@ describe("pages", () => {
 
   it("every decision record has a valid decision and implementation status", () => {
     expect(PRINCIPLES.length).toBeGreaterThanOrEqual(30);
-    expect(new Set(PRINCIPLES.map((p) => p.n)).size).toBe(PRINCIPLES.length);
-    for (const p of PRINCIPLES) {
+    expect(new Set(RECORDS_ALL.map((p) => p.n)).size).toBe(RECORDS_ALL.length);
+    for (const p of RECORDS_ALL) {
       expect(p.decision).toMatch(/^(Proposed|Accepted|Superseded by \d{4})$/);
+      // A superseded record leads to one in force, and only those are on the site.
+      const successor = /^Superseded by (\d{4})$/.exec(p.decision)?.[1];
+      if (successor) expect(PRINCIPLES.map((q) => q.n)).toContain(successor);
+      expect(PRINCIPLES.includes(p)).toBe(!successor);
       expect(["Not started", "In progress", "Implemented"]).toContain(p.implementation);
       if (p.decision === "Proposed") expect(["Critical", "High", "Medium"]).toContain(p.priority);
       expect(p.file.startsWith(p.n)).toBe(true);
