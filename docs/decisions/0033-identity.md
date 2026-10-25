@@ -30,6 +30,11 @@ The options were to wrap an existing identity server or to build on a library:
 - The provider settings for Keycloak, Entra ID, Okta, Google, Authentik and Zitadel live in `@openasy/auth`. Identity's upstream providers and the sign-in settings of every product use the same ones, so a team that keeps its provider gets the same help as one that uses Identity.
 - OpenAsy also ships a ready Keycloak for teams that want one: a compose file with a realm in which every OpenAsy product is a client, with groups and role mappings set. CI signs in to each product through it, which is the real-server test ADR 0002 requires.
 - SAML 2.0, LDAP and Active Directory, SCIM and single sign-on for VPN connections come after the first release, each with its own record.
+- When the products sign in through Identity (`OPENASY_OIDC_PROVIDER=openasy-identity`), Identity keeps the person and the products show what it keeps:
+  - Account and Members in a product send the browser to Identity's Account and People pages. Who has which role follows Identity's groups.
+  - The theme and the language are kept with the person in Identity. A product's pages read them when they open and whenever the person comes back to them, and send a choice made in the product to Identity, so a change made anywhere shows everywhere. The name shown is Identity's too.
+  - The pages call Identity with its own session cookie: Identity allows the origins of its applications (CORS), and each product's content security policy names Identity in `connect-src`.
+- Without Identity, each product keeps the theme and the language with the person itself, so they follow the person from browser to browser.
 
 ## Consequences
 
@@ -37,3 +42,5 @@ The options were to wrap an existing identity server or to build on a library:
 - We own the user interface and the storage, so they follow our design and our backup and upgrade rules; we also own their bugs. The protocol itself stays in a certified library.
 - Each product keeps signing people in on its own (ADR 0001): Identity is one provider among others, never a requirement.
 - Applications that need SAML wait for its record, or use Keycloak in front of Identity meanwhile.
+- The theme and the language reach a product only when it shares a site with Identity, such as `id.example.com` and `vpn.example.com`: browsers send Identity's cookie only then. Elsewhere each browser keeps its own, and Account and Members still lead to Identity.
+- A role changed through Identity's groups takes effect at the person's next sign-in to the product, as before; the theme, the language and the name do not wait for it.
