@@ -1,7 +1,7 @@
 # 0031. Nothing installed on hosts: one agent reads them
 
 - **Decision:** Accepted
-- **Implementation:** In progress
+- **Implementation:** Implemented
 - **Where:** `infra-agent` reads hosts over SSH and containers through the host's Docker or Podman, and `infra` reads Kubernetes through its API, without installing anything. `vpn-server` stays on its host, because it runs OpenVPN.
 - **Area:** Architecture
 

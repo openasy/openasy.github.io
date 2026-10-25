@@ -1,7 +1,7 @@
 # 0033. Identity: an OpenID provider of our own, on node-oidc-provider
 
 - **Decision:** Accepted
-- **Implementation:** In progress
+- **Implementation:** Implemented
 - **Where:** `identity` has the OpenID provider on oidc-provider, applications with templates for OpenAsy products, people with the user role of `@openasy/auth` 0.3.0, groups that can follow a provider's groups, a second factor per group and the audit log, released in 0.1.0. `@openasy/auth` 0.2.0 added the provider presets and Settings, Sign-in, which every product now has. `auth/examples/keycloak` is the ready Keycloak, signed in through in CI. Passkey-only groups, SAML, LDAP and SCIM followed in ADR 0034.
 - **Area:** Architecture
 

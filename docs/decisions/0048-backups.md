@@ -1,7 +1,7 @@
 # 0048. Backups: track the jobs that make backups, and count a restore nobody tested as a risk
 
 - **Decision:** Proposed
-- **Implementation:** In progress
+- **Implementation:** Implemented
 - **Where:** `backups` keeps backup jobs, the runs restic, Velero or a script report, and restore tests, and gives each job a state (`ghcr.io/openasy/backups`).
 - **Priority:** High
 - **Area:** Architecture

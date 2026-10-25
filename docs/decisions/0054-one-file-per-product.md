@@ -1,7 +1,7 @@
 # 0054. Each product in one compose file of its own, with its settings and secrets
 
 - **Decision:** Proposed
-- **Implementation:** In progress
+- **Implementation:** Implemented
 - **Where:** The install builder and the dev setup at openasy.github.io/install write `products/<product>.yaml` for every product they run, and a compose.yaml that includes them.
 - **Priority:** High
 - **Area:** Architecture

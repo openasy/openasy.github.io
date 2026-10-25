@@ -1,7 +1,7 @@
 # 0050. Threat Intel: feeds in, one lookup out, and nothing dropped without a word
 
 - **Decision:** Proposed
-- **Implementation:** In progress
+- **Implementation:** Implemented
 - **Where:** `threat-intel` keeps indicators from STIX 2.1, CSV and text feeds, answers lookups from the other products, and keeps an allow list with reasons (`ghcr.io/openasy/threat-intel`). It pulls STIX feeds from TAXII 2.1 collections, and any feed from a URL, on a schedule.
 - **Priority:** High
 - **Area:** Architecture

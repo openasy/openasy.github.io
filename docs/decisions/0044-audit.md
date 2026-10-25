@@ -1,7 +1,7 @@
 # 0044. Audit: dependency advisories from the scanner you run, and only what a change adds fails it
 
 - **Decision:** Proposed
-- **Implementation:** In progress
+- **Implementation:** Implemented
 - **Where:** `audit` reads osv-scanner JSON and SARIF from Trivy, Grype or osv-scanner, compares each scan with the default branch, keeps decisions and a package inventory (`ghcr.io/openasy/audit`).
 - **Priority:** High
 - **Area:** Architecture

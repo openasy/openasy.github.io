@@ -1,7 +1,7 @@
 # 0047. Uptime: runners check from where users are, and the server probes nothing
 
 - **Decision:** Proposed
-- **Implementation:** In progress
+- **Implementation:** Implemented
 - **Where:** `uptime` keeps HTTP, TCP, DNS and TLS checks, their state, outages and uptime, and serves a public status page; `uptime-runner.mjs`, served by the product, runs the checks from a CI cron or any machine (`ghcr.io/openasy/uptime`). Each outage opens an incident in Incidents and its end is noted on it (ADR 0041).
 - **Priority:** High
 - **Area:** Architecture
