@@ -1,7 +1,7 @@
 # 0009. Current, supported libraries
 
 - **Decision:** Accepted
-- **Implementation:** In progress
+- **Implementation:** Implemented
 - **Where:** Dependabot runs on every product, agent and server, and on `@openasy/auth`.
 - **Area:** Engineering
 

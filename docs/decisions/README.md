@@ -20,8 +20,8 @@ Each record has two statuses:
 | 0005 | [Accessibility: WCAG 2.2 AA, tested in CI](./0005-accessibility.md) | Quality | Accepted | In progress |
 | 0006 | [Languages: English first, ready for translation](./0006-languages.md) | Product | Accepted | Not started |
 | 0007 | [Theme: light, dark and follow the system](./0007-theme.md) | Product | Accepted | Implemented |
-| 0008 | [Open source: AGPL-3.0 products, Apache-2.0 libraries, developed in public](./0008-open-source.md) | Project | Accepted | In progress |
-| 0009 | [Current, supported libraries](./0009-latest-libraries.md) | Engineering | Accepted | In progress |
+| 0008 | [Open source: AGPL-3.0 products, Apache-2.0 libraries, developed in public](./0008-open-source.md) | Project | Accepted | Implemented |
+| 0009 | [Current, supported libraries](./0009-latest-libraries.md) | Engineering | Accepted | Implemented |
 | 0010 | [Forward-only upgrades, no backward compatibility](./0010-forward-only-upgrades.md) | Engineering | Accepted | In progress |
 | 0011 | [SQLite by default](./0011-sqlite-by-default.md) | Architecture | Accepted | Implemented |
 | 0012 | [Backups, point-in-time restore and disaster recovery](./0012-backups.md) | Operations | Accepted | Not started |

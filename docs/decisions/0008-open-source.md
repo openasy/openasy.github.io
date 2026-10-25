@@ -1,8 +1,8 @@
 # 0008. Open source: AGPL-3.0 products, Apache-2.0 libraries, developed in public
 
 - **Decision:** Accepted
-- **Implementation:** In progress
-- **Where:** Licences are in every repository. The CLA and the commercial licence are not set up yet.
+- **Implementation:** Implemented
+- **Where:** Licences are in every repository, and every repository is developed in public.
 - **Area:** Project
 
 ## Context
