@@ -235,7 +235,18 @@ const SEEDS: Record<string, (call: Call) => Promise<string>> = {
       },
     ]);
     await call(`/api/v1/scans?repository=acme/shop&branch=main&commit=${sha("sast").slice(0, 40)}&defaultBranch=main`, log);
-    return "an opengrep scan of acme/shop with 4 findings";
+    // A pull request that adds one finding: only that one is new, and it fails the check.
+    const pr = sarif("opengrep", [
+      ...log.runs[0]!.results,
+      {
+        ruleId: "openasy.javascript.command-injection",
+        level: "error",
+        message: { text: "A shell command is built from data. Pass the arguments as a list to execFile or spawn, without a shell." },
+        locations: at("src/api/export.js", 31, "exec(`zip -r ${req.query.name}.zip exports/`)"),
+      },
+    ]);
+    await call(`/api/v1/scans?repository=acme/shop&branch=feature%2Fexport&commit=${sha("sast-pr").slice(0, 40)}&pullRequest=42`, pr);
+    return "an opengrep scan of acme/shop with 4 findings, and a pull request that adds one";
   },
 
   async secrets(call) {

@@ -44,8 +44,8 @@ const FIRST_STORY: Record<string, string> = {
 
 const slug = (name: string) => name.toLowerCase().replace(/\s+/g, "-");
 
-/** Storybook URL of a product's screens, by its display name. */
-export function storyUrl(name: string): string {
-  const first = FIRST_STORY[name];
+/** Storybook URL of a product's screens, by its display name: its first story, or the one named. */
+export function storyUrl(name: string, story?: string): string {
+  const first = story ?? FIRST_STORY[name];
   return first ? `${STORYBOOK}?path=/story/products-${slug(name)}--${first}` : STORYBOOK;
 }

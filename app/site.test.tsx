@@ -135,7 +135,8 @@ describe("pages", () => {
 
   it("product page shows its goals", () => {
     open("/products/backups");
-    expect(h1()).toHaveTextContent("Backups");
+    // The heading is the problem it solves; the product's name is above it.
+    expect(h1()).toHaveTextContent("Whether your backups ran");
     expect(screen.getByRole("link", { name: "Notice data loss" })).toHaveAttribute("href", "/goals/data-loss");
   });
 
@@ -281,6 +282,43 @@ describe("pages", () => {
     await userEvent.type(screen.getByLabelText("Organization"), "Acme Corp");
     await userEvent.click(files.getByRole("button", { name: "Open openasy.env" }));
     expect(screen.getByLabelText("openasy.env")).toHaveTextContent("OPENASY_ORGANIZATION='Acme Corp'");
+  });
+
+  it("a product's page says what problem it solves, how it works, what it checks and where it shows it", async () => {
+    open("/products/sast");
+    const menu = within(screen.getByRole("navigation", { name: "On this page" }));
+    for (const title of [
+      "The problem",
+      "How it works",
+      "What it checks",
+      "How it decides",
+      "Where you see it",
+      "Works with",
+      "What it does not do",
+      "What works today",
+      "Run it",
+    ])
+      expect(menu.getByRole("link", { name: title })).toHaveAttribute("href", expect.stringMatching(/^#/));
+    // The heading is the problem it solves, and four facts at a glance sit under it.
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Flaws in your own code");
+    expect(screen.getByText("Reads").closest("dl")).toHaveTextContent("Your own code");
+    expect(screen.getByRole("heading", { name: "A scanner that blocks every old finding gets switched off" })).toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "How it works, step by step" })).getAllByRole("listitem")).toHaveLength(4);
+    // What it checks: a tab per group down the side.
+    const checks = within(screen.getByRole("tablist", { name: "What it checks" }));
+    expect(checks.getByRole("tab", { name: /^Injection/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Injection" })).toHaveTextContent("CWE-89");
+    await userEvent.click(checks.getByRole("tab", { name: /^Web/ }));
+    expect(screen.getByRole("tabpanel", { name: "Web" })).toHaveTextContent("CWE-79");
+    // How it decides: a rule under each label.
+    expect(within(screen.getByLabelText("How it decides", { selector: "dl" })).getByText("Severity")).toBeInTheDocument();
+    // Where you see it: one screen at a time, each with its Storybook link.
+    await userEvent.click(within(screen.getByRole("tablist", { name: "Screens" })).getByRole("tab", { name: "Findings" }));
+    expect(within(screen.getByRole("tabpanel", { name: "Findings" })).getByRole("link", { name: "Open in Storybook" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("products-sast--findings"),
+    );
+    expect(within(screen.getByRole("list", { name: "Works with" })).getByRole("link", { name: "Secrets" })).toHaveAttribute("href", "/products/secrets");
   });
 
   it("a planned product shows no install steps", () => {
