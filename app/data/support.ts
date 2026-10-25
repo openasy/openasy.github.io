@@ -6,7 +6,7 @@ export const SUPPORT_EMAIL = "info@openasy.com";
 export const contactUrl = (plan: string) => `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`OpenAsy ${plan} support`)}`;
 
 export interface Plan {
-  id: "community" | "standard" | "enterprise";
+  id: "community" | "enterprise";
   name: string;
   price: string;
   pitch: string;
@@ -25,28 +25,14 @@ export const PLANS: Plan[] = [
     cta: { label: "Go to GitHub", href: "https://github.com/openasy" },
   },
   {
-    id: "standard",
-    name: "Standard",
-    price: "Contact us",
-    pitch: "For companies running OpenAsy in production.",
-    features: [
-      "Email support in business hours",
-      "Guaranteed response times",
-      "Help with installation and configuration",
-      "Help with every upgrade",
-      "Covers all products you run",
-    ],
-    cta: { label: "Contact us", href: contactUrl("Standard") },
-    highlight: true,
-  },
-  {
     id: "enterprise",
     name: "Enterprise",
     price: "Contact us",
-    pitch: "For teams where OpenAsy is critical to operations or security.",
+    pitch: "For companies running OpenAsy in production, and teams where it is critical to operations or security.",
     features: [
-      "Everything in Standard",
-      "24/7 for critical issues",
+      "Guaranteed response times, 24/7 for critical issues",
+      "Help with installation, configuration and every upgrade",
+      "Covers all products you run",
       "A named engineer and a private Slack or Teams channel",
       "Upgrade planning and assisted upgrades",
       "Long-term support lines with 12 months of security fixes",
@@ -54,13 +40,14 @@ export const PLANS: Plan[] = [
       "Help preparing evidence for ISO 27001 and SOC 2 audits",
     ],
     cta: { label: "Contact us", href: contactUrl("Enterprise") },
+    highlight: true,
   },
 ];
 
-export const RESPONSE_TIMES: Array<{ severity: string; meaning: string; standard: string; enterprise: string }> = [
-  { severity: "Critical", meaning: "Production is down or a security incident is in progress", standard: "4 business hours", enterprise: "1 hour, 24/7" },
-  { severity: "High", meaning: "A major feature does not work and there is no workaround", standard: "1 business day", enterprise: "4 hours" },
-  { severity: "Normal", meaning: "Questions, configuration help, minor problems", standard: "2 business days", enterprise: "1 business day" },
+export const RESPONSE_TIMES: Array<{ severity: string; meaning: string; enterprise: string }> = [
+  { severity: "Critical", meaning: "Production is down or a security incident is in progress", enterprise: "1 hour, 24/7" },
+  { severity: "High", meaning: "A major feature does not work and there is no workaround", enterprise: "4 hours" },
+  { severity: "Normal", meaning: "Questions, configuration help, minor problems", enterprise: "1 business day" },
 ];
 
 export const FAQ: Array<{ q: string; a: string }> = [
@@ -71,6 +58,6 @@ export const FAQ: Array<{ q: string; a: string }> = [
   },
   { q: "Does paying unlock features?", a: "No. There is no enterprise edition and no licence key. You pay for people who know the products, not for code." },
   { q: "How much does it cost?", a: "It depends on how many products and hosts you run and the plan you need. Tell us what you run and we will send a quote." },
-  { q: "Can you install it for us?", a: "Yes. Standard and Enterprise include help with installation, and we can do the first setup together on a call." },
+  { q: "Can you install it for us?", a: "Yes. Enterprise includes help with installation, and we can do the first setup together on a call." },
   { q: "Who answers?", a: "The engineers who build the products." },
 ];
