@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `infra-agent` and `logs-agent` each seal their SSH certificate authority, keys and secret with per-secret data keys under their own key-encryption key, and `infra` seals cluster tokens under the product's key mounted from `/run/secrets/openasy-kek`; neither starts without its key. `vpn` seals its CA key, tls-crypt key and server keys the same way, seals keys left in the clear by earlier versions on its first start, and does not start without its key or with another one. Every product encrypts its sign-in secrets with its key (`@openasy/auth`). In `vpn`, device private keys are returned once and never stored. Rotation and the recovery key are not built yet.
+- **Where:** `infra-agent`, `logs-agent` and `siem-agent` each seal their SSH certificate authority, keys and secret with per-secret data keys under their own key-encryption key, and `infra` seals cluster tokens under the product's key mounted from `/run/secrets/openasy-kek`; neither starts without its key. `vpn` seals its CA key, tls-crypt key and server keys the same way, seals keys left in the clear by earlier versions on its first start, and does not start without its key or with another one. Every product encrypts its sign-in secrets with its key (`@openasy/auth`). In `vpn`, device private keys are returned once and never stored. Rotation and the recovery key are not built yet.
 - **Priority:** Critical
 - **Area:** Security
 

@@ -64,6 +64,7 @@ const PLACEHOLDER: Secrets = {
   kek: PENDING,
   agentKek: PENDING,
   logsAgentKek: PENDING,
+  siemAgentKek: PENDING,
   ingest: PENDING,
   tokens: {},
   keycloakDb: PENDING,
@@ -117,7 +118,7 @@ const CERTIFICATES: Array<{ value: Certificates; title: string; text: string }> 
 
 const installable = (id: string): id is Installable => (INSTALLABLE as readonly string[]).includes(id);
 
-/** A picture picked for the brand: its file name in config/brand, and its bytes, which stay in the page. */
+/** A picture picked for the brand: its file name in brand/, and its bytes, which stay in the page. */
 type Picture = { name: string; type: string; bytes: Uint8Array<ArrayBuffer>; url: string };
 /** The pictures picked, by their path in the folder. */
 type Pictures = Record<string, Picture>;
@@ -687,7 +688,7 @@ export default function InstallPage() {
   const brandSummary = [cleanOrganization(choice.organization), choice.logo && "logo", choice.favicon && "tab icon", cleanAccent(choice.accent) && "color"]
     .filter(Boolean)
     .join(", ");
-  const pictures: Pictures = Object.fromEntries([logo, favicon].filter((p) => p !== null).map((p) => [`config/brand/${p.name}`, p]));
+  const pictures: Pictures = Object.fromEntries([logo, favicon].filter((p) => p !== null).map((p) => [`brand/${p.name}`, p]));
 
   return (
     <Section className="py-12" labelledBy="title">
@@ -832,7 +833,7 @@ export default function InstallPage() {
                 <Options title="Your brand" summary={brandSummary || "OpenAsy's own"}>
                   <div className="flex flex-col gap-4">
                     <p className="m-0 text-sm text-fg-muted">
-                      Every product loads it from config/brand.env, a file of its own, so you see and change it in one place.
+                      Every product loads it from openasy.env, a file every product shares, so you see and change it in one place.
                     </p>
                     <TextField
                       label="Organization"

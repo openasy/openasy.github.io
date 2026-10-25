@@ -179,7 +179,11 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   },
   "0052": {
     title: "One list, every product",
-    text: "Endpoints, servers and DAST's targets live only in two files the install keeps, in git if it likes, and no product has a form for them. Every product reads the same list, so Uptime, Certificates and DAST agree on an endpoint.",
+    text: "Endpoints, servers, DAST's targets and the repositories SAST reads live only in files the install keeps, in git if it likes, and no product has a form for them. Every product reads the same list, so Uptime, Certificates and DAST agree on an endpoint.",
+  },
+  "0054": {
+    title: "One file per product",
+    text: "Each product is one file in products/, with its containers, their settings and their secrets, and compose.yaml only includes them. A product's secrets reach only its containers, a change to it is one file, and leaving a line out of compose.yaml leaves it out.",
   },
 };
 

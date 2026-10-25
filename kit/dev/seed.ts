@@ -1,14 +1,22 @@
 // Sample data for the dev setup, so every page has something to show: events, findings, scans, runs and records sent
 // through each product's own API, as a script or CI job would. Only when you want it, after setup is done:
 //   docker compose run --rm --no-deps setup node setup/seed.ts
-// Each product is filled once and remembered in secrets/dev.json; a product that fails is said so and tried next time.
+// Each product is filled once and remembered in keys/setup-state.json; a product that fails is said so and tried next time.
 // Everything here is made up: example.com names, documentation addresses and fake keys.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
-const STATE = "secrets/dev.json";
-const PRODUCTS: Array<{ service: string }> = JSON.parse(readFileSync("setup/products.json", "utf8"));
+const STATE = "keys/setup-state.json";
+// The products compose.yaml includes, each with an x-openasy line naming its address (ADR 0054).
+const PRODUCTS: Array<{ service: string }> = [];
+for (const [, file] of readFileSync("compose.yaml", "utf8").matchAll(/^ {2}- \{ path: (products\/[a-z0-9-]+\.yaml)/gm)) {
+  let service = "";
+  for (const line of readFileSync(file!, "utf8").split("\n")) {
+    service = /^ {2}([a-z0-9][a-z0-9-]*):\s*$/.exec(line)?.[1] ?? service;
+    if (/^ {4}x-openasy: \{"url"/.test(line)) PRODUCTS.push({ service });
+  }
+}
 type State = { tokens: Record<string, string>; seeded?: string[] };
 const load = (): State => JSON.parse(readFileSync(STATE, "utf8"));
 if (!existsSync(STATE)) throw new Error(`No ${STATE}: run setup first (docker compose up -d && docker compose logs -f setup)`);
@@ -62,7 +70,7 @@ async function fromFile(call: Call, path: string, key: string, names: string[]):
     const rows = (await call<Record<string, Array<{ id: string; name: string }>>>(path))[key]!;
     const found = names.map((n) => rows.find((r) => r.name === n));
     if (found.every(Boolean)) return found as Array<{ id: string; name: string }>;
-    if (i === 30) throw new Error(`${names.filter((_, n) => !found[n]).join(", ")} not in ${path} yet: is config/inventory/endpoints.yaml mounted?`);
+    if (i === 30) throw new Error(`${names.filter((_, n) => !found[n]).join(", ")} not in ${path} yet: is inventory/endpoints.yaml mounted?`);
     await new Promise((r) => setTimeout(r, 2000));
   }
 }
@@ -251,7 +259,7 @@ const SEEDS: Record<string, (call: Call) => Promise<string>> = {
   },
 
   async dast(call) {
-    // The target is in config/inventory/endpoints.yaml (ADR 0052); DAST reads it at start.
+    // The target is in inventory/endpoints.yaml (ADR 0052); DAST reads it at start.
     await fromFile(call, "/api/v1/targets", "targets", ["shop-staging"]);
     const zap = (ruleId: string, level: string, text: string, path: string, score?: number) => ({
       ruleId,
@@ -400,7 +408,7 @@ const SEEDS: Record<string, (call: Call) => Promise<string>> = {
   },
 
   async uptime(call) {
-    // The checks are the entries of config/inventory/endpoints.yaml (ADR 0052); Uptime reads it at start.
+    // The checks are the entries of inventory/endpoints.yaml (ADR 0052); Uptime reads it at start.
     const checks = await fromFile(call, "/api/v1/checks", "checks", ["Shop", "API", "Status page"]);
     // A day of results every 5 minutes, sent as a runner would; the API had an outage of half an hour this morning.
     const results = checks.flatMap((c, n) =>

@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** Implemented
-- **Where:** `vpn` and `vpn-server` (a server on the host), `vulns` and `vulns-agent` (an agent on each host), `infra` and `infra-agent`, and `logs` and `logs-agent` (an agent in one place that reads many hosts).
+- **Where:** `vpn` and `vpn-server` (a server on the host), `vulns` and `vulns-agent` (an agent on each host), `infra` and `infra-agent`, and `logs` and `logs-agent`, `siem` and `siem-agent` (an agent in one place that reads many hosts).
 - **Area:** Architecture
 
 ## Context

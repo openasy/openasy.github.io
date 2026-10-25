@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { createHmac } from "node:crypto";
 
 const product = process.argv.find((a, i) => i > 1 && !a.startsWith("--")) ?? "identity";
-const state = JSON.parse(readFileSync(new URL("../secrets/dev.json", import.meta.url), "utf8")) as { totp: Record<string, string> };
+const state = JSON.parse(readFileSync(new URL("../keys/setup-state.json", import.meta.url), "utf8")) as { totp: Record<string, string> };
 const secret = state.totp[product];
 if (!secret) throw new Error(`No two-step secret for ${product}; wait for setup to finish: docker compose logs -f setup`);
 if (process.argv.includes("--secret")) {

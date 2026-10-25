@@ -1,6 +1,7 @@
 // The install builder (/install): one setup for several products that already know each other. Pure functions, so the
 // page and the tests use the same output. No React or @openasy/ui imports here, like goals.ts.
 // Each product's part matches the compose.yaml in its repository; versions come from status.ts.
+import { splitProducts } from "./productfiles";
 import { statusFor } from "./status";
 
 /** Products the builder can set up: released, with their part written here. */
@@ -59,9 +60,9 @@ export interface InstallChoice {
   organization: string;
   /** #rrggbb for buttons and links; empty keeps OpenAsy's blue. */
   accent: string;
-  /** The logo's file name in config/brand, such as logo.svg, once one is picked; its bytes stay in the page. */
+  /** The logo's file name in brand/, such as logo.svg, once one is picked; its bytes stay in the page. */
   logo: string | null;
-  /** The tab icon's file name in config/brand, such as favicon.png, the same way. */
+  /** The tab icon's file name in brand/, such as favicon.png, the same way. */
   favicon: string | null;
 }
 
@@ -82,12 +83,13 @@ export const DEFAULT_CHOICE: InstallChoice = {
   favicon: null,
 };
 
-/** Made in the reader's browser; the names are the .env variables or files they end up in. */
+/** Made in the reader's browser; the names are the variables or files they end up in. */
 export interface Secrets {
   kek: string;
-  /** infra-agent's, sast-agent's and dast-agent's own key, and logs-agent's. */
+  /** infra-agent's, sast-agent's and dast-agent's own key; logs-agent and siem-agent each have one of their own. */
   agentKek: string;
   logsAgentKek: string;
+  siemAgentKek: string;
   /** Vulnerabilities' ingest token, which its agents send. */
   ingest: string;
   /** The ingest token of every other product that takes data from scripts and CI. */
@@ -109,6 +111,7 @@ export function makeSecrets(fill: (bytes: Uint8Array<ArrayBuffer>) => void): Sec
     kek: hex(32),
     agentKek: hex(32),
     logsAgentKek: hex(32),
+    siemAgentKek: hex(32),
     ingest: hex(24),
     tokens: Object.fromEntries(INSTALLABLE.filter((id) => PARTS[id].ingest && id !== "vulnerabilities").map((id) => [id, hex(24)])),
     keycloakDb: hex(16),
@@ -130,7 +133,7 @@ export interface Part {
   name: string;
   /** Compose service, also the host it is reached at inside the network. */
   service: string;
-  /** Environment prefix of its settings, and of its sign-in client's keys in .env. */
+  /** Environment prefix of its settings. */
   prefix: string;
   /** Its name under the reader's domain. */
   sub: string;
@@ -145,6 +148,8 @@ export interface Part {
   hosts?: boolean;
   /** Reads the endpoints in endpoints.yaml (ADR 0052). */
   endpoints?: boolean;
+  /** Reads the forge accounts in repositories.yaml, and their tokens from products/sast.yaml (ADR 0052). */
+  repositories?: boolean;
 }
 
 /** The products in the ready Keycloak realm (auth/examples/keycloak). */
@@ -177,9 +182,9 @@ export const PARTS: Record<Installable, Part> = {
     hosts: true,
   },
   logs: { name: "Logs", service: "logs", prefix: "LOGS_", sub: "logs", hosts: true },
-  siem: { name: "SIEM", service: "siem", prefix: "SIEM_", sub: "siem", ingest: true },
+  siem: { name: "SIEM", service: "siem", prefix: "SIEM_", sub: "siem", ingest: true, hosts: true },
   audit: { name: "Audit", service: "audit", prefix: "AUDIT_", sub: "audit", ingest: true },
-  sast: { name: "SAST", service: "sast", prefix: "SAST_", sub: "sast", ingest: true },
+  sast: { name: "SAST", service: "sast", prefix: "SAST_", sub: "sast", ingest: true, repositories: true },
   dast: { name: "DAST", service: "dast", prefix: "DAST_", sub: "dast", ingest: true, endpoints: true },
   malware: { name: "Malware", service: "malware", prefix: "MALWARE_", sub: "malware", ingest: true, hosts: true },
   posture: { name: "Posture", service: "posture", prefix: "POSTURE_", sub: "posture", ingest: true, hosts: true },
@@ -254,7 +259,20 @@ export const cleanOrganization = (o: string) =>
     .slice(0, 64);
 export const cleanAccent = (a: string) => (/^#[0-9a-f]{6}$/i.test(a.trim()) ? a.trim().toLowerCase() : "");
 
-/** One line of auth.env: the setting with what it does, commented out while it is not set. */
+/** The product file a container goes in (ADR 0054): a product's agents and servers go with it. */
+export function productFileOf(service: string): string | undefined {
+  const base = service.replace(/-(agent|server|server-tcp)$/, "");
+  if (INSTALLABLE.some((id) => PARTS[id].service === base)) return base;
+  if (service === "keycloak" || service === "postgres") return "keycloak";
+  if (service === "host-web" || service === "host-db") return "demo";
+  return undefined;
+}
+export function productFileTitle(file: string): string {
+  const id = INSTALLABLE.find((i) => PARTS[i].service === file);
+  return id ? `OpenAsy ${PARTS[id].name}` : file === "keycloak" ? "Keycloak and its database" : "Two demo servers for the agents to read";
+}
+
+/** One line of sign-in.env: the setting with what it does, commented out while it is not set. */
 const AUTH_SETTINGS: Array<[string, string, string]> = [
   ["OPENASY_OIDC_PROVIDER", "Which provider: openasy-identity, keycloak, entra, okta, google, authentik or zitadel.", "openasy-identity"],
   ["OPENASY_OIDC_NAME", "The label on the sign-in button.", "SSO"],
@@ -266,8 +284,8 @@ const AUTH_SETTINGS: Array<[string, string, string]> = [
   ["OPENASY_OIDC_GROUPS_CLAIM", "Where the groups are in the token; a dotted path reads a nested claim.", "groups"],
 ];
 
-/** auth.env: how people sign in, the same in every product that loads it (ADR 0002). Each product's client is in `clients`. */
-export function authFile(values: Record<string, string>, intro?: string, clients = ".env", apply = "docker compose up -d"): string {
+/** sign-in.env: how people sign in, the same in every product that loads it (ADR 0002). Each product's client is in `clients`. */
+export function authFile(values: Record<string, string>, intro?: string, clients = "its file in products/", apply = "docker compose up -d"): string {
   return [
     "# How people sign in, the same in every product that loads this file (ADR 0002). Each product's own client, its",
     `# issuer, ID and secret, is in ${clients}.`,
@@ -292,8 +310,8 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const tag = (id: Installable) => statusFor(id).version!;
   const env = (k: string, v: string) => `      ${k}: ${v}`;
 
-  // How people sign in. What every product shares (the provider, roles, going straight to it) is in config/auth.env;
-  // each product's own client (issuer, ID and secret) is in its environment, from .env (@openasy/auth 0.5.0).
+  // How people sign in. What every product shares (the provider, roles, going straight to it) is in sign-in.env;
+  // each product's own client (issuer, ID and secret) is in its own file (@openasy/auth 0.5.0, ADR 0054).
   // A product with no client in the ready realm is added to it by hand, like a client made later.
   const keycloakClient = (id: Installable) => {
     const { client, realmVar } = PARTS[id];
@@ -305,12 +323,12 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         ]
       : laterClient(id);
   };
-  // A client made after the first start: the issuer comes from .env with it. Until both are there the issuer is empty,
+  // A client made after the first start: the issuer goes in its config file with it. Until both are there it is empty,
   // which leaves sign-in through it off (@openasy/auth), so the product starts with its own sign-in.
   const laterClient = (id: Installable) => {
     const P = PARTS[id].prefix;
     return [
-      "      # Off until .env has the issuer and the client: until then the product signs people in on its own",
+      "      # Off until the issuer and the client are filled in: until then the product signs people in on its own",
       env("OPENASY_OIDC_ISSUER", `\${${P}ISSUER:-}`),
       env("OPENASY_OIDC_CLIENT_ID", `\${${P}CLIENT_ID:-}`),
       env("OPENASY_OIDC_CLIENT_SECRET", `\${${P}CLIENT_SECRET:-}`),
@@ -332,7 +350,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           ? sharedOf(choice.provider)
           : {};
   // Identity signs its own people in through another provider than the one the products use: its settings stay in
-  // its environment, and it does not load auth.env.
+  // its environment, and it does not load sign-in.env.
   const ownAuthFile = (id: Installable) => id === "identity" && signIn === "identity";
   const identityUpstream = () => {
     const up = sharedOf(choice.upstream);
@@ -365,7 +383,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const endpointReaders = picked.filter((id) => PARTS[id].endpoints);
   const endpointsFile = endpointReaders.length > 0;
   // A folder, not the file: an editor that saves by replacing the file would leave the product with the old one.
-  const inventoryMount = ["      - ./config/inventory:/config/inventory:ro   # your servers and endpoints, shared with the other products"];
+  const inventoryMount = ["      - ./inventory:/config/inventory:ro   # your servers and endpoints, shared with the other products"];
   const hostsMount = hostsFile ? inventoryMount : [];
   const hostsEnv = hostsFile ? [env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")] : [];
   const endpointsEnv = [env("OPENASY_ENDPOINTS", "/config/inventory/endpoints.yaml")];
@@ -374,9 +392,9 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const caEnv = internal ? [env("NODE_EXTRA_CA_CERTS", "/caddy/caddy/pki/authorities/local/root.crt")] : [];
   // The brand every product shows (ADR 0004) and how people sign in, each in a file of its own that every product loads.
   const envFiles = (id: Installable) => [
-    `    env_file: [config/brand.env${ownAuthFile(id) ? "" : ", config/auth.env"}${id === "dast" ? ", secrets/dast.env" : ""}]   # your brand${ownAuthFile(id) ? "" : " and sign-in"}, the same in every product${id === "dast" ? "; the secrets its logins name" : ""}`,
+    `    env_file: [openasy.env${ownAuthFile(id) ? "" : ", sign-in.env"}]   # your brand${ownAuthFile(id) ? "" : " and sign-in"}, the same in every product`,
   ];
-  const brandMount = choice.logo || choice.favicon ? ["      - ./config/brand:/config/brand:ro   # your logo and tab icon, in every product"] : [];
+  const brandMount = choice.logo || choice.favicon ? ["      - ./brand:/config/brand:ro   # your logo and tab icon, in every product"] : [];
   const hardened = ["    read_only: true", "    cap_drop: [ALL]", '    security_opt: ["no-new-privileges:true"]'];
 
   const lines = [`# OpenAsy for ${d}, made at openasy.github.io/install`, "services:"];
@@ -474,6 +492,8 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           env("INFRA_PUBLIC_URL", url(id)),
           ...caEnv,
           ...hostsEnv,
+          // Each host's packages to Vulnerabilities, so the hosts Infrastructure reads need no vulns-agent (ADR 0031).
+          ...(has("vulnerabilities") ? [env("INFRA_VULNS_URL", "http://vulns:8080"), env("INFRA_VULNS_TOKEN", "${VULNS_INGEST_TOKEN}")] : []),
           ...oidc(id),
         ],
         ["infra-data"],
@@ -487,7 +507,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    tmpfs: [/tmp]",
           "    volumes:",
           "      - infra-agent-data:/data   # its CA and keys, sealed with its own key",
-          "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
+          "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile",
           "    secrets: [openasy-agent-kek]",
           "    environment:",
           env("INFRA_URL", "http://infra:8080"),
@@ -538,7 +558,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     }
     // Every other product is one hardened container like these, as compose.yaml in its repository has it.
     if (!(REALM_PRODUCTS as readonly string[]).includes(id)) {
-      const { service, prefix, ingest, hosts, endpoints } = PARTS[id];
+      const { service, prefix, ingest, hosts, endpoints, repositories } = PARTS[id];
       add(
         service,
         [
@@ -549,7 +569,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           ...ports(i),
           "    volumes:",
           `      - ${service}-data:/data   # SQLite database`,
-          ...(hosts || endpoints ? inventoryMount : []),
+          ...(hosts || endpoints || repositories ? inventoryMount : []),
           ...brandMount,
           ...caMount,
           ...kek,
@@ -560,6 +580,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           ...(ingest ? [env(`${prefix}INGEST_TOKEN`, `\${${prefix}INGEST_TOKEN}   # for the scripts and CI jobs that send it data`)] : []),
           ...(hosts ? hostsEnv : []),
           ...(endpoints ? endpointsEnv : []),
+          ...(repositories ? [env("OPENASY_REPOSITORIES", "/config/inventory/repositories.yaml")] : []),
           ...oidc(id),
         ],
         [`${service}-data`],
@@ -597,7 +618,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    volumes:",
           "      - malware-agent-data:/data   # its SSH key, trusted host keys and ClamAV's signatures",
           "      - /:/host:ro   # this host, read-only",
-          "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
+          "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile",
           "    environment:",
           env("MALWARE_URL", "http://malware:8080"),
           env("MALWARE_INGEST_TOKEN", "${MALWARE_INGEST_TOKEN}"),
@@ -612,7 +633,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           `    image: ghcr.io/openasy/sast-agent:${tag(id)}   # clones and scans repositories from GitHub; sast holds no code`,
           "    restart: unless-stopped",
           ...hardened,
-          "    tmpfs: [/scan:size=2g]   # the clone of one repository, deleted after its scan",
+          '    tmpfs: ["/scan:exec,size=2g,uid=1000,gid=1000"]   # the clone of one repository, deleted after its scan, and Opengrep, which unpacks itself here to run',
           "    mem_limit: 3g",
           "    volumes:",
           "      - sast-agent-data:/data   # its secret, sealed with its own key",
@@ -634,7 +655,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    tmpfs: [/tmp]",
           "    volumes:",
           "      - logs-agent-data:/data   # its CA and keys, sealed with its own key",
-          "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
+          "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile",
           "    secrets:",
           "      - source: openasy-logs-agent-kek",
           "        target: openasy-agent-kek",
@@ -644,6 +665,27 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    depends_on: [logs]",
         ],
         ["logs-agent-data"],
+      );
+    if (id === "siem")
+      add(
+        "siem-agent",
+        [
+          `    image: ghcr.io/openasy/siem-agent:${tag(id)}   # reads the security events of the journal over SSH; nothing is installed on hosts`,
+          "    restart: unless-stopped",
+          ...hardened,
+          "    tmpfs: [/tmp]",
+          "    volumes:",
+          "      - siem-agent-data:/data   # its CA and keys, sealed with its own key",
+          "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile",
+          "    secrets:",
+          "      - source: openasy-siem-agent-kek",
+          "        target: openasy-agent-kek",
+          "    environment:",
+          env("SIEM_URL", "http://siem:8080"),
+          env("SIEM_ENROLL_TOKEN", "${SIEM_ENROLL_TOKEN:-}   # one-time, from Agents"),
+          "    depends_on: [siem]",
+        ],
+        ["siem-agent-data"],
       );
   });
 
@@ -736,12 +778,14 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     lines.push(
       "secrets:",
       "  openasy-kek:",
-      "    file: ./secrets/openasy-kek",
-      ...(has("infrastructure") || has("sast") || has("dast") ? ["  openasy-agent-kek:", "    file: ./secrets/openasy-agent-kek"] : []),
-      ...(has("logs") ? ["  openasy-logs-agent-kek:", "    file: ./secrets/openasy-logs-agent-kek"] : []),
+      "    file: ./keys/openasy-kek",
+      ...(has("infrastructure") || has("sast") || has("dast") ? ["  openasy-agent-kek:", "    file: ./keys/openasy-agent-kek"] : []),
+      ...(has("logs") ? ["  openasy-logs-agent-kek:", "    file: ./keys/openasy-logs-agent-kek"] : []),
+      ...(has("siem") ? ["  openasy-siem-agent-kek:", "    file: ./keys/openasy-siem-agent-kek"] : []),
     );
 
-  // .env: what the compose file reads. Secrets made here are filled in; what only exists after the first start is left empty.
+  // The values compose.yaml names as ${NAME}: secrets made here, and what only exists after the first start, commented
+  // out with an example. splitProducts writes each into the files of the products that use it (ADR 0054).
   const e = ["# Keep this file with your backups and out of git."];
   const block = (title: string, rows: string[]) => rows.length && e.push("", `# ${title}`, ...rows);
   if (has("vulnerabilities")) block("Vulnerabilities and its agents", [`VULNS_INGEST_TOKEN=${secrets.ingest}`]);
@@ -782,29 +826,52 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     ...(has("sast") ? ["SAST_ENROLL_TOKEN="] : []),
     ...(has("dast") ? ["DAST_ENROLL_TOKEN="] : []),
     ...(has("logs") ? ["LOGS_ENROLL_TOKEN="] : []),
+    ...(has("siem") ? ["SIEM_ENROLL_TOKEN="] : []),
   ]);
 
   const names = (ids: readonly Installable[]) => ids.map((id) => PARTS[id].name).join(", ");
-  const files: InstallFile[] = [
-    { name: "compose.yaml", content: lines.join("\n") },
-    { name: ".env", content: e.join("\n"), secret: true },
-  ];
+  const values: Record<string, string> = {};
+  const examples: Record<string, string> = {};
+  for (const l of e) {
+    const m = /^(# )?([A-Z_][A-Z0-9_]*)=(.*)$/.exec(l);
+    if (m) (m[1] ? examples : values)[m[2]!] = m[3]!;
+  }
+  // A product's own file also holds what its inventory entries name: SAST's forge tokens, DAST's logins.
+  const extra: Record<string, string[]> = {};
+  if (has("sast"))
+    extra.sast = [
+      "      # The tokens of the accounts inventory/repositories.yaml names (ADR 0052). GitHub: a fine-grained token with read",
+      "      # access to Contents and Metadata, and read and write access to Pull requests and Commit statuses. GitLab: a",
+      "      # token with the api scope, for a Developer or more.",
+      "      # SAST_ACME_TOKEN: github_pat_...",
+    ];
+  if (has("dast"))
+    extra.dast = ["      # The secrets the logins of DAST's targets name in inventory/endpoints.yaml (ADR 0052).", '      # DAST_SHOP_TOKEN: "Bearer ..."'];
+  const split = splitProducts(lines.join("\n"), {
+    productOf: productFileOf,
+    title: productFileTitle,
+    values,
+    examples,
+    apply: "docker compose up -d",
+    extra,
+  });
+  const files: InstallFile[] = [{ name: "compose.yaml", content: split.compose }];
   if (picked.length) {
     // Single quotes: compose reads the value as it is, with no $ expansion.
     const org = cleanOrganization(choice.organization);
     const accent = cleanAccent(choice.accent);
     const line = (on: boolean, k: string, v: string) => `${on ? "" : "# "}${k}=${v}`;
     files.push({
-      name: "config/brand.env",
+      name: "openasy.env",
       content: [
-        "# The brand every product shows, loaded by each of them (ADR 0004). After a change: docker compose up -d",
+        "# The brand every product shows, loaded by each of them (ADR 0004, 0054). After a change: docker compose up -d",
         "",
         "# Under each product's name, such as your company.",
         line(!!org, "OPENASY_ORGANIZATION", org ? `'${org}'` : "'Acme Corp'"),
         "# Buttons and links in your color.",
         line(!!accent, "OPENASY_ACCENT", accent || "#0a66c2"),
         "# Your logo, in its own shape: SVG, PNG or WebP, up to 512 KB, shown at a fixed height in place of the OpenAsy mark.",
-        "# Files go in config/brand, which every product mounts, as compose.yaml shows; an address is not read.",
+        "# Files go in brand/, which every product mounts as /config/brand; an address is not read.",
         line(!!choice.logo, "OPENASY_LOGO", `/config/brand/${choice.logo ?? "logo.svg"}`),
         "# The browser tab's icon: a square SVG, PNG or ICO, up to 128 KB.",
         line(!!choice.favicon, "OPENASY_FAVICON", `/config/brand/${choice.favicon ?? "favicon.png"}`),
@@ -813,22 +880,24 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       ].join("\n"),
     });
     files.push({
-      name: "config/auth.env",
+      name: "sign-in.env",
       content: authFile(
         shared,
         signIn === "own"
-          ? "Each product signs people in on its own. To use a provider, set it here and give each product its client in .env (openasy.github.io/sign-in)."
+          ? "Each product signs people in on its own. To use a provider, set it here and give each product its client in its own files (openasy.github.io/sign-in)."
           : undefined,
       ),
     });
-    for (const picture of [choice.logo, choice.favicon]) if (picture) files.push({ name: `config/brand/${picture}`, content: "", binary: true });
-    files.push({ name: "secrets/openasy-kek", content: secrets.kek, secret: true });
+    for (const picture of [choice.logo, choice.favicon]) if (picture) files.push({ name: `brand/${picture}`, content: "", binary: true });
   }
-  if (has("infrastructure") || has("sast") || has("dast")) files.push({ name: "secrets/openasy-agent-kek", content: secrets.agentKek, secret: true });
-  if (has("logs")) files.push({ name: "secrets/openasy-logs-agent-kek", content: secrets.logsAgentKek, secret: true });
+  files.push(...split.files.map((f) => ({ name: f.name, content: f.content, secret: true })));
+  if (picked.length) files.push({ name: "keys/openasy-kek", content: secrets.kek, secret: true });
+  if (has("infrastructure") || has("sast") || has("dast")) files.push({ name: "keys/openasy-agent-kek", content: secrets.agentKek, secret: true });
+  if (has("logs")) files.push({ name: "keys/openasy-logs-agent-kek", content: secrets.logsAgentKek, secret: true });
+  if (has("siem")) files.push({ name: "keys/openasy-siem-agent-kek", content: secrets.siemAgentKek, secret: true });
   if (hostsFile)
     files.push({
-      name: "config/inventory/hosts.yaml",
+      name: "inventory/hosts.yaml",
       content: [
         `# Your servers, read by ${readers.map((id) => PARTS[id].name).join(" and ")} (ADR 0052). A change is picked up within a minute.`,
         "# This file is the only place servers are added: no product has a form for them.",
@@ -836,6 +905,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           ? ["# Infrastructure reads each one over SSH through infra-agent: prepare it first, as Setup in Infrastructure shows."]
           : []),
         ...(readers.includes("logs") ? ["# Logs reads their journal and container logs over SSH through logs-agent, prepared the same way."] : []),
+        ...(readers.includes("siem") ? ["# SIEM reads the security events of their journal over SSH through siem-agent, prepared the same way."] : []),
         ...(readers.some((id) => id === "vulnerabilities" || id === "posture" || id === "malware")
           ? [`# ${names(readers.filter((id) => id === "vulnerabilities" || id === "posture" || id === "malware"))} list the ones they have no scan for.`]
           : []),
@@ -846,7 +916,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         "#     port: 22                   # 22 when left out",
         "#     user: openasy              # openasy when left out",
         "#     auth: key                  # certificate when left out: the agent's own CA, as Setup shows",
-        "#     keyFile: web-1.key         # with auth: key, a private key in secrets/ssh; the agent's own key when left out",
+        "#     keyFile: web-1.key         # with auth: key, a private key in keys/ssh; the agent's own key when left out",
         "#     hostKey: SHA256:...        # ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub: trusted without an admin when it matches;",
         "#                                # first: the first key it presents is trusted; left out: an admin accepts it",
         "#     tags: { env: prod }",
@@ -855,14 +925,14 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     });
   if (endpointsFile)
     files.push({
-      name: "config/inventory/endpoints.yaml",
+      name: "inventory/endpoints.yaml",
       content: [
         `# Your endpoints, read by ${names(endpointReaders)} (ADR 0052). A change is picked up within a minute.`,
         "# This file is the only place endpoints are added: no product has a form for them.",
         ...(endpointReaders.includes("uptime") ? ["# Uptime checks every entry, from the runners you start."] : []),
         ...(endpointReaders.includes("certificates") ? ["# Certificates reads the certificate of each https:// and tls:// entry on a public address."] : []),
         ...(endpointReaders.includes("dast")
-          ? ["# DAST tests each entry with a dast block, once you prove the address is yours. A login's secret is in secrets/dast.env."]
+          ? ["# DAST tests each entry with a dast block, once you prove the address is yours. A login's secret is in products/dast.yaml."]
           : []),
         "#",
         "# endpoints:",
@@ -883,16 +953,25 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         "endpoints: []",
       ].join("\n"),
     });
-  if (has("dast"))
+  if (has("sast"))
     files.push({
-      name: "secrets/dast.env",
+      name: "inventory/repositories.yaml",
       content: [
-        "# The secrets the logins of DAST's targets name in config/inventory/endpoints.yaml, and nothing else (ADR 0052).",
-        "# Only DAST reads this file. After a change: docker compose up -d dast",
-        "# DAST_SHOP_TOKEN='Bearer ...'",
-        "",
+        "# The GitHub organizations and GitLab groups SAST reads (ADR 0052). A change is picked up within a minute.",
+        "# This file is the only place they are added: SAST has no form for them. A token is never here: token names the",
+        "# variable that holds it, in products/sast.yaml.",
+        "#",
+        "# forges:",
+        "#   - name: acme                 # unique: how SAST knows the entry",
+        "#     forge: github              # or gitlab",
+        "#     account: acme              # a GitHub organization or user, or a GitLab group path such as acme/platform",
+        "#     url: https://gitlab.acme.com   # GitLab only, for a GitLab of your own",
+        "#     token: SAST_ACME_TOKEN     # its value in products/sast.yaml",
+        "# repositories:",
+        "#   - name: acme/legacy",
+        "#     scan: false                # listed, never scanned",
+        "forges: []",
       ].join("\n"),
-      secret: true,
     });
   if (withCaddy)
     files.push({
@@ -962,7 +1041,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const steps: InstallStep[] = [];
   if (picked.length) {
     steps.push({
-      text: `On a host with Docker, unzip openasy.zip and work in its openasy folder: compose.yaml and .env at the top, settings in config and keys in secrets. Keep the secrets folder with your backups: without it the products cannot open their secrets.`,
+      text: `On a host with Docker, unzip openasy.zip and work in its openasy folder: compose.yaml at the top, and each product in a file of its own in products/, with its containers, settings and secrets (ADR 0054). Keep products/ and keys/ with your backups: without them the products cannot open their secrets.`,
     });
     if (keycloak)
       steps.push({ text: "Fetch the Keycloak realm in which every product is already a client:", code: `curl -fsSL -o config/openasy-realm.json ${REALM}` });
@@ -984,7 +1063,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     } else if (withCaddy || onHost)
       steps.push({ text: `Point ${fronted.map(host).join(", ")} at this host, so ${withCaddy ? "Caddy" : "certbot"} can get their certificates.` });
     // Agents that enrol with a one-time token start once they have it.
-    const waiting = ["vpn-server", "vpn-server-tcp", "infra-agent", "sast-agent", "dast-agent", "logs-agent"];
+    const waiting = ["vpn-server", "vpn-server-tcp", "infra-agent", "sast-agent", "dast-agent", "logs-agent", "siem-agent"];
     const first = services.filter((sv) => !waiting.includes(sv));
     steps.push({
       text: first.length < services.length ? "Start everything but the agents that wait for a token:" : "Start everything:",
@@ -1030,33 +1109,36 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         .filter(Boolean)
         .join(", and ");
       steps.push({
-        text: `In Identity, Applications, add ${how}. Put the issuer, client ID and secret of each in .env, then start them again:`,
+        text: `In Identity, Applications, add ${how}. Put the issuer, client ID and secret of each in its file in products/, then start them again:`,
         code: `docker compose up -d ${apps.map((id) => PARTS[id].service).join(" ")}`,
       });
     }
     if (unrealmed.length)
       steps.push({
-        text: `In Keycloak, add ${names(unrealmed)} as clients of the openasy realm, with the redirect URI https://<its address>/api/v1/auth/oidc/sso/callback. Put each one's issuer, client ID and secret in .env.`,
+        text: `In Keycloak, add ${names(unrealmed)} as clients of the openasy realm, with the redirect URI https://<its address>/api/v1/auth/oidc/sso/callback. Put each one's issuer, client ID and secret in its file in products/.`,
       });
     if (provider)
       steps.push({
-        text: `At ${PROVIDER_NAME[provider]}, register ${(signIn === "provider" ? picked : ["identity" as const]).map((id) => PARTS[id].name).join(", ")} with the redirect URIs from the sign-in guide, and fill in .env.`,
+        text: `At ${PROVIDER_NAME[provider]}, register ${(signIn === "provider" ? picked : ["identity" as const]).map((id) => PARTS[id].name).join(", ")} with the redirect URIs from the sign-in guide, and fill in each one's file in products/.`,
       });
     if (has("vpn"))
       steps.push({
-        text: `In VPN, Servers, add ${host("vpn")}${choice.vpnTcp ? " twice, for UDP and for TCP" : ""}. Put the token in .env, then:`,
+        text: `In VPN, Servers, add ${host("vpn")}${choice.vpnTcp ? " twice, for UDP and for TCP" : ""}. Put the token in products/vpn.yaml, under vpn-server${choice.vpnTcp ? " and vpn-server-tcp" : ""}, then:`,
         code: `docker compose up -d vpn-server${choice.vpnTcp ? " vpn-server-tcp" : ""}`,
       });
     if (has("infrastructure"))
-      steps.push({ text: "In Infrastructure, Settings, Agents, make a token. Put it in INFRA_ENROLL_TOKEN, then:", code: "docker compose up -d infra-agent" });
+      steps.push({
+        text: "In Infrastructure, Settings, Agents, make a token. Put it in products/infra.yaml, under infra-agent, then:",
+        code: "docker compose up -d infra-agent",
+      });
     if (has("sast"))
       steps.push({
-        text: "In SAST, GitHub, connect your account and add an agent. Put its token in SAST_ENROLL_TOKEN, then:",
+        text: "In SAST, GitHub and GitLab, add an agent. Put its token in products/sast.yaml, under sast-agent, then:",
         code: "docker compose up -d sast-agent",
       });
     if (has("dast"))
       steps.push({
-        text: "In DAST, Agents, add an agent. Put its token in DAST_ENROLL_TOKEN, then:",
+        text: "In DAST, Agents, add an agent. Put its token in products/dast.yaml, under dast-agent, then:",
         code: "docker compose up -d dast-agent",
       });
     if (has("malware"))
@@ -1065,14 +1147,23 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         code: "docker compose logs malware-agent | grep authorizedKey",
       });
     if (has("logs"))
-      steps.push({ text: "In Logs, Settings, Agents, make a token. Put it in LOGS_ENROLL_TOKEN, then:", code: "docker compose up -d logs-agent" });
+      steps.push({
+        text: "In Logs, Settings, Agents, make a token. Put it in products/logs.yaml, under logs-agent, then:",
+        code: "docker compose up -d logs-agent",
+      });
+    if (has("siem"))
+      steps.push({ text: "In SIEM, Agents, make a token. Put it in products/siem.yaml, under siem-agent, then:", code: "docker compose up -d siem-agent" });
     if (hostsFile)
       steps.push({
-        text: `List your servers in config/inventory/hosts.yaml. ${readers.map((id) => PARTS[id].name).join(" and ")} pick them up within a minute, with no restart.`,
+        text: `List your servers in inventory/hosts.yaml. ${readers.map((id) => PARTS[id].name).join(" and ")} pick them up within a minute, with no restart.`,
+      });
+    if (has("sast"))
+      steps.push({
+        text: "List your GitHub organizations and GitLab groups in inventory/repositories.yaml, and each token in products/sast.yaml under the name the file gives it. SAST picks up the file within a minute; after a new token: docker compose up -d sast",
       });
     if (endpointsFile)
       steps.push({
-        text: `List your endpoints in config/inventory/endpoints.yaml. ${names(endpointReaders)} pick them up within a minute, with no restart.${has("dast") ? " Put the secrets of DAST's logins in secrets/dast.env." : ""}`,
+        text: `List your endpoints in inventory/endpoints.yaml. ${names(endpointReaders)} pick them up within a minute, with no restart.${has("dast") ? " Put the secrets of DAST's logins in products/dast.yaml." : ""}`,
       });
   }
 
@@ -1099,7 +1190,10 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   } else if (signIn === "keycloak" && picked.length)
     wiring.push({ title: `${names(picked)} sign in through Keycloak`, text: "Each is already a client in the openasy realm, with its secret made here." });
   else if (signIn === "provider" && picked.length)
-    wiring.push({ title: `${names(picked)} sign in through ${PROVIDER_NAME[choice.provider]}`, text: "Register each product there, then fill in .env." });
+    wiring.push({
+      title: `${names(picked)} sign in through ${PROVIDER_NAME[choice.provider]}`,
+      text: "Register each product there, then fill in each one's config and secrets files.",
+    });
   else if (picked.length)
     wiring.push({
       title: "Each product signs people in on its own",
@@ -1126,8 +1220,14 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       title: "logs-agent reads your hosts' logs",
       text: "over SSH with its own CA and key, kept apart from infra-agent's. Hosts that already ship logs send them to Logs instead.",
     });
+  if (has("siem"))
+    wiring.push({
+      title: "siem-agent reads your hosts' security events",
+      text: "logins, sudo and account changes from the journal, over SSH with its own CA and key. Shippers can send events to SIEM too.",
+    });
   const fed = picked.filter((id) => id !== "vulnerabilities" && PARTS[id].ingest);
-  if (fed.length) wiring.push({ title: `${names(fed)} take data from CI and scripts`, text: "each with its own ingest token, made here and kept in .env." });
+  if (fed.length)
+    wiring.push({ title: `${names(fed)} take data from CI and scripts`, text: "each with its own ingest token, made here and kept in its secrets file." });
   if (picked.length) {
     const org = cleanOrganization(choice.organization);
     const parts = [
@@ -1139,8 +1239,8 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     wiring.push({
       title: "One brand",
       text: parts.length
-        ? `in config/brand.env: ${parts.join(", ")}, in every product.`
-        : "in config/brand.env, which every product loads. Set your name, logo and color there, now or later.",
+        ? `in openasy.env: ${parts.join(", ")}, in every product.`
+        : "in openasy.env, which every product loads. Set your name, logo and color there, now or later.",
     });
   }
   if (endpointsFile)

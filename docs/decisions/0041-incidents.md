@@ -2,7 +2,7 @@
 
 - **Decision:** Proposed
 - **Implementation:** In progress
-- **Where:** `incidents` keeps incidents with an append-only timeline, tasks, evidence links and a postmortem, and takes incidents from other products over its API (`ghcr.io/openasy/incidents`). Opening incidents from SIEM, Alerts and Uptime, and links back to them, are planned.
+- **Where:** `incidents` keeps incidents with an append-only timeline, tasks, evidence links and a postmortem, and takes incidents from other products over its API (`ghcr.io/openasy/incidents`). SIEM opens one for each severe signal and Uptime one for each outage, with a link back as evidence and, for an outage, a note when it ends; opening them from Alerts is planned.
 - **Priority:** High
 - **Area:** Architecture
 

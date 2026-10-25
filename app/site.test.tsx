@@ -253,31 +253,34 @@ describe("pages", () => {
     // Opened from the other computers on the network, the products get names under a domain of its own.
     await userEvent.click(screen.getByRole("radio", { name: "Other computers too" }));
     expect(screen.getByLabelText("Domain")).toHaveValue("openasy.internal");
-    expect(compose()).toContain("IDENTITY_PUBLIC_URL: https://id.openasy.internal:8443");
+    expect(compose()).toContain("- id.openasy.internal");
     expect(screen.getByRole("heading", { name: "Four steps" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("radio", { name: "This computer" }));
-    expect(compose()).toContain("IDENTITY_PUBLIC_URL: https://id.localhost:8443");
+    expect(compose()).toContain("- id.localhost");
 
     await userEvent.click(screen.getByRole("radio", { name: "Production" }));
-    expect(compose()).toContain("env_file: [config/brand.env, config/auth.env]");
+    expect(compose()).toContain("- { path: products/vpn.yaml, project_directory: . }");
     // Only released products can be picked.
     const products = within(screen.getByRole("group", { name: "Products" }));
     expect(products.getAllByRole("checkbox")).toHaveLength(INSTALLABLE.length);
     await userEvent.click(products.getByRole("checkbox", { name: /Infrastructure/ }));
-    expect(compose()).toContain("  infra-agent:");
+    expect(compose()).toContain("- { path: products/infra.yaml, project_directory: . }");
     await userEvent.click(screen.getByRole("radio", { name: /Keycloak, ready for OpenAsy/ }));
-    expect(compose()).toContain("OPENASY_OIDC_ISSUER: https://auth.example.com/realms/openasy");
+    expect(compose()).toContain("- { path: products/keycloak.yaml, project_directory: . }");
     // Every file is in one folder: pick one to read, copy or download it. Secrets are made once the page runs.
     const files = within(screen.getByRole("list", { name: "Files" }));
-    await userEvent.click(files.getByRole("button", { name: "Open secrets/openasy-kek" }));
-    expect(screen.getByLabelText("secrets/openasy-kek")).toHaveTextContent(/^[0-9a-f]{64}$/);
-    expect(screen.getByRole("button", { name: "Download secrets/openasy-kek" })).toBeInTheDocument();
+    // Each product is a file of its own, with its containers, settings and secrets (ADR 0054).
+    await userEvent.click(files.getByRole("button", { name: "Open products/vpn.yaml" }));
+    expect(screen.getByLabelText("products/vpn.yaml")).toHaveTextContent("OPENASY_OIDC_ISSUER: https://auth.example.com/realms/openasy");
+    await userEvent.click(files.getByRole("button", { name: "Open keys/openasy-kek" }));
+    expect(screen.getByLabelText("keys/openasy-kek")).toHaveTextContent(/^[0-9a-f]{64}$/);
+    expect(screen.getByRole("button", { name: "Download keys/openasy-kek" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Steps to start" })).toHaveTextContent("openasy-realm.json");
-    // The brand goes into brand.env, which every product loads.
+    // The brand goes into openasy.env, which every product loads.
     await userEvent.click(screen.getByText("Your brand"));
     await userEvent.type(screen.getByLabelText("Organization"), "Acme Corp");
-    await userEvent.click(files.getByRole("button", { name: "Open config/brand.env" }));
-    expect(screen.getByLabelText("config/brand.env")).toHaveTextContent("OPENASY_ORGANIZATION='Acme Corp'");
+    await userEvent.click(files.getByRole("button", { name: "Open openasy.env" }));
+    expect(screen.getByLabelText("openasy.env")).toHaveTextContent("OPENASY_ORGANIZATION='Acme Corp'");
   });
 
   it("a planned product shows no install steps", () => {

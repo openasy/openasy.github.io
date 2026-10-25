@@ -15,7 +15,10 @@ import {
   type InstallStep,
   type Installable,
   type Secrets,
+  productFileOf,
+  productFileTitle,
 } from "./install";
+import { splitProducts } from "./productfiles";
 import { statusFor } from "./status";
 
 /** Images the dev setup adds to the ones in THIRD_PARTY, pinned the same way (ADR 0027). */
@@ -30,8 +33,6 @@ const APPLY = "docker compose --profile wired up -d";
 const ROLES = "openasy-admins=admin,openasy-editors=editor,openasy-viewers=viewer";
 /** The domain the dev setup suggests for opening it from other computers; .internal is kept for private networks. */
 export const DEV_NETWORK_DOMAIN = "openasy.internal";
-/** Where setup writes a product's client, under the names the product reads (OPENASY_OIDC_*). */
-export const clientFile = (id: Installable) => `secrets/oidc/${PARTS[id].service}.env`;
 /** The products with a service of their own below; every other one is the same hardened container. */
 const OWN = ["identity", "vpn", "infrastructure", "vulnerabilities"];
 
@@ -55,7 +56,7 @@ const HOST_DOCKERFILE = `# syntax=docker/dockerfile:1
         COPY <<'EOF' /entrypoint.sh
         set -e
         ssh-keygen -A >/dev/null
-        printf '%s\\n%s\\n' "$$OPENASY_CA" "$$OPENASY_CA_LOGS" > /etc/ssh/openasy_ca.pub
+        printf '%s\\n%s\\n%s\\n' "$$OPENASY_CA" "$$OPENASY_CA_LOGS" "$$OPENASY_CA_SIEM" > /etc/ssh/openasy_ca.pub
         if [ -n "$$OPENASY_AUTHORIZED_KEYS" ]; then install -d -m 700 -o openasy /home/openasy/.ssh && printf '%s\\n' "$$OPENASY_AUTHORIZED_KEYS" > /home/openasy/.ssh/authorized_keys && chown openasy /home/openasy/.ssh/authorized_keys && chmod 600 /home/openasy/.ssh/authorized_keys; fi
         if [ -n "$$OPENASY_SUDOERS" ]; then printf '%b\\n' "$$OPENASY_SUDOERS" > /etc/sudoers.d/openasy && chmod 440 /etc/sudoers.d/openasy && (visudo -cf /etc/sudoers.d/openasy || rm /etc/sudoers.d/openasy); fi
         if [ -n "$$OPENASY_DOCKER" ] && [ -S /var/run/docker.sock ]; then groupadd -g "$$(stat -c %g /var/run/docker.sock)" -o dockerhost && usermod -aG dockerhost openasy; fi
@@ -77,10 +78,10 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
   const svc = (id: Installable) => PARTS[id].service;
   const env = (k: string, v: string) => `      ${k}: ${v}`;
   // A folder, not the file: an editor that saves by replacing the file would leave the product with the old one.
-  const hosts = ["      - ./config/inventory:/config/inventory:ro"];
+  const hosts = ["      - ./inventory:/config/inventory:ro"];
 
   /** A product's service: its image, data, Caddy's CA to trust, its key, the brand and, but for Identity, the sign-in. */
-  const product = (id: Installable, extra: { volumes?: string[]; env?: string[]; hardened?: boolean; envFile?: string } = {}) => {
+  const product = (id: Installable, extra: { volumes?: string[]; env?: string[]; hardened?: boolean } = {}) => {
     const { prefix } = PARTS[id];
     const sso = id !== "identity";
     return [
@@ -92,29 +93,26 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
       "    volumes:",
       `      - ${svc(id)}-data:/data`,
       "      - caddy-data:/caddy:ro",
-      "      - ./config/brand:/config/brand:ro   # the logo and tab icon brand.env names",
+      "      - ./brand:/config/brand:ro   # the logo and tab icon openasy.env names",
       ...(extra.volumes ?? []),
       "    secrets: [openasy-kek]",
-      // Its own client, issuer, ID and secret, in a file setup writes once it has made the clients; until then the
-      // product starts without sign-in through Identity.
-      sso
-        ? `    env_file: [config/brand.env, config/auth.env, { path: ${clientFile(id)}, required: false }${extra.envFile ? `, ${extra.envFile}` : ""}]`
-        : "    env_file: [config/brand.env]",
+      // What every product shares (ADR 0054). setup writes each product's own client, its issuer, ID and secret, into its
+      // environment once it has made the clients; until then the product starts without sign-in through Identity.
+      sso ? "    env_file: [openasy.env, sign-in.env]   # what every product shares" : "    env_file: [openasy.env]   # what every product shares",
       "    environment:",
-      "      <<: [*trust, *products]",
       env(`${prefix}PUBLIC_URL`, url(id)),
       ...(extra.env ?? []),
       "    depends_on: [caddy]",
       "",
     ];
   };
-  const agent = (name: string, image: string, kek: string, body: string[]) => [
+  const agent = (name: string, image: string, kek: string, body: string[], tmpfs = "[/tmp]") => [
     `  ${name}:`,
     `    image: ${image}`,
     "    restart: unless-stopped",
     "    profiles: [wired]",
     "    read_only: true",
-    "    tmpfs: [/tmp]",
+    `    tmpfs: ${tmpfs}`,
     ...body.slice(0, body.indexOf("environment")),
     ...(kek ? ["    secrets:", `      - source: ${kek}`, "        target: openasy-agent-kek"] : []),
     ...body.slice(body.indexOf("environment") + 1),
@@ -129,13 +127,6 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "#",
     "# setup starts the products in order and wires them; README.md says what to open.",
     `name: ${DEV_FOLDER}`,
-    "",
-    "x-trust: &trust",
-    "  # Caddy's local CA, so the products trust Identity's https issuer.",
-    "  NODE_EXTRA_CA_CERTS: /caddy/caddy/pki/authorities/local/root.crt",
-    "x-products: &products",
-    "  # The product switcher in every product's sidebar.",
-    `  OPENASY_PRODUCTS: ${ids.map((id) => `${id}=${url(id)}`).join(",")}`,
     "",
     "services:",
     "  caddy:",
@@ -160,7 +151,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "    working_dir: ${PWD}",
     "    volumes:",
     "      - /var/run/docker.sock:/var/run/docker.sock",
-    "      - .:${PWD}   # the same path as on this machine, so compose finds ./config and ./secrets",
+    "      - .:${PWD}   # the same path as on this machine, so compose finds ./products and ./keys",
     "    depends_on: [caddy]",
     "",
     ...product("identity"),
@@ -184,11 +175,19 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     env("OPENVPN_PORT", '"1194"'),
     "    depends_on: [vpn]",
     "",
-    ...product("infrastructure", { volumes: hosts, env: [env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")] }),
+    ...product("infrastructure", {
+      volumes: hosts,
+      env: [
+        env("OPENASY_HOSTS", "/config/inventory/hosts.yaml"),
+        // Each host's packages to Vulnerabilities, so those hosts need no vulns-agent.
+        env("INFRA_VULNS_URL", "http://vulns:8080"),
+        env("INFRA_VULNS_TOKEN", "${VULNS_INGEST_TOKEN}"),
+      ],
+    }),
     ...agent("infra-agent", `ghcr.io/openasy/infra-agent:${tag("infrastructure")}`, "openasy-agent-kek", [
       "    volumes:",
       "      - infra-agent-data:/data",
-      "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
+      "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile",
       "environment",
       "    environment:",
       env("INFRA_URL", "http://infra:8080"),
@@ -215,29 +214,37 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     ...ids
       .filter((id) => !OWN.includes(id))
       .flatMap((id) => {
-        const { prefix, ingest, hosts: reads, endpoints } = PARTS[id];
+        const { prefix, ingest, hosts: reads, endpoints, repositories } = PARTS[id];
         return product(id, {
-          volumes: reads || endpoints ? hosts : [],
+          volumes: reads || endpoints || repositories ? hosts : [],
           env: [
             ...(ingest ? [env(`${prefix}INGEST_TOKEN`, `\${${prefix}INGEST_TOKEN}`)] : []),
             ...(reads ? [env("OPENASY_HOSTS", "/config/inventory/hosts.yaml")] : []),
             ...(endpoints ? [env("OPENASY_ENDPOINTS", "/config/inventory/endpoints.yaml")] : []),
+            ...(repositories ? [env("OPENASY_REPOSITORIES", "/config/inventory/repositories.yaml")] : []),
+            // A severe signal and an outage open an incident, with a token setup makes in Incidents (ADR 0041).
+            ...(id === "siem" || id === "uptime"
+              ? [env(`${prefix}INCIDENTS_URL`, `http://${svc("incidents")}:8080`), env(`${prefix}INCIDENTS_TOKEN`, `\${${prefix}INCIDENTS_TOKEN:-}`)]
+              : []),
           ],
-          // The secrets DAST's logins name in the endpoints file, apart from every other product's.
-          envFile: id === "dast" ? "secrets/dast.env" : undefined,
         });
       }),
     // Clones the repositories of a GitHub account connected under SAST, GitHub, into its tmpfs and scans them.
-    ...agent("sast-agent", `ghcr.io/openasy/sast-agent:${tag("sast")}`, "openasy-agent-kek", [
-      "    volumes:",
-      "      - sast-agent-data:/data",
-      "environment",
-      "    environment:",
-      env("SAST_URL", "http://sast:8080"),
-      env("SAST_ENROLL_TOKEN", "${SAST_ENROLL_TOKEN:-}"),
-      env("WORK_DIR", "/tmp"),
-      "    depends_on: [sast]",
-    ]),
+    ...agent(
+      "sast-agent",
+      `ghcr.io/openasy/sast-agent:${tag("sast")}`,
+      "openasy-agent-kek",
+      [
+        "    volumes:",
+        "      - sast-agent-data:/data",
+        "environment",
+        "    environment:",
+        env("SAST_URL", "http://sast:8080"),
+        env("SAST_ENROLL_TOKEN", "${SAST_ENROLL_TOKEN:-}"),
+        "    depends_on: [sast]",
+      ],
+      '["/scan:exec,size=2g,uid=1000,gid=1000"]   # the clone of one repository, and Opengrep, which unpacks itself here to run',
+    ),
     // Runs ZAP and Nuclei for DAST against the targets in the endpoints file, by hand or on a schedule.
     ...agent("dast-agent", `ghcr.io/openasy/dast-agent:${tag("dast")}`, "openasy-agent-kek", [
       "    volumes:",
@@ -254,7 +261,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
       "    volumes:",
       "      - malware-agent-data:/data",
       '      - "/:/host:ro"',
-      "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
+      "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile",
       "environment",
       "    environment:",
       env("MALWARE_URL", "http://malware:8080"),
@@ -264,14 +271,24 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     ...agent("logs-agent", `ghcr.io/openasy/logs-agent:${tag("logs")}`, "openasy-logs-agent-kek", [
       "    volumes:",
       "      - logs-agent-data:/data",
-      "      - ./secrets/ssh:/keys:ro   # private keys a host names with keyFile",
+      "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile",
       "environment",
       "    environment:",
       env("LOGS_URL", "http://logs:8080"),
       env("LOGS_ENROLL_TOKEN", "${LOGS_ENROLL_TOKEN:-}"),
       "    depends_on: [logs]",
     ]),
-    "  # Two servers for Infrastructure and Logs to read, prepared as Infrastructure's Setup page says, and for",
+    ...agent("siem-agent", `ghcr.io/openasy/siem-agent:${tag("siem")}`, "openasy-siem-agent-kek", [
+      "    volumes:",
+      "      - siem-agent-data:/data",
+      "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile",
+      "environment",
+      "    environment:",
+      env("SIEM_URL", "http://siem:8080"),
+      env("SIEM_ENROLL_TOKEN", "${SIEM_ENROLL_TOKEN:-}"),
+      "    depends_on: [siem]",
+    ]),
+    "  # Two servers for Infrastructure, Logs and SIEM to read, prepared as Infrastructure's Setup page says, and for",
     "  # malware-agent to scan with its own key. web can also list this machine's containers through Docker.",
     "  host-web:",
     "    build:",
@@ -287,6 +304,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "    environment:",
     env("OPENASY_CA", "${INFRA_AGENT_CA:-}"),
     env("OPENASY_CA_LOGS", "${LOGS_AGENT_CA:-}"),
+    env("OPENASY_CA_SIEM", "${SIEM_AGENT_CA:-}"),
     env("OPENASY_SUDOERS", "${INFRA_AGENT_SUDOERS:-}"),
     env("OPENASY_AUTHORIZED_KEYS", "${MALWARE_AGENT_KEY:-}"),
     env("OPENASY_DOCKER", '"1"'),
@@ -299,6 +317,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "    environment:",
     env("OPENASY_CA", "${INFRA_AGENT_CA:-}"),
     env("OPENASY_CA_LOGS", "${LOGS_AGENT_CA:-}"),
+    env("OPENASY_CA_SIEM", "${SIEM_AGENT_CA:-}"),
     env("OPENASY_AUTHORIZED_KEYS", "${MALWARE_AGENT_KEY:-}"),
     "    depends_on: [host-web]",
     "",
@@ -321,16 +340,19 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
       "dast-agent-data",
       "malware-agent-data",
       "logs-agent-data",
+      "siem-agent-data",
       "prometheus-data",
     ].map((v) => `  ${v}:`),
     "",
     "secrets:",
     "  openasy-kek:",
-    "    file: ./secrets/openasy-kek",
+    "    file: ./keys/openasy-kek",
     "  openasy-agent-kek:",
-    "    file: ./secrets/openasy-agent-kek",
+    "    file: ./keys/openasy-agent-kek",
     "  openasy-logs-agent-kek:",
-    "    file: ./secrets/openasy-logs-agent-kek",
+    "    file: ./keys/openasy-logs-agent-kek",
+    "  openasy-siem-agent-kek:",
+    "    file: ./keys/openasy-siem-agent-kek",
   ].join("\n");
 
   const caddyfile = [
@@ -368,7 +390,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "    group: Internal",
     "    dast:",
     "      schedule: weekly",
-    "      # login: { kind: header, header: Authorization, secret: DAST_SHOP_TOKEN }   # its value in secrets/dast.env",
+    "      # login: { kind: header, header: Authorization, secret: DAST_SHOP_TOKEN }   # its value in products/dast.yaml",
   ].join("\n");
   const hostsFile = [
     "# The servers Infrastructure and Logs read over SSH, that malware-agent scans, and that Vulnerabilities, Posture and",
@@ -384,42 +406,39 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "    address: host-db",
     "    hostKey: first",
     "    tags: { env: dev }",
-    "# A server of yours with a fixed key: put the private key in secrets/ssh, which both agents mount, and its",
+    "# A server of yours with a fixed key: put the private key in keys/ssh, which the agents mount, and its",
     "# public key, prefixed with restrict,pty, in ~/.ssh/authorized_keys of the user there.",
     "#  - name: web-2",
     "#    address: web-2.example.com",
     "#    port: 22                # 22 when left out",
     "#    user: openasy           # the account on the server; openasy when left out",
     "#    auth: key               # certificate when left out: the agent's own CA, as Setup in Infrastructure shows",
-    "#    keyFile: web-2.key      # a file in secrets/ssh, with no passphrase",
+    "#    keyFile: web-2.key      # a file in keys/ssh, with no passphrase",
     "#    hostKey: first          # first: trust the first key; SHA256:... from ssh-keygen -lf: trust only that one;",
     "#                            # left out: an admin accepts it under Hosts",
   ].join("\n");
 
-  const brand = [
-    "# The brand every product shows, loaded by each of them (ADR 0004).",
-    `# After a change: ${APPLY}`,
+  const shared = [
+    "# What every product is told alike, loaded by each of them (ADR 0054). After a change: " + APPLY,
     "",
-    "# Under each product's name, such as your company.",
+    "# Caddy's local CA, so the products trust Identity's https issuer.",
+    "NODE_EXTRA_CA_CERTS=/caddy/caddy/pki/authorities/local/root.crt",
+    "# The product switcher in every product's sidebar.",
+    `OPENASY_PRODUCTS=${ids.map((id) => `${id}=${url(id)}`).join(",")}`,
+    "",
+    "# The brand every product shows (ADR 0004). Under each product's name, such as your company.",
     "OPENASY_ORGANIZATION='OpenAsy dev'",
     "# Buttons and links in your color.",
     "# OPENASY_ACCENT=#0a66c2",
     "# Your logo, in its own shape: SVG, PNG or WebP, up to 512 KB, shown at a fixed height in place of the OpenAsy mark.",
-    "# Files go in config/brand, which every product mounts; an address is not read.",
+    "# Files go in brand/, which every product mounts as /config/brand; an address is not read.",
     "# OPENASY_LOGO=/config/brand/logo.svg",
     "# The browser tab's icon: a square SVG, PNG or ICO, up to 128 KB.",
     "# OPENASY_FAVICON=/config/brand/favicon.png",
     "# Where people get help, in the help menu and on About: an email address or an https address. OpenAsy's own when unset.",
     "# OPENASY_SUPPORT=help@example.com",
+    "",
   ].join("\n");
-
-  // What setup.ts needs to know of each product: where it is, the file for its client, its Identity template.
-  const setupProducts = ids.map((id) => ({
-    service: svc(id),
-    url: url(id),
-    clientFile: clientFile(id),
-    ...(PARTS[id].template && { template: PARTS[id].template }),
-  }));
 
   const trust = [
     "security add-trusted-cert -r trustRoot -k ~/Library/Keychains/login.keychain-db caddy-root.crt",
@@ -495,45 +514,61 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "| Prometheus | http://localhost:9090/targets |",
     "",
     "What is set up: Identity signs everyone in, with groups that decide the role in each product. VPN has a server on",
-    "UDP 1194. Infrastructure's and Logs' agents read the two servers in config/inventory/hosts.yaml over SSH; Vulnerabilities,",
-    "Posture and Malware show which of them send no scan. Products that take data from CI have their ingest token in",
-    ".env, and each product's client is in secrets/oidc. config/brand.env holds the brand and config/auth.env the",
-    `sign-in: change them and run ${APPLY}.`,
+    "UDP 1194. Infrastructure's and Logs' agents read the two servers in inventory/hosts.yaml over SSH; Vulnerabilities,",
+    "Posture and Malware show which of them send no scan.",
+    "",
+    "Each product is one file in products/, with its containers, their settings and their secrets, such as its ingest",
+    "token and its client. openasy.env holds what every product shares, the brand among it, and sign-in.env how people",
+    `sign in. After a change: ${APPLY} <the containers you changed>. Leave a product's line out of compose.yaml to leave it out.`,
   ].join("\n");
 
-  const ingest = ids.filter((id) => PARTS[id].ingest);
-  const files: InstallFile[] = [
-    { name: "compose.yaml", content: compose },
-    { name: "README.md", content: readme },
-    {
-      name: ".env",
-      content: [
-        "# The dev setup's tokens; setup/setup.ts adds to it. Keep out of git.",
-        ...ingest.map((id) => `${PARTS[id].prefix}INGEST_TOKEN=${id === "vulnerabilities" ? secrets.ingest : secrets.tokens[id]}`),
-      ].join("\n"),
-      secret: true,
+  // Each product in a file of its own, with its settings and secrets (ADR 0054). The ingest tokens are made here; what
+  // is made later, such as an agent's enrolment token, setup writes into the lines x-openasy names.
+  const values = Object.fromEntries(
+    ids.filter((id) => PARTS[id].ingest).map((id) => [`${PARTS[id].prefix}INGEST_TOKEN`, id === "vulnerabilities" ? secrets.ingest : secrets.tokens[id]!]),
+  );
+  const split = splitProducts(compose, {
+    productOf: productFileOf,
+    title: productFileTitle,
+    values,
+    apply: APPLY,
+    // A product's own environment also holds what its inventory entries name: SAST's forge tokens, DAST's logins.
+    extra: {
+      sast: ["      # The tokens of the accounts inventory/repositories.yaml names (ADR 0052).", "      # SAST_ACME_TOKEN: github_pat_..."],
+      dast: ["      # The secrets the logins of DAST's targets name in inventory/endpoints.yaml (ADR 0052).", '      # DAST_SHOP_TOKEN: "Bearer ..."'],
     },
-    { name: "config/brand.env", content: brand },
+    setup: Object.fromEntries(ids.map((id) => [svc(id), { url: url(id), ...(PARTS[id].template && { template: PARTS[id].template }) }])),
+  });
+  const files: InstallFile[] = [
+    { name: "compose.yaml", content: split.compose },
+    { name: "README.md", content: readme },
+    { name: "openasy.env", content: shared },
     {
-      name: "config/auth.env",
+      name: "sign-in.env",
       content: authFile(
         { OPENASY_OIDC_PROVIDER: "openasy-identity", OPENASY_OIDC_ROLE_MAPPING: ROLES, OPENASY_OIDC_AUTO_REDIRECT: "true" },
         "Every product but Identity signs in through Identity; Identity keeps its own people.",
-        "secrets/oidc, written by setup",
+        "its file in products/, written there by setup",
         APPLY,
       ),
     },
-    { name: "config/inventory/hosts.yaml", content: hostsFile },
-    { name: "config/inventory/endpoints.yaml", content: endpointsFile },
+    ...split.files.map((f) => ({ name: f.name, content: f.content, secret: true })),
+    { name: "inventory/hosts.yaml", content: hostsFile },
+    { name: "inventory/endpoints.yaml", content: endpointsFile },
     {
-      name: "secrets/dast.env",
+      name: "inventory/repositories.yaml",
       content: [
-        "# The secrets the logins of DAST's targets name in config/inventory/endpoints.yaml (ADR 0052). Only DAST reads it.",
-        "# After a change: docker compose --profile wired up -d dast",
-        "# DAST_SHOP_TOKEN='Bearer ...'",
+        "# The GitHub organizations and GitLab groups SAST reads (ADR 0052). A change is picked up within a minute.",
+        "# A token is never here: token names the variable that holds it, in products/sast.yaml.",
+        "#",
+        "# forges:",
+        "#   - name: acme",
+        "#     forge: github              # or gitlab",
+        "#     account: acme",
+        "#     token: SAST_ACME_TOKEN     # its value in products/sast.yaml",
+        "forges: []",
         "",
       ].join("\n"),
-      secret: true,
     },
     { name: "config/Caddyfile", content: caddyfile },
     {
@@ -546,12 +581,12 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
       ].join("\n"),
     },
     { name: "setup/setup.ts", content: SETUP.trimEnd() },
-    { name: "setup/products.json", content: JSON.stringify(setupProducts, null, 2) },
     { name: "setup/code.ts", content: CODE.trimEnd() },
     { name: "setup/seed.ts", content: SEED.trimEnd() },
-    { name: "secrets/openasy-kek", content: secrets.kek, secret: true },
-    { name: "secrets/openasy-agent-kek", content: secrets.agentKek, secret: true },
-    { name: "secrets/openasy-logs-agent-kek", content: secrets.logsAgentKek, secret: true },
+    { name: "keys/openasy-kek", content: secrets.kek, secret: true },
+    { name: "keys/openasy-agent-kek", content: secrets.agentKek, secret: true },
+    { name: "keys/openasy-logs-agent-kek", content: secrets.logsAgentKek, secret: true },
+    { name: "keys/openasy-siem-agent-kek", content: secrets.siemAgentKek, secret: true },
   ];
   const services = [
     "caddy",
@@ -564,6 +599,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
     "dast-agent",
     "malware-agent",
     "logs-agent",
+    "siem-agent",
     "host-web",
     "host-db",
     "prometheus",
@@ -576,7 +612,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
       text: "setup leaves the products empty; setup/seed.ts fills them with events, findings, scans, runs and spend.",
     },
     {
-      title: "Two servers in config/inventory/hosts.yaml",
+      title: "Two servers in inventory/hosts.yaml",
       text: "read over SSH by Infrastructure and Logs; Vulnerabilities, Posture and Malware show they send no scan.",
     },
     {

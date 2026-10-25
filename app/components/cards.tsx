@@ -225,6 +225,20 @@ export function composeFor(ids: string[]): string {
         "      LOGS_URL: http://logs:8080",
         "      LOGS_ENROLL_TOKEN: ${LOGS_ENROLL_TOKEN:-}   # one-time, from Settings, Agents",
       );
+    if (id === "siem")
+      lines.push(
+        "  siem-agent:",
+        `    image: ghcr.io/openasy/siem-agent:${tag}   # always the same version as siem; reads hosts' security events over SSH`,
+        "    restart: unless-stopped",
+        "    read_only: true",
+        "    tmpfs: [/tmp]",
+        "    volumes:",
+        "      - siem-agent-data:/data   # its SSH CA and keys, sealed with its own key",
+        "    secrets: [openasy-agent-kek]",
+        "    environment:",
+        "      SIEM_URL: http://siem:8080",
+        "      SIEM_ENROLL_TOKEN: ${SIEM_ENROLL_TOKEN:-}   # one-time, from Agents",
+      );
   });
   lines.push(
     "volumes:",
@@ -232,6 +246,7 @@ export function composeFor(ids: string[]): string {
     ...(ids.includes("vpn") && vpnEnrols() ? ["  vpn-server-data:"] : []),
     ...(ids.includes("infrastructure") ? ["  infra-agent-data:"] : []),
     ...(ids.includes("logs") ? ["  logs-agent-data:"] : []),
+    ...(ids.includes("siem") ? ["  siem-agent-data:"] : []),
   );
   if (ids.some((id) => statusFor(id).signIn))
     lines.push(

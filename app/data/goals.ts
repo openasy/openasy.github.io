@@ -247,7 +247,7 @@ export const GOALS: Goal[] = [
     steps: [
       {
         title: "List your endpoints",
-        body: "In config/inventory/endpoints.yaml, the URLs and ports customers depend on. Uptime checks each one and Certificates reads its certificate.",
+        body: "In inventory/endpoints.yaml, the URLs and ports customers depend on. Uptime checks each one and Certificates reads its certificate.",
       },
       { title: "Set up on-call", body: "In Alerts → On-call, add a rotation and connect email, Slack, Teams or a phone provider." },
     ],

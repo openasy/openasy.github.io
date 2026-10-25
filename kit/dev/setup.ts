@@ -6,47 +6,100 @@
 import { execFileSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
 
-const STATE = "secrets/dev.json";
-const ENV = ".env";
+const STATE = "keys/setup-state.json";
 const EMAIL = "dev@openasy.localhost";
 const PASSWORD = "openasy dev password";
 const ROLES = ["openasy-admins", "openasy-editors", "openasy-viewers"];
 
+// Each product is a file in products/, with its containers, their settings and their secrets (ADR 0054). A container
+// setup needs to know of says so on an x-openasy line: a product's address and Identity template, and which of its
+// keys take a value setup makes, such as an agent's enrolment token, which setup then writes on that line.
 interface Product {
   service: string;
   url: string;
-  clientFile: string;
+  file: string;
   template?: string;
 }
-// Every product in compose.yaml, Identity first: written with this script by openasy.github.io/install.
-const PRODUCTS: Product[] = JSON.parse(readFileSync("setup/products.json", "utf8"));
+type Target = { file: string; service: string; key: string };
+const SERVICE = /^ {2}([a-z0-9][a-z0-9-]*):\s*$/;
+const FILES = [...readFileSync("compose.yaml", "utf8").matchAll(/^ {2}- \{ path: (products\/[a-z0-9-]+\.yaml)/gm)].map((m) => m[1]!);
+const PRODUCTS: Product[] = [];
+const TARGETS: Record<string, Target[]> = {};
+for (const file of FILES) {
+  let service = "";
+  for (const line of readFileSync(file, "utf8").split("\n")) {
+    service = SERVICE.exec(line)?.[1] ?? service;
+    const x = /^ {4}x-openasy: (\{.*\})/.exec(line.replace(/\s{2,}#.*$/, ""));
+    if (!x) continue;
+    const meta = JSON.parse(x[1]!) as { url?: string; template?: string; fills?: Record<string, string> };
+    if (meta.url) PRODUCTS.push({ service, url: meta.url, file, ...(meta.template && { template: meta.template }) });
+    for (const [key, name] of Object.entries(meta.fills ?? {})) (TARGETS[name] ??= []).push({ file, service, key });
+  }
+}
+// Identity first: every other product signs in through it.
+PRODUCTS.sort((a, b) => Number(b.service === "identity") - Number(a.service === "identity"));
 const byName = (s: string) => PRODUCTS.find((p) => p.service === s)!;
 
-mkdirSync("secrets", { recursive: true });
+mkdirSync("keys", { recursive: true });
 type State = { totp: Record<string, string>; tokens: Record<string, string> };
 const state: State = existsSync(STATE) ? JSON.parse(readFileSync(STATE, "utf8")) : { totp: {}, tokens: {} };
 const save = () => writeFileSync(STATE, JSON.stringify(state, null, 2), { mode: 0o600 });
 
-// .env keeps what the site made (the ingest tokens) and gains what is made here. It is read again before each write,
-// so a line added while setup runs is kept.
-const readEnv = () =>
-  new Map<string, string>(
-    existsSync(ENV)
-      ? readFileSync(ENV, "utf8")
-          .split("\n")
-          .filter((l) => l.includes("=") && !l.startsWith("#"))
-          .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)])
-      : [],
-  );
-const env = readEnv();
-const setEnv = (k: string, v: string) => {
-  for (const [a, b] of readEnv()) if (!env.has(a)) env.set(a, b);
-  env.set(k, v.includes("\n") || v.includes(" ") ? `'${v.replace(/\n/g, "\\n")}'` : v);
-  writeFileSync(ENV, `# The dev setup's tokens, written by setup/setup.ts. Keep out of git.\n${[...env].map(([a, b]) => `${a}=${b}`).join("\n")}\n`, {
-    mode: 0o600,
-  });
+/** A value as YAML reads it back as the same text, and compose leaves alone: anything unusual is quoted, $ doubled. */
+const yamlValue = (v: string) =>
+  /^[A-Za-z0-9_./@+=,~][A-Za-z0-9_./@+=,~:-]*( [A-Za-z0-9_./@+=,~:-]+)*$/.test(v) &&
+  !/:( |$)/.test(v) &&
+  !/^(true|false|yes|no|on|off|null|[-+]?[0-9][0-9._]*(e[0-9]+)?)$/i.test(v)
+    ? v
+    : JSON.stringify(v).replaceAll("$", () => "$$");
+const yamlText = (v: string) =>
+  v.startsWith('"') ? (JSON.parse(v) as string).replaceAll("$$", "$") : v.startsWith("'") ? v.slice(1, -1).replaceAll("''", "'") : v;
+/** The lines of one service in its file: from its name to the next service or section. */
+const block = (lines: string[], service: string) => {
+  const start = lines.findIndex((l) => l === `  ${service}:`);
+  if (start < 0) throw new Error(`no ${service} in its file`);
+  let end = start + 1;
+  while (end < lines.length && !/^ {0,2}[a-z]/.test(lines[end]!)) end++;
+  return { start, end };
+};
+/** One key of a service's environment, or undefined when it is not set. */
+const readKey = (t: Target) => {
+  const lines = readFileSync(t.file, "utf8").split("\n");
+  const { start, end } = block(lines, t.service);
+  const line = lines.slice(start, end).find((l) => l.startsWith(`      ${t.key}: `));
+  const v =
+    line &&
+    yamlText(
+      line
+        .slice(t.key.length + 8)
+        .replace(/\s{2,}#.*$/, "")
+        .trim(),
+    );
+  return v ? v : undefined;
+};
+/** Sets a key of a service's environment, in place of its line or its commented-out example, read again before each write. */
+const writeKey = (t: Target, value: string) => {
+  const lines = readFileSync(t.file, "utf8").replace(/\n$/, "").split("\n");
+  const { start, end } = block(lines, t.service);
+  const at = lines.findIndex((l, i) => i > start && i < end && (l.startsWith(`      ${t.key}:`) || l.startsWith(`      # ${t.key}:`)));
+  const line = `      ${t.key}: ${yamlValue(value)}`;
+  if (at >= 0) lines[at] = line;
+  else {
+    const env = lines.findIndex((l, i) => i > start && i < end && l === "    environment:");
+    if (env < 0) lines.splice(end, 0, "    environment:", line);
+    else {
+      let last = env + 1;
+      while (last < end && /^ {6}/.test(lines[last]!)) last++;
+      lines.splice(last, 0, line);
+    }
+  }
+  writeFileSync(t.file, `${lines.join("\n")}\n`, { mode: 0o600 });
+};
+const env = { get: (name: string) => (TARGETS[name]?.[0] ? readKey(TARGETS[name]![0]!) : undefined) };
+const setEnv = (name: string, value: string) => {
+  if (!TARGETS[name]) throw new Error(`No x-openasy line in products/ takes ${name}`);
+  for (const t of TARGETS[name]!) writeKey(t, value);
 };
 
 const compose = (...args: string[]) =>
@@ -78,10 +131,11 @@ async function ready(p: Product) {
 }
 
 /** A client for one product, inside the compose network: the owner's API token once it exists, a session before. */
-function client(p: Product) {
+/** Calls a product with its admin token, or, with session, signed in as the owner, for what a token may not do. */
+function client(p: Product, session = false) {
   const jar = new Map<string, string>();
   return async <T = any>(path: string, body?: unknown, method?: string): Promise<T> => {
-    const token = state.tokens[p.service];
+    const token = session ? undefined : state.tokens[p.service];
     const verb = method ?? (body === undefined ? "GET" : "POST");
     const send = () =>
       fetch(`http://${p.service}:8080${path}`, {
@@ -171,7 +225,8 @@ for (const name of ROLES) {
 }
 const apps = (await id<{ applications: Array<{ name: string }> }>("/api/v1/applications")).applications;
 for (const p of PRODUCTS.filter((x) => x.service !== "identity")) {
-  if (apps.some((a) => a.name === p.service) && existsSync(p.clientFile)) continue;
+  const own = (key: string) => ({ file: p.file, service: p.service, key });
+  if (apps.some((a) => a.name === p.service) && readKey(own("OPENASY_OIDC_CLIENT_SECRET"))) continue;
   // A product with a template in Identity is added from it; any other as an OpenID Connect application.
   const body = p.template
     ? { name: p.service, template: p.template, url: p.url, everyone: true }
@@ -184,23 +239,21 @@ for (const p of PRODUCTS.filter((x) => x.service !== "identity")) {
         everyone: true,
       };
   const r = await id<{ application: { id: string }; clientSecret: string }>("/api/v1/applications", body);
-  // compose loads this file into the product alone (env_file), so each product sees only its own secret.
-  mkdirSync(dirname(p.clientFile), { recursive: true });
-  writeFileSync(
-    p.clientFile,
-    `OPENASY_OIDC_ISSUER=${byName("identity").url}\nOPENASY_OIDC_CLIENT_ID=${r.application.id}\nOPENASY_OIDC_CLIENT_SECRET=${r.clientSecret}\n`,
-    { mode: 0o600 },
-  );
+  // In the product's own environment, so each product sees only its own secret.
+  writeKey(own("OPENASY_OIDC_ISSUER"), byName("identity").url);
+  writeKey(own("OPENASY_OIDC_CLIENT_ID"), r.application.id);
+  writeKey(own("OPENASY_OIDC_CLIENT_SECRET"), r.clientSecret);
   console.log(`  ${p.service}: signs in through Identity`);
 }
 
 step("VPN: a server");
 if (!env.get("VPN_ENROLL_TOKEN")) setEnv("VPN_ENROLL_TOKEN", (await api.vpn!<{ enrollToken: string }>("/api/v1/servers", { id: "local" })).enrollToken);
 
-// Infrastructure and Logs each read the servers with an agent of their own, with its own CA.
+// Infrastructure, Logs and SIEM each read the servers with an agent of their own, with its own CA.
 const AGENTS = [
   { product: "infra", service: "infra-agent", token: "INFRA_ENROLL_TOKEN", ca: "INFRA_AGENT_CA" },
   { product: "logs", service: "logs-agent", token: "LOGS_ENROLL_TOKEN", ca: "LOGS_AGENT_CA" },
+  { product: "siem", service: "siem-agent", token: "SIEM_ENROLL_TOKEN", ca: "SIEM_AGENT_CA" },
 ] as const;
 for (const a of AGENTS) {
   step(`${a.product}: an agent`);
@@ -214,6 +267,19 @@ if (!env.get("SAST_ENROLL_TOKEN")) setEnv("SAST_ENROLL_TOKEN", (await api.sast!<
 // DAST's agent runs ZAP and Nuclei against the targets added in DAST.
 step("dast: an agent");
 if (!env.get("DAST_ENROLL_TOKEN")) setEnv("DAST_ENROLL_TOKEN", (await api.dast!<{ enrollToken: string }>("/api/v1/agents", { name: "local" })).enrollToken);
+
+// SIEM's severe signals and Uptime's outages open incidents, each with an editor token of its own in Incidents.
+step("Incidents: SIEM and Uptime open incidents");
+if (!env.get("SIEM_INCIDENTS_TOKEN") || !env.get("UPTIME_INCIDENTS_TOKEN")) {
+  // Only a signed-in person makes tokens, not an API token.
+  const owner = client(byName("incidents"), true);
+  await owner("/api/v1/auth/login", { email: EMAIL, password: PASSWORD });
+  await owner("/api/v1/auth/login/mfa", { code: totp(state.totp.incidents!) });
+  for (const from of ["siem", "uptime"]) {
+    const key = `${from.toUpperCase()}_INCIDENTS_TOKEN`;
+    if (!env.get(key)) setEnv(key, (await owner<{ token: string }>("/api/v1/auth/tokens", { name: from, role: "editor" })).token);
+  }
+}
 
 step("Starting again with sign-in through Identity, and the agents");
 compose(
