@@ -117,7 +117,7 @@ docker run -d --name vpn-server --restart unless-stopped \\
 export const STATUS: Partial<Record<string, ProductState>> = {
   vulnerabilities: {
     status: "Preview",
-    version: "0.6.0",
+    version: "0.7.0",
     signIn: true,
     note: "Serve it over HTTPS and set VULNS_PUBLIC_URL to that address: cookies and passkeys need it. There is no email yet, so invitations and password resets are links an admin sends.",
     helm: {
@@ -178,7 +178,7 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_API_TOKEN" -H 'content-type: ap
   },
   infrastructure: {
     status: "Preview",
-    version: "0.6.0",
+    version: "0.7.0",
     signIn: true,
     note: "infra-agent holds the SSH certificate authority your hosts trust, sealed with its own key: keep openasy-agent-kek apart from its volume, and run one agent per network. Serve Infrastructure over HTTPS.",
     guides: [
@@ -255,7 +255,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   logs: {
     status: "Preview",
-    version: "0.6.0",
+    version: "0.7.0",
     signIn: true,
     features: [
       { title: "Syslog over TLS, OpenTelemetry, Loki, Elasticsearch bulk and JSON lines, each source with its own token", done: true },
@@ -316,7 +316,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   malware: {
     status: "Preview",
-    version: "0.6.0",
+    version: "0.7.0",
     signIn: true,
     features: [
       { title: "Send ClamAV or YARA scan reports and get back whether the check passes", done: true },
@@ -336,7 +336,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   siem: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     features: [
       { title: "Events in as JSON, kept with a retention period", done: true },
@@ -422,7 +422,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   posture: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     features: [
       { title: "Send SARIF from Trivy, kubescape, checkov or Prowler for a cloud account, cluster or hosts", done: true },
@@ -476,7 +476,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   backups: {
     status: "Preview",
-    version: "0.4.0",
+    version: "0.5.0",
     signIn: true,
     features: [
       { title: "Runs from restic, Velero or any script, and restore tests, reported per job", done: true },
