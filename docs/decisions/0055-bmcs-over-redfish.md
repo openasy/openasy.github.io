@@ -1,0 +1,38 @@
+# 0055. BMCs: the agent reads them over Redfish, with GET only and a password the product never holds
+
+- **Decision:** Proposed
+- **Implementation:** Implemented
+- **Where:** `infra-agent` reads each BMC over Redfish (`agent/redfish.ts`, `agent/bmc.ts`) with a read-only account whose password is a file in its key folder; `infra` takes the BMCs from the `bmcs:` list of the hosts file (ADR 0052), shows them under BMCs and keeps what changed. The products that read the hosts file accept the list and leave it alone.
+- **Priority:** Medium
+- **Area:** Architecture
+
+## Context
+
+A server's management controller (Dell iDRAC, HPE iLO, Lenovo XClarity, Supermicro and most others) knows what the operating system cannot say: the board's serial and service tag, the BIOS, RAID and NIC firmware, a power supply that failed, a disk near the end of its life, the hardware event log. It is also one of the most valuable targets in a data centre: whoever signs in can power the server off, mount an image and boot it, or flash firmware, and many still answer IPMI over the LAN, which hands out password hashes to anyone who asks. Which accounts a BMC has and which services it opens are questions an audit asks and that nobody can answer from memory.
+
+Every current BMC speaks Redfish, a REST API over HTTPS. Reading it is a few hundred GET requests; changing anything is a POST, PATCH or DELETE to the same service with the same credentials. BMCs almost always present a certificate of their own making, so a client that checks it against a CA has to be told to stop checking, and then sends its password to whoever answers.
+
+ADR 0031 keeps credentials away from the product: the agent holds the keys and runs only its own reads. A BMC password is the same kind of thing as an SSH key, and is worth more.
+
+## Decision
+
+- **The agent reads BMCs; Infrastructure does not.** BMCs sit on a management network, which the agent of that network reaches (ADR 0031: one agent per network). Infrastructure says which BMC to read and the agent decides how.
+- **The password stays with the agent.** A BMC entry names `passwordFile`, a file name in the agent's read-only key folder (`/keys`), as a host names `keyFile`. Infrastructure keeps and sends only the name; the agent reads the file for each collection. Nothing in the hosts file or in Infrastructure's database opens a BMC.
+- **GET only, under `/redfish/v1`.** The agent's Redfish client has no other method. It starts at the service root and follows the BMC's own links, only to paths under `/redfish/v1` with nothing that climbs out of it, only to the resources it knows (systems, chassis with power and thermal, managers and their network services, update service firmware inventory, storage, accounts, the SEL and IML), never an `Actions` target, and at most 600 requests and 4 minutes per collection. A compromised Infrastructure can make the agent read a BMC, never power a server off, change a setting or start an update.
+- **The account is read-only on the BMC.** The documented setup is an account with Redfish's `ReadOnly` role (iDRAC's Login privilege, iLO's Login), so even a stolen password cannot change the BMC. What that account may not read, such as the other accounts on some BMCs, is shown as not readable.
+- **The certificate is pinned.** Like a host key (ADR 0031), the agent reports the SHA-256 fingerprint of the certificate a BMC presents, and an admin compares it before accepting it, or the hosts file names it (`certificate:`, as `openssl x509 -fingerprint -sha256` prints it) or says `first`. The agent sends the password only on a connection whose certificate is one of the pinned ones, checked before the request is written. A changed certificate stops collection, and the agent reports the new one, until an admin accepts it or the file names it.
+- **BMCs are a list of their own in the hosts file.** `bmcs:` sits next to `hosts:`, with `name`, `address`, `port` (443), `user` (`openasy`), `passwordFile`, `server` (a host in the same file, whose page then links to its BMC), `agent`, `certificate` and `tags`. A BMC is often reached at another address than its server, some servers are never read over SSH (hypervisors, appliances), and one BMC can manage a chassis of several servers, so it is not a field of a host. The whole file is checked by every product that reads it, so they refuse the same mistakes; only Infrastructure uses the list.
+- **What is kept, and what is a change.** Each collection keeps the machine (manufacturer, model, serial, SKU or service tag, CPU, memory), the BIOS and every firmware version, the health of each power supply, fan, temperature sensor, controller and drive, the power state, the BMC's accounts with their role (Redfish never shows a password), its network services and ports, and the 50 newest entries of its event logs. A firmware version, a new account or role, a service turned on, a part that turns Warning or Critical, and a power state are changes. Readings that move all the time (temperatures, fan speeds, watts) and the event log are shown, not changes.
+- **A host and its BMC are put together.** Both say which machine they are on: the host its SMBIOS UUID and serial (read with the sudo rules, `/sys/class/dmi/id/product_uuid` and `product_serial`), the BMC the same UUID and its serial or service tag. When they agree, the file's `server:` is confirmed; when they differ, the BMC and the host's page say the file names the wrong machine, and which host the BMC does match; a UUID that differs outweighs a serial that agrees. A BMC the file gives no `server:` is matched by them, and its page shows the line to add. Placeholders boards ship with ("To Be Filled By O.E.M.", all zeros) match nothing. The host's page then shows its hardware as the BMC sees it: the parts that are not OK, and each reboot next to what the BMC logged from 30 minutes before to 5 minutes after, such as a power supply that lost its input.
+- **Risky services are said plainly.** The BMC's page warns when IPMI over LAN is on (IPMI 2.0 RAKP gives a password hash to anyone who names an account) and when Telnet is.
+- BMCs are read every 15 minutes, and on request. A BMC that left the file goes with its history.
+
+## Consequences
+
+- A reboot nobody planned is explained where it is seen: the host's page shows the BMC's events around it. A BMC wired or listed against the wrong server is caught before someone powers off the wrong machine.
+- An install sees its hardware as well as its hosts: a failed power supply, a worn disk, a BIOS behind the others, a BMC with an unexpected administrator or IPMI left on, each with the time it changed.
+- The trust boundaries grow by one: agent to BMC over HTTPS. A compromised agent holds the BMC passwords of its network, as it holds the SSH CA its hosts trust; with read-only accounts they read and nothing more. A compromised Infrastructure learns no password and can only start reads.
+- The agent sends Basic auth on each request rather than opening a Redfish session, so it leaves no session behind and needs no logout; BMCs that allow only sessions are not read yet.
+- Power and thermal are read from the `Power` and `Thermal` resources, which every current BMC still serves; the newer `PowerSubsystem` and `ThermalSubsystem` are not read yet.
+- The parsing is tested against Redfish trees shaped after iDRAC 9 and iLO 5, and the agent against a BMC over real TLS in the end-to-end test (ADR 0029). Trees captured from real BMCs should replace them as they come.
+- A hosts file with `bmcs:` is refused by a product released before this record, which knows only `hosts:`. Products that read the file are updated together.

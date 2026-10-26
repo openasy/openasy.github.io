@@ -16,11 +16,11 @@ export const infrastructure: ProductStory = {
   glance: [
     {
       label: "Reads",
-      value: "Hosts, containers, clusters",
+      value: "Hosts, BMCs, containers, clusters",
     },
     {
       label: "How",
-      value: "SSH and the Kubernetes API",
+      value: "SSH, Redfish and the Kubernetes API",
     },
     {
       label: "Keeps",
@@ -34,11 +34,12 @@ export const infrastructure: ProductStory = {
   flow: [
     {
       label: "The hosts file",
-      detail: "The install lists its servers in one file, shared with Logs and SIEM; clusters are added with a read-only token.",
+      detail: "The install lists its servers and their BMCs in one file, shared with Logs and SIEM; clusters are added with a read-only token.",
     },
     {
       label: "infra-agent reads",
-      detail: "One agent per network signs 5-minute SSH certificates for the openasy account and runs its built-in, read-only script.",
+      detail:
+        "One agent per network signs 5-minute SSH certificates for the openasy account and runs its built-in, read-only script, and reads BMCs over Redfish with GET only.",
     },
     {
       label: "Compared with last time",
@@ -74,6 +75,15 @@ export const infrastructure: ProductStory = {
       items: ["File systems and their usage, disks", "Interfaces, addresses, routes and DNS"],
     },
     {
+      title: "Hardware, through the BMC",
+      items: [
+        "iDRAC, iLO, XClarity and other Redfish BMCs: model, serial and service tag, BIOS and every firmware version",
+        "Health of power supplies, fans, temperatures, RAID controllers and drives, power state and the hardware event log",
+        "Who may sign in to the BMC and with which role, and which services it opens, such as IPMI over LAN",
+        "Each host matched with its BMC by SMBIOS UUID and serial, and its reboots next to what the BMC logged around them",
+      ],
+    },
+    {
       title: "Containers and Kubernetes",
       items: [
         "Docker and Podman: image and digest, state, health, restarts, ports, mounts, limits, privileged",
@@ -98,6 +108,10 @@ export const infrastructure: ProductStory = {
       label: "Host keys",
       text: "A host whose SSH host key changes is not read again until an admin accepts the new key.",
     },
+    {
+      label: "BMC certificates",
+      text: "The agent sends a BMC's password only to the certificate an admin accepted or the hosts file names; a new certificate stops collection until it is checked.",
+    },
   ],
   inputs: [
     {
@@ -109,12 +123,16 @@ export const infrastructure: ProductStory = {
       how: "Optional, for what only root can read, such as every account's SSH keys; the setup page writes them.",
     },
     {
+      name: "Redfish",
+      how: "infra-agent reads each BMC with a ReadOnly account, GET requests only; its password is a file in the agent's key folder.",
+    },
+    {
       name: "Kubernetes API",
       how: "A read-only service account token per cluster.",
     },
     {
       name: "The hosts file",
-      how: "OPENASY_HOSTS: name, address, port, user and options for each host.",
+      how: "OPENASY_HOSTS: name, address, port, user and options for each host, and the BMCs under bmcs:.",
     },
   ],
   screens: [
@@ -162,7 +180,7 @@ export const infrastructure: ProductStory = {
   limits: [
     "Nothing is installed on the hosts, and Infrastructure holds no SSH key and sends no commands: a compromised product cannot run commands on them.",
     "Without the sudo rules it reads only what the openasy account may read, and the page says what was not readable.",
-    "It reads; it does not change hosts or deploy anything.",
+    "It reads; it does not change hosts or BMCs, or deploy anything. The agent has no way to send anything but GET to a BMC.",
     "Windows and cloud accounts are not read yet.",
   ],
 };

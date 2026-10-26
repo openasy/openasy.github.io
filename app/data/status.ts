@@ -205,6 +205,14 @@ sshd -t && systemctl reload ssh`,
         code: "ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub",
       },
       {
+        title: "Read a BMC",
+        text: "Make an account with the ReadOnly role on the BMC, put its password in keys/ssh/db-1-bmc, and list the BMC under bmcs: in inventory/hosts.yaml with passwordFile: db-1-bmc. The agent reports the BMC's certificate; compare its fingerprint before accepting it, or name it there with certificate. Most BMCs take the new account in one Redfish call; iDRAC fills a free slot instead (PATCH /redfish/v1/AccountService/Accounts/3 with the same body).",
+        code: `curl -k -u admin -X POST https://10.0.9.6/redfish/v1/AccountService/Accounts \\
+  -H 'Content-Type: application/json' \\
+  -d '{"UserName": "openasy", "Password": "...", "RoleId": "ReadOnly", "Enabled": true}'
+openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -noout -fingerprint -sha256`,
+      },
+      {
         title: "Add a Kubernetes cluster",
         text: "Apply the read-only role from Setup (no Secrets, no ConfigMaps, nothing it can change), then add the cluster with its API server URL, CA and this token. Nothing runs in the cluster.",
         code: "kubectl -n openasy get secret openasy-infra-token -o jsonpath='{.data.token}' | base64 -d",
@@ -229,6 +237,10 @@ sshd -t && systemctl reload ssh`,
           "Servers from a file that Logs, Vulnerabilities, Posture, Malware and Backups read too (OPENASY_HOSTS); a host key named there is trusted without an admin",
         done: true,
       },
+      {
+        title: "BMCs over Redfish (iDRAC, iLO, XClarity): hardware, firmware, health, accounts and network services, with GET only and a pinned certificate",
+        done: true,
+      },
       { title: "Cloud accounts (AWS, Hetzner and others) and hosts without SSH access", done: false },
       { title: "Package lists to Vulnerabilities, so hosts need no vulns-agent", done: true },
       { title: "Windows over SSH or WinRM", done: false },
@@ -236,6 +248,7 @@ sshd -t && systemctl reload ssh`,
     upstream: [
       { name: "OpenSSH", url: "https://www.openssh.com/", role: "the connection, certificates and host keys" },
       { name: "Kubernetes API", url: "https://kubernetes.io/docs/reference/kubernetes-api/", role: "clusters" },
+      { name: "Redfish", url: "https://www.dmtf.org/standards/redfish", role: "BMCs" },
       { name: "SQLite", url: "https://sqlite.org/", role: "storage" },
       { name: "Swagger UI", url: "https://github.com/swagger-api/swagger-ui", role: "API reference" },
     ],

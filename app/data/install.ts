@@ -507,7 +507,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           "    tmpfs: [/tmp]",
           "    volumes:",
           "      - infra-agent-data:/data   # its CA and keys, sealed with its own key",
-          "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile",
+          "      - ./keys/ssh:/keys:ro   # private keys a host names with keyFile, and BMC password files",
           "    secrets: [openasy-agent-kek]",
           "    environment:",
           env("INFRA_URL", "http://infra:8080"),
@@ -920,6 +920,19 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         "#     hostKey: SHA256:...        # ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub: trusted without an admin when it matches;",
         "#                                # first: the first key it presents is trusted; left out: an admin accepts it",
         "#     tags: { env: prod }",
+        ...(readers.includes("infrastructure")
+          ? [
+              "#",
+              "# Their BMCs (iDRAC, iLO, XClarity), read by Infrastructure over Redfish with a ReadOnly account (ADR 0055).",
+              "# bmcs:",
+              "#   - name: web-1-idrac",
+              "#     address: 10.0.9.5",
+              "#     server: web-1              # its server above, whose page then links to it",
+              "#     user: openasy              # openasy when left out",
+              "#     passwordFile: web-1-bmc    # the password, in a file in keys/ssh; never in this file",
+              "#     certificate: first         # AB:CD:... as openssl x509 -fingerprint -sha256 prints it; left out: an admin accepts it",
+            ]
+          : []),
         "hosts: []",
       ].join("\n"),
     });

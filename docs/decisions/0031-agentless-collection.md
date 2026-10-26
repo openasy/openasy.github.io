@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** Implemented
-- **Where:** `infra-agent` reads hosts over SSH and containers through the host's Docker or Podman, and `infra` reads Kubernetes through its API, without installing anything. `vpn-server` stays on its host, because it runs OpenVPN.
+- **Where:** `infra-agent` reads hosts over SSH, containers through the host's Docker or Podman and BMCs over Redfish (ADR 0055), and `infra` reads Kubernetes through its API, without installing anything. `vpn-server` stays on its host, because it runs OpenVPN.
 - **Area:** Architecture
 
 ## Context

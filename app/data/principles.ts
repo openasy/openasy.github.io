@@ -185,6 +185,10 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
     title: "One file per product",
     text: "Each product is one file in products/, with its containers, their settings and their secrets, and compose.yaml only includes them. A product's secrets reach only its containers, a change to it is one file, and leaving a line out of compose.yaml leaves it out.",
   },
+  "0055": {
+    title: "Read the BMC, touch nothing",
+    text: "infra-agent reads iDRAC, iLO and other BMCs over Redfish with GET only, a read-only account and a pinned certificate. The password is a file only the agent reads, so a compromised Infrastructure can start a read and nothing else.",
+  },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });

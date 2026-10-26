@@ -291,4 +291,4 @@ export const CLAIMS: Claim[] = [
 ];
 
 /** Decisions with no source behind them yet: our judgment, said as such. */
-export const JUDGMENT = ["0001", "0010", "0014", "0018", "0019", "0028", "0031", "0052"];
+export const JUDGMENT = ["0001", "0010", "0014", "0018", "0019", "0028", "0031", "0052", "0055"];

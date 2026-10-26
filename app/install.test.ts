@@ -168,6 +168,8 @@ describe("install builder", () => {
     expect(service(compose, "infra-agent")).not.toContain("hosts.yaml");
     expect(envOf(out, "infra-agent")).not.toContain("hosts.yaml");
     expect(file(out, "inventory/hosts.yaml")).toMatch(/^# Your servers, read by Infrastructure and Vulnerabilities[\s\S]*\nhosts: \[\]$/);
+    // Infrastructure also reads the servers' BMCs from it; their passwords stay in the agent's key folder (ADR 0055).
+    expect(file(out, "inventory/hosts.yaml")).toMatch(/^# bmcs:\n[\s\S]*# {5}passwordFile: web-1-bmc {4}# the password, in a file in keys\/ssh/m);
     expect(out.wiring.map((w) => w.title)).toContain("One list of servers");
     expect(file(out, "inventory/hosts.yaml")).toContain("the only place servers are added");
     expect(build().files.map((f) => f.name)).not.toContain("inventory/hosts.yaml");
