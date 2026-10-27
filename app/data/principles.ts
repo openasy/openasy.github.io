@@ -189,6 +189,10 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
     title: "Read the BMC, touch nothing",
     text: "infra-agent reads iDRAC, iLO and other BMCs over Redfish with GET only, a read-only account and a pinned certificate. The password is a file only the agent reads, so a compromised Infrastructure can start a read and nothing else.",
   },
+  "0056": {
+    title: "One session per BMC read",
+    text: "infra-agent signs in to a BMC once per collection and out at the end, so an iDRAC answers in a second instead of checking the password again on every request. An answer is whole at its length, so iDRAC 8's stray bytes cost a connection, not the read.",
+  },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });

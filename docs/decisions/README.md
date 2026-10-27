@@ -68,5 +68,6 @@ Each record has two statuses:
 | 0053 | [One brand for every product, from one env file](./0053-one-brand.md) | Product | Superseded by 0004 | In progress |
 | 0054 | [Each product in one compose file of its own, with its settings and secrets](./0054-one-file-per-product.md) | Architecture | Proposed · High | Implemented |
 | 0055 | [BMCs: the agent reads them over Redfish, with GET only and a password the product never holds](./0055-bmcs-over-redfish.md) | Architecture | Proposed · Medium | Implemented |
+| 0056 | [BMCs: one Redfish session per collection, and BMCs that break HTTP read anyway](./0056-bmc-sessions.md) | Architecture | Proposed · High | Implemented |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.
