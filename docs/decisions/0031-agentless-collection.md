@@ -1,4 +1,4 @@
-# 0031. Nothing installed on hosts: one agent reads them
+# 0031. Infrastructure: nothing installed on hosts, one agent reads them
 
 - **Decision:** Accepted
 - **Implementation:** Implemented

@@ -43,10 +43,10 @@ Each record has two statuses:
 | 0028 | [Resource budgets](./0028-resource-budgets.md) | Operations | Proposed · Medium | In progress |
 | 0029 | [Testing and quality gates](./0029-testing-and-quality-gates.md) | Quality | Accepted | In progress |
 | 0030 | [Open-source governance](./0030-open-source-governance.md) | Project | Proposed · High | Not started |
-| 0031 | [Nothing installed on hosts: one agent reads them](./0031-agentless-collection.md) | Architecture | Accepted | Implemented |
-| 0032 | [VPN servers at several locations, each with its own identity](./0032-vpn-server-enrolment.md) | Architecture | Proposed · High | In progress |
+| 0031 | [Infrastructure: nothing installed on hosts, one agent reads them](./0031-agentless-collection.md) | Architecture | Accepted | Implemented |
+| 0032 | [VPN: servers at several locations, each with its own identity](./0032-vpn-server-enrolment.md) | Architecture | Proposed · High | In progress |
 | 0033 | [Identity: an OpenID provider of our own, on node-oidc-provider](./0033-identity.md) | Architecture | Accepted | Implemented |
-| 0034 | [Identity meets the directories and applications teams already have: SAML, LDAP, SCIM and passkey-only groups](./0034-identity-directories-and-saml.md) | Architecture | Accepted | In progress |
+| 0034 | [Identity: the directories and applications teams already have, through SAML, LDAP, SCIM and passkey-only groups](./0034-identity-directories-and-saml.md) | Architecture | Accepted | In progress |
 | 0035 | [Logs: VictoriaLogs inside, logs sent to it or read over SSH](./0035-logs.md) | Architecture | Accepted | Implemented |
 | 0036 | [SAST: Opengrep scans every pull request, and only what is new blocks it](./0036-sast.md) | Architecture | Proposed · High | In progress |
 | 0037 | [DAST: scanners run in an agent, and only on targets you have proven are yours](./0037-dast.md) | Architecture | Proposed · High | In progress |
@@ -67,11 +67,21 @@ Each record has two statuses:
 | 0052 | [One list of endpoints, one of servers and one of repositories, in files every product can read](./0052-shared-inventory-files.md) | Architecture | Proposed · High | In progress |
 | 0053 | [One brand for every product, from one env file](./0053-one-brand.md) | Product | Superseded by 0004 | In progress |
 | 0054 | [Each product in one compose file of its own, with its settings and secrets](./0054-one-file-per-product.md) | Architecture | Proposed · High | Implemented |
-| 0055 | [BMCs: the agent reads them over Redfish, with GET only and a password the product never holds](./0055-bmcs-over-redfish.md) | Architecture | Proposed · Medium | Implemented |
-| 0056 | [BMCs: one Redfish session per collection, and BMCs that break HTTP read anyway](./0056-bmc-sessions.md) | Architecture | Proposed · High | Implemented |
+| 0055 | [Infrastructure: the agent reads BMCs over Redfish, with GET only and a password the product never holds](./0055-bmcs-over-redfish.md) | Architecture | Proposed · Medium | Implemented |
+| 0056 | [Infrastructure: one Redfish session per BMC collection, and BMCs that break HTTP read anyway](./0056-bmc-sessions.md) | Architecture | Proposed · High | Implemented |
 | 0057 | [Deception: canaries with a token each, found by URL, DNS or CloudTrail, and a trigger a person decides on](./0057-deception.md) | Architecture | Proposed · Medium | In progress |
 | 0058 | [Compliance: controls judged on what the products serve at /metrics, with evidence by hand for the rest](./0058-compliance.md) | Architecture | Proposed · Medium | In progress |
 | 0059 | [Alerts: Alertmanager's way in, routes and groups, silences, schedules and webhooks](./0059-alerts.md) | Architecture | Proposed · High | In progress |
 | 0060 | [Automation: playbooks of steps through product APIs, calling only stored connections, with approvals](./0060-automation.md) | Architecture | Proposed · Medium | In progress |
+| 0061 | [Access: requests and approvals, short-lived SSH certificates, and an audit log nobody changes](./0061-access.md) | Architecture | Proposed · High | In progress |
+| 0062 | [Database: PostgreSQL's own statistics, read with a monitoring role, sampled and explained, changing nothing](./0062-database.md) | Architecture | Proposed · Medium | In progress |
+| 0063 | [Metrics: VictoriaMetrics inside, every product scraped, PromQL for Grafana as it is](./0063-metrics.md) | Architecture | Proposed · High | In progress |
+| 0064 | [Traces: VictoriaTraces inside, OTLP in, services and the map read from the spans themselves](./0064-traces.md) | Architecture | Proposed · High | In progress |
+| 0065 | [Endpoints: osquery is the agent, with a fixed pack on the device and no query from the server](./0065-endpoints.md) | Architecture | Proposed · High | In progress |
+| 0066 | [Runtime: Falco as the sensor, detections with their process tree, a learned process inventory and file integrity](./0066-runtime.md) | Architecture | Proposed · High | In progress |
+| 0067 | [Attack Surface: only proven roots, passive discovery, a light check and the changes since the last scan](./0067-attack-surface.md) | Architecture | Proposed · High | In progress |
+| 0068 | [Profiling: Pyroscope inside, eBPF through Alloy, pprof read from services, flame graphs compared by share](./0068-profiling.md) | Architecture | Proposed · Medium | In progress |
+| 0069 | [WAF: Coraza and the OWASP Core Rule Set in the request path, sites start in detection-only mode](./0069-waf.md) | Architecture | Proposed · High | In progress |
+| 0070 | [Network IDS: Suricata on the sensors, its EVE events in, local rules and suppressions out](./0070-network-ids.md) | Architecture | Proposed · Medium | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.

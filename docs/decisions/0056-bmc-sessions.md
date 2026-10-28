@@ -1,4 +1,4 @@
-# 0056. BMCs: one Redfish session per collection, and BMCs that break HTTP read anyway
+# 0056. Infrastructure: one Redfish session per BMC collection, and BMCs that break HTTP read anyway
 
 - **Decision:** Proposed
 - **Implementation:** Implemented

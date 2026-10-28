@@ -1,4 +1,4 @@
-# 0034. Identity meets the directories and applications teams already have: SAML, LDAP, SCIM and passkey-only groups
+# 0034. Identity: the directories and applications teams already have, through SAML, LDAP, SCIM and passkey-only groups
 
 - **Decision:** Accepted
 - **Implementation:** In progress

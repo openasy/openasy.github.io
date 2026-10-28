@@ -1,6 +1,6 @@
 import { Badge } from "@openasy/ui";
 import { CLAIMS, GRADES, GRADE_TONE, JUDGMENT, type Claim, type Grade } from "../data/evidence";
-import { PRINCIPLES, adrUrl } from "../data/principles";
+import { IN_FORCE, adrUrl } from "../data/principles";
 import { PageTitle, Section } from "../components/site";
 
 export function meta() {
@@ -13,7 +13,7 @@ export function meta() {
   ];
 }
 
-const record = (n: string) => PRINCIPLES.find((p) => p.n === n);
+const record = (n: string) => IN_FORCE.find((p) => p.n === n);
 
 function ClaimItem({ c }: { c: Claim }) {
   return (

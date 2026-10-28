@@ -4,7 +4,7 @@ import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 import { PRODUCT_IDS, PRODUCTS, type ProductId } from "@openasy/ui";
 import { GOALS } from "./data/goals";
-import { PRINCIPLES, RECORDS_ALL } from "./data/principles";
+import { IN_FORCE, PRINCIPLES, RECORDS_ALL } from "./data/principles";
 import { storyUrl } from "./data/storybook";
 import { STATUS } from "./data/status";
 import { composeFor } from "./components/cards";
@@ -389,7 +389,7 @@ describe("pages", () => {
   });
 
   it("evidence names decisions in force, and every claim has a source", () => {
-    const inForce = new Set(PRINCIPLES.map((p) => p.n));
+    const inForce = new Set(IN_FORCE.map((p) => p.n));
     expect(new Set(CLAIMS.map((c) => c.id)).size).toBe(CLAIMS.length);
     for (const c of CLAIMS) {
       for (const n of c.adrs) expect(inForce).toContain(n);
@@ -427,8 +427,10 @@ describe("pages", () => {
       expect(p.decision).toMatch(/^(Proposed|Accepted|Superseded by \d{4})$/);
       // A superseded record leads to one in force, and only those are on the site.
       const successor = /^Superseded by (\d{4})$/.exec(p.decision)?.[1];
-      if (successor) expect(PRINCIPLES.map((q) => q.n)).toContain(successor);
-      expect(PRINCIPLES.includes(p)).toBe(!successor);
+      if (successor) expect(IN_FORCE.map((q) => q.n)).toContain(successor);
+      expect(IN_FORCE.includes(p)).toBe(!successor);
+      // A record of one product is described on its product page, not among the principles.
+      expect(PRINCIPLES.includes(p)).toBe(!successor && !p.product);
       expect(["Not started", "In progress", "Implemented"]).toContain(p.implementation);
       if (p.decision === "Proposed") expect(["Critical", "High", "Medium"]).toContain(p.priority);
       expect(p.file.startsWith(p.n)).toBe(true);

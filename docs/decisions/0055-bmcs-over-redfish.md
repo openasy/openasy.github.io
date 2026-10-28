@@ -1,4 +1,4 @@
-# 0055. BMCs: the agent reads them over Redfish, with GET only and a password the product never holds
+# 0055. Infrastructure: the agent reads BMCs over Redfish, with GET only and a password the product never holds
 
 - **Decision:** Proposed
 - **Implementation:** Implemented

@@ -1,7 +1,10 @@
 /**
  * Short form of the design decisions in docs/decisions. Titles, statuses and areas are read from the
  * records themselves, so this file only holds the one-line summaries shown on the site.
+ * A record of one product ("Logs: ...") is not a principle: its product page says what it does, so it needs no summary.
  */
+import { PRODUCT_LIST } from "@openasy/ui";
+
 
 const REPO = "https://github.com/openasy/openasy.github.io/blob/main/docs/decisions/";
 export const ADR_INDEX = "https://github.com/openasy/openasy.github.io/tree/main/docs/decisions";
@@ -23,6 +26,8 @@ export interface Principle {
   priority?: Priority;
   area: string;
   file: string;
+  /** The product a record decides for, when its title starts with that product's name. */
+  product?: string;
 }
 
 const SUMMARIES: Record<string, { title: string; text: string }> = {
@@ -93,90 +98,6 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0028": { title: "Runs on a small server", text: "Memory, CPU and image size budgets, amd64 and arm64, no required external services." },
   "0029": { title: "Proof, not percentages", text: "Tests for what matters: migrations, upgrades, restores, accessibility and the main flow of each product." },
   "0030": { title: "How the project is run", text: "Contributions, maintainers, licence checks, security reports, and what happens if the project ends." },
-  "0031": {
-    title: "Hosts stay clean",
-    text: "One agent per network reads hosts over SSH with 5-minute certificates and keeps the keys; the product holds none. Nothing is installed on your hosts.",
-  },
-  "0032": {
-    title: "VPN servers anywhere",
-    text: "Add a VPN server per location from one place. Each enrols with a one-time token and gets its own secret; clients move to the next server when one is down.",
-  },
-  "0033": {
-    title: "One sign-in for everything",
-    text: "Identity is an OpenID provider on a certified library, in one container with SQLite. It also helps you connect Keycloak, Entra ID, Okta or Google.",
-  },
-  "0034": {
-    title: "Bring your directory",
-    text: "Identity signs in SAML applications such as AWS, reads LDAP and Active Directory, takes people from Okta or Entra ID over SCIM, and can ask a group for a passkey only.",
-  },
-  "0035": {
-    title: "Logs without a shipper",
-    text: "Logs keeps them in VictoriaLogs inside its one container. Send them over Syslog, OpenTelemetry or what Vector and Fluent Bit speak, or let one agent read journald over SSH.",
-  },
-  "0036": {
-    title: "Static analysis on every pull request",
-    text: "SAST runs Opengrep in a separate agent, so hostile code never reaches the product. A pull request is blocked only by what it adds.",
-  },
-  "0037": {
-    title: "Scans only what is yours",
-    text: "DAST runs ZAP and Nuclei in an agent inside your network, and attacks a target only after you prove you own it. Full scans never run on production by default.",
-  },
-  "0038": {
-    title: "Leaks without a second leak",
-    text: "Secrets keeps where a secret was found and never the secret: snippets are dropped, the fingerprint is salted, and rotating the key is a decision of its own.",
-  },
-  "0039": {
-    title: "Leaks of files, never files",
-    text: "Malware keeps where a detection was found and never the file: ClamAV and YARA reports are compared, quarantine is recorded, and every decision has a reason.",
-  },
-  "0040": {
-    title: "Sigma rules, one signal per host",
-    text: "SIEM runs Sigma rules over every event and groups matches into one signal per rule and host, so an analyst sees a story and not a thousand lines.",
-  },
-  "0041": {
-    title: "A timeline nobody can rewrite",
-    text: "Incidents keeps an append-only timeline, tasks, evidence links and a postmortem, and other products can open an incident over the API without duplicating it.",
-  },
-  "0042": {
-    title: "Errors grouped by where they happen",
-    text: "Errors groups events by the place they come from, counts who is affected, and reopens an issue as a regression when a fix did not hold.",
-  },
-  "0043": {
-    title: "A judge, not a signer",
-    text: "Supply Chain keeps the SBOM, the signature result and the provenance your CI reports, and answers allowed or not for an image against your policy. It says plainly that it records what CI says and does not verify signatures itself.",
-  },
-  "0044": {
-    title: "Only what a change adds",
-    text: "Audit reads the advisories your scanner reports for every lockfile, compares each branch with the default one, and fails a pull request only for what it adds. It holds no advisory database of its own.",
-  },
-  "0045": {
-    title: "A score that moves",
-    text: "Posture keeps the failed controls of each cloud account, cluster or group of hosts from the checkers you run, with decisions that last and a score over time. It needs no credentials for your infrastructure.",
-  },
-  "0046": {
-    title: "Certificates, never keys",
-    text: "Certificates keeps every certificate you send or a public endpoint presents, warns once per threshold before it ends, and refuses any body that holds a private key. It will not probe a private address.",
-  },
-  "0047": {
-    title: "Checked from outside",
-    text: "Uptime runs no probes itself: a runner you start from CI or another network checks HTTP, TCP, DNS and TLS. A check nobody has run lately is stale, never up, and a public status page shows only what you choose.",
-  },
-  "0048": {
-    title: "A backup nobody restored is a hope",
-    text: "Backups tracks the jobs restic, Velero or a script run, and gives each a state. A job with no recent restore test is untested, not healthy.",
-  },
-  "0049": {
-    title: "Acceptance that ends",
-    text: "Risk keeps the register and vendor reviews. Accepting a risk needs a reason, an approver and an end within a year, and every change goes into a history the database will not let anyone edit.",
-  },
-  "0050": {
-    title: "Nothing dropped without a word",
-    text: "Threat Intel imports STIX, CSV and text feeds, names whatever it cannot use, and answers one lookup for every product. TLP:RED stays with the people it was meant for.",
-  },
-  "0051": {
-    title: "Spend with an owner",
-    text: "Cost reads the bill a pipeline sends, gives every line an owner by tag or rule, forecasts the month and flags spikes for a person to explain. It holds no cloud credentials.",
-  },
   "0052": {
     title: "One list, every product",
     text: "Endpoints, servers, DAST's targets and the repositories SAST reads live only in files the install keeps, in git if it likes, and no product has a form for them. Every product reads the same list, so Uptime, Certificates and DAST agree on an endpoint.",
@@ -184,30 +105,6 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0054": {
     title: "One file per product",
     text: "Each product is one file in products/, with its containers, their settings and their secrets, and compose.yaml only includes them. A product's secrets reach only its containers, a change to it is one file, and leaving a line out of compose.yaml leaves it out.",
-  },
-  "0055": {
-    title: "Read the BMC, touch nothing",
-    text: "infra-agent reads iDRAC, iLO and other BMCs over Redfish with GET only, a read-only account and a pinned certificate. The password is a file only the agent reads, so a compromised Infrastructure can start a read and nothing else.",
-  },
-  "0056": {
-    title: "One session per BMC read",
-    text: "infra-agent signs in to a BMC once per collection and out at the end, so an iDRAC answers in a second instead of checking the password again on every request. An answer is whole at its length, so iDRAC 8's stray bytes cost a connection, not the read.",
-  },
-  "0057": {
-    title: "A canary that names its copy",
-    text: "Deception gives each canary its own token, as a URL, a DNS name or an AWS key found in CloudTrail, and answers every caller the same way so nobody learns they found one. A person decides whether a trigger was a breach or a test.",
-  },
-  "0058": {
-    title: "Controls proved by numbers",
-    text: "Compliance reads what each product serves at /metrics and judges the checks that prove ISO 27001, SOC 2, GDPR and PCI DSS controls. What software cannot prove needs evidence by hand, with an end date. It holds no token of another product.",
-  },
-  "0059": {
-    title: "Alertmanager's way in",
-    text: "Alerts takes alerts from Prometheus and vmalert as their Alertmanager, and from products and scripts. Routes in order group them and send them to whoever is on call, an alert no route takes is shown, never dropped, and silences need a reason and an end.",
-  },
-  "0060": {
-    title: "Playbooks that call only what is stored",
-    text: "Automation runs playbooks of steps through the products' APIs and webhooks an admin stored, with tokens sealed and templates that fill a path or a body, never a host. Approvals are steps, and every run is recorded step by step.",
   },
 };
 
@@ -220,8 +117,10 @@ export function parseRecord(file: string, md: string): Principle {
   if (!head) throw new Error(`${file}: missing "# NNNN. Title"`);
   const [, n, record] = head as unknown as [string, string, string];
   const decision = (field(md, "Decision") ?? "Proposed") as DecisionStatus;
-  // A superseded record is not on the site, so it needs no summary.
-  const summary = SUMMARIES[n] ?? (decision.startsWith("Superseded") ? { title: record, text: "" } : undefined);
+  const product = PRODUCT_LIST.find((p) => record.startsWith(`${p.name}: `))?.name;
+  if (product && SUMMARIES[n]) throw new Error(`${file}: a record of ${product} needs no summary; its product page says what it does`);
+  // Superseded and product records are not on the principles page, so they need no summary.
+  const summary = SUMMARIES[n] ?? (product || decision.startsWith("Superseded") ? { title: record, text: "" } : undefined);
   if (!summary) throw new Error(`${file}: add a summary to SUMMARIES`);
   return {
     n,
@@ -233,6 +132,7 @@ export function parseRecord(file: string, md: string): Principle {
     priority: field(md, "Priority") as Priority | undefined,
     area: field(md, "Area") ?? "",
     file,
+    product,
   };
 }
 
@@ -240,6 +140,8 @@ export const RECORDS_ALL: Principle[] = Object.entries(RECORDS)
   .map(([path, md]) => parseRecord(path.split("/").pop()!, md))
   .sort((a, b) => a.n.localeCompare(b.n));
 /** The decisions in force. A superseded record stays in docs/decisions, so the commits and links that name it still lead to its successor. */
-export const PRINCIPLES = RECORDS_ALL.filter((p) => !p.decision.startsWith("Superseded"));
+export const IN_FORCE = RECORDS_ALL.filter((p) => !p.decision.startsWith("Superseded"));
+/** The decisions every product follows, on the principles page. */
+export const PRINCIPLES = IN_FORCE.filter((p) => !p.product);
 
 export const adrUrl = (file: string) => REPO + file;

@@ -1,4 +1,4 @@
-# 0032. VPN servers at several locations, each with its own identity
+# 0032. VPN: servers at several locations, each with its own identity
 
 - **Decision:** Proposed
 - **Implementation:** In progress
