@@ -44,6 +44,8 @@ const names = (ids: string[]) => {
   const n = ids.map((id) => product(id).name);
   return n.length < 2 ? (n[0] ?? "") : `${n.slice(0, -1).join(", ")} and ${n.at(-1)}`;
 };
+/** The names while they fit in a sentence, a count after that. */
+const some = (ids: string[]) => (ids.length > 4 ? `${ids.length} products` : names(ids));
 
 const released = withStatus(PRODUCT_IDS, "Preview");
 const building = withStatus(PRODUCT_IDS, "In progress");
@@ -88,10 +90,12 @@ function Legend() {
         <span aria-hidden className={cn("size-3.5 rounded border", CHIP["In progress"])} />
         In progress
       </span>
-      <span className="flex items-center gap-2">
-        <span aria-hidden className={cn("size-3.5 rounded border", CHIP.Designed)} />
-        Designed
-      </span>
+      {designed > 0 && (
+        <span className="flex items-center gap-2">
+          <span aria-hidden className={cn("size-3.5 rounded border", CHIP.Designed)} />
+          Designed
+        </span>
+      )}
     </div>
   );
 }
@@ -180,7 +184,7 @@ function BuildingCard({ id }: { id: string }) {
 
 export default function Home() {
   const readyLine = released.length
-    ? `${names(released)} ${released.length === 1 ? "is" : "are"} ready to try today${building.length ? `, and ${names(building)} ${building.length === 1 ? "is" : "are"} next` : ""}.`
+    ? `${some(released)} ${released.length === 1 ? "is" : "are"} ready to try today${building.length ? `, and ${building.length} more ${building.length === 1 ? "is" : "are"} being built` : ""}.`
     : "";
   return (
     <>
@@ -244,14 +248,30 @@ export default function Home() {
         </h2>
         <div className="grid gap-px overflow-hidden rounded-xl border border-line bg-line shadow-overlay sm:grid-cols-3">
           {[
-            { n: released.length, label: "Ready to try", text: `${names(released)}, released for testing.`, tone: "text-success" },
+            {
+              n: released.length,
+              label: "Ready to try",
+              text: released.length > 4 ? "Released for testing. Each card below says what works." : `${names(released)}, released for testing.`,
+              tone: "text-success",
+            },
             {
               n: building.length,
               label: "In progress",
-              text: building.length ? `${names(building)}, being built now.` : "The next one starts soon.",
+              text: building.length
+                ? building.length > 4
+                  ? "Being built now. Each card says what works in its first release."
+                  : `${names(building)}, being built now.`
+                : "The next one starts soon.",
               tone: "text-warning-text",
             },
-            { n: designed, label: "Designed", text: "Every screen is in Storybook. Click through them now.", tone: "" },
+            designed
+              ? { n: designed, label: "Designed", text: "Every screen is in Storybook. Click through them now.", tone: "" }
+              : {
+                  n: PRODUCT_IDS.length,
+                  label: "Every screen designed",
+                  text: "All of them are in Storybook, built or not. Click through them now.",
+                  tone: "",
+                },
           ].map((c) => (
             <div key={c.label} className="bg-surface p-6">
               <p className={cn("m-0 text-4xl leading-none font-semibold", c.tone)}>{c.n}</p>

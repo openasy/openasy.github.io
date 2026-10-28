@@ -39,7 +39,8 @@ export default function Products() {
           onChange={setStatus}
           options={[
             { value: "all", label: `All (${PRODUCT_IDS.length})` },
-            ...STATUSES.map((s) => ({ value: s.value, label: `${s.label} (${count(s.value)})` })),
+            // A status no product has is left out, so no choice leads to an empty list.
+            ...STATUSES.filter((s) => count(s.value) > 0).map((s) => ({ value: s.value, label: `${s.label} (${count(s.value)})` })),
           ]}
         />
         <SegmentedControl
