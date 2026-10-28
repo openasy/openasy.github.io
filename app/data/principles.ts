@@ -5,7 +5,6 @@
  */
 import { PRODUCT_LIST } from "@openasy/ui";
 
-
 const REPO = "https://github.com/openasy/openasy.github.io/blob/main/docs/decisions/";
 export const ADR_INDEX = "https://github.com/openasy/openasy.github.io/tree/main/docs/decisions";
 
