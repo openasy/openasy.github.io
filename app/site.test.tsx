@@ -322,7 +322,7 @@ describe("pages", () => {
   });
 
   it("a planned product shows no install steps", () => {
-    open("/products/waf");
+    open("/products/awareness");
     expect(screen.getByText("Designed")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Not built yet" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Run it" })).not.toBeInTheDocument();
