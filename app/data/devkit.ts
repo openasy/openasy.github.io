@@ -226,6 +226,18 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
             ...(id === "siem" || id === "uptime"
               ? [env(`${prefix}INCIDENTS_URL`, `http://${svc("incidents")}:8080`), env(`${prefix}INCIDENTS_TOKEN`, `\${${prefix}INCIDENTS_TOKEN:-}`)]
               : []),
+            // Inside the network, as Prometheus scrapes them: VictoriaMetrics does not trust Caddy's local CA.
+            ...(id === "metrics"
+              ? [
+                  env(
+                    "METRICS_SOURCES",
+                    ids
+                      .filter((o) => o !== "metrics")
+                      .map((o) => `${o}=http://${svc(o)}:8080/metrics`)
+                      .join(","),
+                  ),
+                ]
+              : []),
           ],
         });
       }),

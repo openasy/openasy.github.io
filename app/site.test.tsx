@@ -321,11 +321,20 @@ describe("pages", () => {
     expect(within(screen.getByRole("list", { name: "Works with" })).getByRole("link", { name: "Secrets" })).toHaveAttribute("href", "/products/secrets");
   });
 
-  it("a product being built shows no install steps", () => {
-    open("/products/awareness");
-    expect(screen.queryByRole("heading", { name: "Run it" })).not.toBeInTheDocument();
-    expect(screen.queryByText(/docker compose up/)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "See the design" })).toBeInTheDocument();
+  it("a product that is not released shows no install steps", () => {
+    // Every product is released now, so one is taken back to designed for this test.
+    const released = STATUS.assistant;
+    delete STATUS.assistant;
+    try {
+      open("/products/assistant");
+      expect(screen.getByText("Designed")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Not built yet" })).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Run it" })).not.toBeInTheDocument();
+      expect(screen.queryByText(/docker compose up/)).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "See the design" })).toBeInTheDocument();
+    } finally {
+      STATUS.assistant = released;
+    }
   });
 
   it("Uptime is released: its compose file and what it builds on", () => {

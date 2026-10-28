@@ -274,7 +274,11 @@ if (!env.get("SIEM_INCIDENTS_TOKEN") || !env.get("UPTIME_INCIDENTS_TOKEN")) {
   // Only a signed-in person makes tokens, not an API token.
   const owner = client(byName("incidents"), true);
   await owner("/api/v1/auth/login", { email: EMAIL, password: PASSWORD });
-  await owner("/api/v1/auth/login/mfa", { code: totp(state.totp.incidents!) });
+  // A code works once, and the owner step may have used this window's: then the next window's is asked for.
+  await owner("/api/v1/auth/login/mfa", { code: totp(state.totp.incidents!) }).catch(async () => {
+    await sleep(31_000 - (Date.now() % 30_000));
+    return owner("/api/v1/auth/login/mfa", { code: totp(state.totp.incidents!) });
+  });
   for (const from of ["siem", "uptime"]) {
     const key = `${from.toUpperCase()}_INCIDENTS_TOKEN`;
     if (!env.get(key)) setEnv(key, (await owner<{ token: string }>("/api/v1/auth/tokens", { name: from, role: "editor" })).token);

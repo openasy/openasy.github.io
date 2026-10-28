@@ -546,7 +546,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Cost reads what a pipeline sends and holds no cloud credentials, so its figures are as fresh as the last export.",
   },
   deception: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "Canaries with a token each: links, kubeconfigs, .env files, HTML pages, host names, SSH configs and AWS keys", done: true },
       { title: "Found by a URL, a DNS name in a zone of its own, or the key's use in CloudTrail", done: true },
@@ -562,7 +564,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Deception holds no cloud credentials: a pipeline sends it the CloudTrail events in which a canary key may show up.",
   },
   compliance: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "Controls of ISO 27001, SOC 2, GDPR and PCI DSS, each with an owner", done: true },
       { title: "Checks judged on what every installed product serves at /metrics", done: true },
@@ -582,7 +586,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Compliance collects evidence and certifies nothing; the auditor does. Controls that no installed product proves need evidence by hand.",
   },
   alerts: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "Prometheus and vmalert use it as their Alertmanager; products and scripts send alerts too", done: true },
       { title: "Routes in order by label, groups, and an alert no route takes shown, never dropped", done: true },
@@ -599,7 +605,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Alerts has no rule engine of its own: alerting rules stay in Prometheus or vmalert.",
   },
   automation: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "Playbooks started by a webhook, a schedule or a person", done: true },
       { title: "Steps in Incidents and VPN, messages, and HTTP calls to stored connections", done: true },
@@ -612,7 +620,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Playbooks are written as JSON for now. Steps reach only the connections an admin stored, and a template never changes a host.",
   },
   access: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "SSH access to one account on one server, asked for with a reason and a duration", done: true },
       { title: "Approved by someone else, or by two people", done: true },
@@ -630,7 +640,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Access never connects to a server: each server trusts its CA once, through commands Access gives. A session already open stays open when access ends.",
   },
   database: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "The slowest queries, from pg_stat_statements, over 7 days", done: true },
       { title: "Who blocks whom, with the session at the head of each chain", done: true },
@@ -647,7 +659,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "PostgreSQL 14 or newer. Database connects as a role in pg_monitor, in read-only sessions, and changes nothing.",
   },
   metrics: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "Every OpenAsy product scraped, and jobs of your own", done: true },
       { title: "OpenTelemetry and Prometheus remote write in", done: true },
@@ -663,7 +677,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Alerting rules stay in vmalert or Prometheus, which send what fires to Alerts.",
   },
   traces: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "OpenTelemetry traces in over OTLP/HTTP", done: true },
       { title: "Services with rate, errors and latency percentiles, and a service map", done: true },
@@ -679,7 +695,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     ],
   },
   endpoints: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "osquery on each device, with a fixed pack and no query from the server", done: true },
       { title: "Disk encryption, OS version, firewall and screen lock against one policy", done: true },
@@ -695,7 +713,18 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "macOS and Linux are tested with real osquery output; Windows is not yet tested on a real machine.",
   },
   runtime: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    guides: [
+      {
+        title: "Add a host",
+        text: "Make an enrolment token under Hosts, then start Falco and runtime-agent on each host from runtime-agent's compose file. Falco watches the kernel; the agent only reads its alerts and sends them.",
+        code: `curl -fsSLO https://raw.githubusercontent.com/openasy/runtime-agent/v0.1.0/compose.yaml
+openssl rand -hex 32 > openasy-agent-kek   # the agent's own key: keep it with the host
+RUNTIME_URL=https://runtime.example.com RUNTIME_ENROLL_TOKEN=oie_... docker compose up -d`,
+      },
+    ],
     features: [
       { title: "Falco's detections, each with its process tree", done: true },
       { title: "A process inventory per host and image, and programs that are new or drift", done: true },
@@ -711,7 +740,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "runtime-agent runs beside Falco on each host, reads only, and runs nothing Runtime sends.",
   },
   "attack-surface": {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "Only domains proven yours by a DNS record, and ranges an admin adds with a reason", done: true },
       { title: "Passive discovery from DNS and certificate transparency", done: true },
@@ -728,7 +759,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Attack Surface probes nothing outside the domains and ranges you have proven or added, and tries no exploits; DAST tests applications.",
   },
   profiling: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "Profiles pushed from Alloy, eBPF included, and the Pyroscope SDKs", done: true },
       { title: "pprof read from services on a schedule or on demand", done: true },
@@ -743,7 +776,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     ],
   },
   waf: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "Coraza and the OWASP Core Rule Set in the request path", done: true },
       { title: "New sites start in detection only; blocking is an admin's choice", done: true },
@@ -759,7 +794,23 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "WAF does not terminate TLS yet: run it behind your proxy.",
   },
   "network-ids": {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    guides: [
+      {
+        title: "Add a sensor",
+        text: "Run network-ids-agent next to Suricata on each sensor, with an enrolment token from Sensors. It reads Suricata's eve.json and writes the rules and suppressions you set into /etc/suricata/openasy; it never changes the traffic.",
+        code: `openssl rand -hex 32 > openasy-agent-kek   # keep it with your backups
+docker run -d --name network-ids-agent --restart unless-stopped --read-only \\
+  --cap-drop ALL --security-opt no-new-privileges \\
+  -v network-ids-agent-data:/data -v "$PWD/openasy-agent-kek:/run/secrets/openasy-agent-kek:ro" \\
+  -v /var/log/suricata:/var/log/suricata:ro -v /etc/suricata/openasy:/rules \\
+  -v /var/run/suricata:/var/run/suricata --group-add "$(getent group suricata | cut -d: -f3)" \\
+  -e NETWORK_IDS_URL=https://network-ids.example.com -e NETWORK_IDS_ENROLL_TOKEN=oie_... \\
+  ghcr.io/openasy/network-ids-agent:0.1.0`,
+      },
+    ],
     features: [
       { title: "Suricata alerts, flows and protocol logs from every sensor", done: true },
       { title: "Each alert with its flow and what was said in it", done: true },
@@ -775,7 +826,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Detection only: Network IDS does not block traffic. network-ids-agent runs beside Suricata on each sensor.",
   },
   awareness: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "People from Identity or a CSV, only in domains proven by a TXT record", done: true },
       { title: "Campaigns from labelled training templates, sent through your own SMTP relay", done: true },
@@ -791,7 +844,18 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "Mail goes only to addresses in domains you have proven are yours.",
   },
   "attack-simulation": {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    guides: [
+      {
+        title: "Add a host",
+        text: "Make an enrolment token under Hosts and start attack-simulation-agent on the host. It runs nothing until an admin allows the host for simulation, with a reason, and then only the tests built into it.",
+        code: `curl -fsSLO https://raw.githubusercontent.com/openasy/attack-simulation-agent/v0.1.0/compose.yaml
+openssl rand -hex 32 > openasy-agent-kek   # the agent's own key: keep it with the host
+ATTACKSIM_URL=https://attack-simulation.example.com ATTACKSIM_ENROLL_TOKEN=aie_... docker compose up -d`,
+      },
+    ],
     features: [
       { title: "A fixed, reviewed pack of harmless MITRE ATT&CK tests", done: true },
       { title: "Runs only on hosts an admin allows, with a reason", done: true },
@@ -806,7 +870,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     note: "attack-simulation-agent runs on each host and runs only the tests built into it.",
   },
   assistant: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
     features: [
       { title: "A model the install chooses: Ollama, vLLM, llama.cpp or Anthropic", done: true },
       { title: "Nothing leaves the install until an admin sets a model", done: true },

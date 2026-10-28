@@ -86,10 +86,12 @@ function Legend() {
         <span aria-hidden className={cn("size-3.5 rounded border", CHIP.Preview)} />
         Ready to try
       </span>
-      <span className="flex items-center gap-2">
-        <span aria-hidden className={cn("size-3.5 rounded border", CHIP["In progress"])} />
-        In progress
-      </span>
+      {building.length > 0 && (
+        <span className="flex items-center gap-2">
+          <span aria-hidden className={cn("size-3.5 rounded border", CHIP["In progress"])} />
+          In progress
+        </span>
+      )}
       {designed > 0 && (
         <span className="flex items-center gap-2">
           <span aria-hidden className={cn("size-3.5 rounded border", CHIP.Designed)} />
@@ -182,6 +184,24 @@ function BuildingCard({ id }: { id: string }) {
   );
 }
 
+// A state no product is in has no tile.
+const tiles = [
+  {
+    n: released.length,
+    label: "Ready to try",
+    text: released.length > 4 ? "Released for testing. Each card below says what works." : `${names(released)}, released for testing.`,
+    tone: "text-success",
+  },
+  {
+    n: building.length,
+    label: "In progress",
+    text: building.length > 4 ? "Being built now. Each card says what works in its first release." : `${names(building)}, being built now.`,
+    tone: "text-warning-text",
+  },
+  { n: designed, label: "Designed", text: "Every screen is in Storybook. Click through them now.", tone: "" },
+].filter((t) => t.n > 0);
+const COLUMNS = ["", "", "sm:grid-cols-2", "sm:grid-cols-3"];
+
 export default function Home() {
   const readyLine = released.length
     ? `${some(released)} ${released.length === 1 ? "is" : "are"} ready to try today${building.length ? `, and ${building.length} more ${building.length === 1 ? "is" : "are"} being built` : ""}.`
@@ -246,33 +266,8 @@ export default function Home() {
         <h2 id="status" className="sr-only">
           Where OpenAsy is today
         </h2>
-        <div className="grid gap-px overflow-hidden rounded-xl border border-line bg-line shadow-overlay sm:grid-cols-3">
-          {[
-            {
-              n: released.length,
-              label: "Ready to try",
-              text: released.length > 4 ? "Released for testing. Each card below says what works." : `${names(released)}, released for testing.`,
-              tone: "text-success",
-            },
-            {
-              n: building.length,
-              label: "In progress",
-              text: building.length
-                ? building.length > 4
-                  ? "Being built now. Each card says what works in its first release."
-                  : `${names(building)}, being built now.`
-                : "The next one starts soon.",
-              tone: "text-warning-text",
-            },
-            designed
-              ? { n: designed, label: "Designed", text: "Every screen is in Storybook. Click through them now.", tone: "" }
-              : {
-                  n: PRODUCT_IDS.length,
-                  label: "Every screen designed",
-                  text: "All of them are in Storybook, built or not. Click through them now.",
-                  tone: "",
-                },
-          ].map((c) => (
+        <div className={cn("grid gap-px overflow-hidden rounded-xl border border-line bg-line shadow-overlay", COLUMNS[tiles.length])}>
+          {tiles.map((c) => (
             <div key={c.label} className="bg-surface p-6">
               <p className={cn("m-0 text-4xl leading-none font-semibold", c.tone)}>{c.n}</p>
               <p className="mt-2 mb-0 font-semibold">{c.label}</p>
@@ -285,7 +280,7 @@ export default function Home() {
       <Section className="pt-20" labelledBy="available">
         <p className="m-0 font-mono text-xs tracking-wider text-accent-text">AVAILABLE NOW</p>
         <h2 id="available" className="mt-2 mb-0 scroll-mt-20 text-3xl font-semibold tracking-tight">
-          Ready to try, and what is next
+          {building.length || designed ? "Ready to try, and what is next" : "Ready to try"}
         </h2>
         <p className="mt-3 max-w-2xl text-base text-fg-muted">
           A product ships when it works on its own. Each card says exactly what works today and what does not yet.

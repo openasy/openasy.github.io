@@ -27,6 +27,23 @@ export const INSTALLABLE = [
   "risk",
   "threat-intel",
   "cost",
+  "deception",
+  "alerts",
+  "access",
+  "database",
+  "endpoints",
+  "attack-surface",
+  "awareness",
+  "runtime",
+  "network-ids",
+  "attack-simulation",
+  "compliance",
+  "automation",
+  "metrics",
+  "traces",
+  "profiling",
+  "waf",
+  "assistant",
 ] as const;
 export type Installable = (typeof INSTALLABLE)[number];
 
@@ -198,6 +215,23 @@ export const PARTS: Record<Installable, Part> = {
   risk: { name: "Risk", service: "risk", prefix: "RISK_", sub: "risk" },
   "threat-intel": { name: "Threat Intelligence", service: "threat-intel", prefix: "THREAT_INTEL_", sub: "threat-intel", ingest: true },
   cost: { name: "Cost", service: "cost", prefix: "COST_", sub: "cost", ingest: true },
+  deception: { name: "Deception", service: "deception", prefix: "DECEPTION_", sub: "deception", ingest: true },
+  alerts: { name: "Alerts", service: "alerts", prefix: "ALERTS_", sub: "alerts", ingest: true },
+  access: { name: "Access", service: "access", prefix: "ACCESS_", sub: "access" },
+  database: { name: "Database", service: "database", prefix: "DATABASE_", sub: "database" },
+  endpoints: { name: "Endpoints", service: "endpoints", prefix: "ENDPOINTS_", sub: "endpoints" },
+  "attack-surface": { name: "Attack Surface", service: "attack-surface", prefix: "ATTACK_SURFACE_", sub: "attack-surface" },
+  awareness: { name: "Awareness", service: "awareness", prefix: "AWARENESS_", sub: "awareness" },
+  runtime: { name: "Runtime", service: "runtime", prefix: "RUNTIME_", sub: "runtime" },
+  "network-ids": { name: "Network IDS", service: "network-ids", prefix: "NETWORK_IDS_", sub: "network-ids" },
+  "attack-simulation": { name: "Attack Simulation", service: "attack-simulation", prefix: "ATTACKSIM_", sub: "attack-simulation" },
+  compliance: { name: "Compliance", service: "compliance", prefix: "COMPLIANCE_", sub: "compliance" },
+  automation: { name: "Automation", service: "automation", prefix: "AUTOMATION_", sub: "automation" },
+  metrics: { name: "Metrics", service: "metrics", prefix: "METRICS_", sub: "metrics", ingest: true },
+  traces: { name: "Traces", service: "traces", prefix: "TRACES_", sub: "traces", ingest: true },
+  profiling: { name: "Profiling", service: "profiling", prefix: "PROFILING_", sub: "profiling", ingest: true },
+  waf: { name: "WAF", service: "waf", prefix: "WAF_", sub: "waf" },
+  assistant: { name: "Assistant", service: "assistant", prefix: "ASSISTANT_", sub: "assistant" },
 };
 const ROLES = "openasy-admins=admin,openasy-editors=editor,openasy-viewers=viewer";
 const PROVIDER_NAME: Record<Provider, string> = { entra: "Microsoft Entra ID", okta: "Okta", google: "Google" };
@@ -581,6 +615,18 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
           ...(hosts ? hostsEnv : []),
           ...(endpoints ? endpointsEnv : []),
           ...(repositories ? [env("OPENASY_REPOSITORIES", "/config/inventory/repositories.yaml")] : []),
+          // Inside the network, as Prometheus scrapes them: no proxy in between, and no local CA VictoriaMetrics would not trust.
+          ...(id === "metrics"
+            ? [
+                env(
+                  "METRICS_SOURCES",
+                  picked
+                    .filter((o) => o !== "metrics")
+                    .map((o) => `${o}=http://${PARTS[o].service}:8080/metrics`)
+                    .join(","),
+                ),
+              ]
+            : []),
           ...oidc(id),
         ],
         [`${service}-data`],
@@ -877,6 +923,9 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         line(!!choice.favicon, "OPENASY_FAVICON", `/config/brand/${choice.favicon ?? "favicon.png"}`),
         "# Where people get help, in the help menu and on About: an email address or an https address. OpenAsy's own when unset.",
         "# OPENASY_SUPPORT=help@example.com",
+        "",
+        "# The products of this install: the product switcher, and where Metrics, Compliance, Automation and Assistant find them.",
+        `OPENASY_PRODUCTS=${picked.map((id) => `${id}=${url(id)}`).join(",")}`,
       ].join("\n"),
     });
     files.push({
