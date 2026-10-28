@@ -69,5 +69,9 @@ Each record has two statuses:
 | 0054 | [Each product in one compose file of its own, with its settings and secrets](./0054-one-file-per-product.md) | Architecture | Proposed · High | Implemented |
 | 0055 | [BMCs: the agent reads them over Redfish, with GET only and a password the product never holds](./0055-bmcs-over-redfish.md) | Architecture | Proposed · Medium | Implemented |
 | 0056 | [BMCs: one Redfish session per collection, and BMCs that break HTTP read anyway](./0056-bmc-sessions.md) | Architecture | Proposed · High | Implemented |
+| 0057 | [Deception: canaries with a token each, found by URL, DNS or CloudTrail, and a trigger a person decides on](./0057-deception.md) | Architecture | Proposed · Medium | In progress |
+| 0058 | [Compliance: controls judged on what the products serve at /metrics, with evidence by hand for the rest](./0058-compliance.md) | Architecture | Proposed · Medium | In progress |
+| 0059 | [Alerts: Alertmanager's way in, routes and groups, silences, schedules and webhooks](./0059-alerts.md) | Architecture | Proposed · High | In progress |
+| 0060 | [Automation: playbooks of steps through product APIs, calling only stored connections, with approvals](./0060-automation.md) | Architecture | Proposed · Medium | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.

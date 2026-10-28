@@ -193,6 +193,22 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
     title: "One session per BMC read",
     text: "infra-agent signs in to a BMC once per collection and out at the end, so an iDRAC answers in a second instead of checking the password again on every request. An answer is whole at its length, so iDRAC 8's stray bytes cost a connection, not the read.",
   },
+  "0057": {
+    title: "A canary that names its copy",
+    text: "Deception gives each canary its own token, as a URL, a DNS name or an AWS key found in CloudTrail, and answers every caller the same way so nobody learns they found one. A person decides whether a trigger was a breach or a test.",
+  },
+  "0058": {
+    title: "Controls proved by numbers",
+    text: "Compliance reads what each product serves at /metrics and judges the checks that prove ISO 27001, SOC 2, GDPR and PCI DSS controls. What software cannot prove needs evidence by hand, with an end date. It holds no token of another product.",
+  },
+  "0059": {
+    title: "Alertmanager's way in",
+    text: "Alerts takes alerts from Prometheus and vmalert as their Alertmanager, and from products and scripts. Routes in order group them and send them to whoever is on call, an alert no route takes is shown, never dropped, and silences need a reason and an end.",
+  },
+  "0060": {
+    title: "Playbooks that call only what is stored",
+    text: "Automation runs playbooks of steps through the products' APIs and webhooks an admin stored, with tokens sealed and templates that fill a path or a body, never a host. Approvals are steps, and every run is recorded step by step.",
+  },
 };
 
 const RECORDS = import.meta.glob<string>("../../docs/decisions/00*.md", { query: "?raw", import: "default", eager: true });
