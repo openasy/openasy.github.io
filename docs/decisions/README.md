@@ -83,5 +83,8 @@ Each record has two statuses:
 | 0068 | [Profiling: Pyroscope inside, eBPF through Alloy, pprof read from services, flame graphs compared by share](./0068-profiling.md) | Architecture | Proposed · Medium | In progress |
 | 0069 | [WAF: Coraza and the OWASP Core Rule Set in the request path, sites start in detection-only mode](./0069-waf.md) | Architecture | Proposed · High | In progress |
 | 0070 | [Network IDS: Suricata on the sensors, its EVE events in, local rules and suppressions out](./0070-network-ids.md) | Architecture | Proposed · Medium | In progress |
+| 0071 | [Awareness: proven domains, your own relay, clicks and reports without capture, training and an evidence trail](./0071-awareness.md) | Architecture | Proposed · Medium | In progress |
+| 0072 | [Attack Simulation: a fixed pack of harmless tests, run on hosts you allow, checked against the detectors](./0072-attack-simulation.md) | Architecture | Proposed · Medium | In progress |
+| 0073 | [Assistant: a model the install chooses, read-only tools as the person asking, and every answer cited](./0073-assistant.md) | Architecture | Proposed · Medium | In progress |
 
 To propose a change, open a pull request that adds a record or changes the status of an existing one.

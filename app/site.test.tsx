@@ -321,10 +321,8 @@ describe("pages", () => {
     expect(within(screen.getByRole("list", { name: "Works with" })).getByRole("link", { name: "Secrets" })).toHaveAttribute("href", "/products/secrets");
   });
 
-  it("a planned product shows no install steps", () => {
+  it("a product being built shows no install steps", () => {
     open("/products/awareness");
-    expect(screen.getByText("Designed")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Not built yet" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Run it" })).not.toBeInTheDocument();
     expect(screen.queryByText(/docker compose up/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "See the design" })).toBeInTheDocument();
