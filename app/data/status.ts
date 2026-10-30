@@ -1,15 +1,19 @@
 // How far each product is built, what it runs on, and how people connect to it.
-// A product without an entry is Designed. When one ships, set its status, version and features here:
+// A product without an entry is Designed, or Planned when it is listed in PLANNED. When one ships, set its status, version and features here:
 // the home page, the lists and every page follow.
 // No React or @openasy/ui imports here, like goals.ts.
 
-/** Preview: released for testing. In progress: being built now. Designed: screens in Storybook only. Add "Available" with the first stable release. */
-export type ProductStatus = "Preview" | "In progress" | "Designed";
+/**
+ * Preview: released for testing. In progress: being built now. Designed: screens in Storybook only. Planned: a page
+ * that says what it will do, and nothing more yet. Add "Available" with the first stable release.
+ */
+export type ProductStatus = "Preview" | "In progress" | "Designed" | "Planned";
 
 export const STATUS_TONE: Record<ProductStatus, "success" | "warning" | "neutral"> = {
   Preview: "success",
   "In progress": "warning",
   Designed: "neutral",
+  Planned: "neutral",
 };
 
 /** What a visitor can do with it, for goals that need several products. */
@@ -97,6 +101,37 @@ export interface ProductState {
 }
 
 const DESIGNED: ProductState = { status: "Designed", features: [], upstream: [] };
+const PLANNED_STATE: ProductState = { status: "Planned", features: [], upstream: [] };
+
+/** Products with a page and no screens yet. Move one out once its screens are in Storybook. */
+const PLANNED = new Set([
+  "audience",
+  "consent",
+  "messages",
+  "crm",
+  "campaigns",
+  "forms",
+  "mail",
+  "calendar",
+  "chat",
+  "meet",
+  "passwords",
+  "files",
+  "wiki",
+  "hr",
+  "recruiting",
+  "time",
+  "payroll",
+  "helpdesk",
+  "live-chat",
+  "knowledge-base",
+  "invoices",
+  "expenses",
+  "purchasing",
+  "contracts",
+  "inventory",
+  "assets",
+]);
 
 // The panel and a vpn-server on their own hosts (ADR 0032). vpn never connects to a server: servers reach it over HTTPS.
 const VPN_PANEL = `openssl rand -hex 32 > openasy-kek   # keep it with your backups
@@ -1063,7 +1098,7 @@ ATTACKSIM_URL=https://attack-simulation.example.com ATTACKSIM_ENROLL_TOKEN=aie_.
   },
 };
 
-export const statusFor = (id: string): ProductState => STATUS[id] ?? DESIGNED;
+export const statusFor = (id: string): ProductState => STATUS[id] ?? (PLANNED.has(id) ? PLANNED_STATE : DESIGNED);
 
 export const isReleased = (id: string) => statusFor(id).status === "Preview";
 
@@ -1076,7 +1111,8 @@ export const statusLabel = (id: string) => {
 /** A goal is ready when every product it needs is released, in progress when one of them is being built or released. */
 export function readiness(required: string[]): Readiness {
   if (required.every(isReleased)) return "Ready to try";
-  return required.some((id) => statusFor(id).status !== "Designed") ? "In progress" : "Designed";
+  // Planned products count as not started, like designed ones.
+  return required.some((id) => ["Preview", "In progress"].includes(statusFor(id).status)) ? "In progress" : "Designed";
 }
 
 /** Whether a plain x.y.z `version` is `min` or later. */

@@ -5,7 +5,7 @@ import { READINESS_TONE, STATUS_TONE, atLeast, readiness, statusFor, statusLabel
 
 export const product = (id: string) => PRODUCTS[id as ProductId];
 
-/** Preview 0.2.0, In progress or Designed. */
+/** Preview 0.2.0, In progress, Designed or Planned. */
 export function ProductStatusBadge({ id }: { id: string }) {
   return <Badge tone={STATUS_TONE[statusFor(id).status]}>{statusLabel(id)}</Badge>;
 }
@@ -30,7 +30,7 @@ export function GoalCard({ goal }: { goal: Goal }) {
   );
 }
 
-const CARD_BORDER = { Preview: "border-accent", "In progress": "border-dashed border-warning", Designed: "border-line" } as const;
+const CARD_BORDER = { Preview: "border-accent", "In progress": "border-dashed border-warning", Designed: "border-line", Planned: "border-line" } as const;
 
 export function ProductCard({ id }: { id: string }) {
   const p = product(id);
@@ -47,7 +47,7 @@ export function ProductCard({ id }: { id: string }) {
         <span className="flex min-w-0 flex-col gap-1">
           <span className="flex flex-wrap items-center gap-1.5">
             <span className="font-semibold">{p.name}</span>
-            {status !== "Designed" && <ProductStatusBadge id={id} />}
+            {status !== "Designed" && status !== "Planned" && <ProductStatusBadge id={id} />}
           </span>
           <span className="text-sm text-fg-muted">{p.summary}</span>
         </span>

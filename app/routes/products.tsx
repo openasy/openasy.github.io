@@ -9,11 +9,12 @@ export function meta() {
   return [{ title: "Products · OpenAsy" }, { name: "description", content: "Every OpenAsy product for operations, security, identity and automation." }];
 }
 
-const RANK: Record<ProductStatus, number> = { Preview: 0, "In progress": 1, Designed: 2 };
+const RANK: Record<ProductStatus, number> = { Preview: 0, "In progress": 1, Designed: 2, Planned: 3 };
 const STATUSES: Array<{ value: ProductStatus; label: string }> = [
   { value: "Preview", label: "Ready to try" },
   { value: "In progress", label: "In progress" },
   { value: "Designed", label: "Designed" },
+  { value: "Planned", label: "Planned" },
 ];
 
 // Released first, then in progress; sort is stable, so each keeps its catalogue order.

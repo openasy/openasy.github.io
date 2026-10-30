@@ -522,11 +522,12 @@ export default function Home() {
             Build your install
           </ButtonLink>
         </div>
-        <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Columns rather than a grid, so short groups fill the space under long ones. */}
+        <div className="mt-8 columns-1 gap-8 sm:columns-2 lg:columns-4">
           {GROUPS.map((g) => {
             const ids = PRODUCT_IDS.filter((id) => PRODUCTS[id].group === g.id);
             return (
-              <div key={g.id}>
+              <div key={g.id} className="mb-8 break-inside-avoid">
                 <h3 className="m-0 text-base font-semibold">
                   {g.name} <span className="font-normal text-fg-subtle">{ids.length}</span>
                 </h3>
