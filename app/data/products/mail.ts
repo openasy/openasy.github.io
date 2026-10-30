@@ -33,7 +33,7 @@ export const mail: ProductStory = {
   ],
   decides: [
     { label: "Sign-in", text: "People sign in to the webmail through Identity; other clients use a password made for that device, which can be revoked." },
-    { label: "Outgoing", text: "Mail is sent directly, or through the relay set in the file when the server's address cannot send on its own." },
+    { label: "Outgoing", text: "Mail is sent directly, or through a relay set on the mail server when its address cannot send on its own." },
     { label: "Changes", text: "A mailbox removed from the file is disabled, not deleted; its mail is kept until an admin deletes it." },
   ],
   inputs: [
