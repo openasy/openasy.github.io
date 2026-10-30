@@ -36,5 +36,6 @@
   "threat-intel": ["feeds", "indicators", "lookup"],
   "uptime": ["checks", "outages", "status"],
   "vpn": ["access", "people", "sessions"],
-  "vulnerabilities": ["findings", "hosts", "images"]
+  "vulnerabilities": ["findings", "hosts", "images"],
+  "mail": ["devices", "dns", "domains", "inbox"]
 }

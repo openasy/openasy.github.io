@@ -111,7 +111,6 @@ const PLANNED = new Set([
   "crm",
   "campaigns",
   "forms",
-  "mail",
   "calendar",
   "chat",
   "meet",
@@ -414,6 +413,19 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
       { title: "Funnels, heatmaps, form analysis and session replays", done: false },
     ],
     upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "visits, events and daily totals" }],
+  },
+  mail: {
+    status: "In progress",
+    signIn: true,
+    features: [
+      { title: "Domains, mailboxes, aliases and quotas in one YAML file, applied to Stalwart whole", done: true },
+      { title: "Webmail: folders, search, reading with outside pictures held back, writing and replying", done: true },
+      { title: "A password for each mail app, made and removed by the person", done: true },
+      { title: "MX, SPF, DKIM, DMARC and MTA-STS records checked for each domain", done: true },
+      { title: "Tested against a running Stalwart", done: false },
+      { title: "Filters, out-of-office replies, delivery reports and import over IMAP", done: false },
+    ],
+    upstream: [{ name: "Stalwart", url: "https://stalw.art/", role: "the mail server: receiving, sending, storage and spam filtering" }],
   },
   errors: {
     status: "Preview",

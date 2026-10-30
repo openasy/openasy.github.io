@@ -42,8 +42,10 @@ export const mail: ProductStory = {
     { name: "Migration", how: "Mail imported over IMAP from the old provider." },
   ],
   screens: [
-    { page: "inbox", title: "Inbox", shows: "A person's mail by thread, with search and folders." },
-    { page: "domains", title: "Domains", shows: "Each domain with its mailboxes and whether its DNS records are right." },
+    { page: "inbox", title: "Mail", shows: "A person's mail with folders and search, and a message open; pictures from other sites are held back." },
+    { page: "devices", title: "Devices", shows: "A password for each mail app, and the settings to put in it." },
+    { page: "domains", title: "Domains", shows: "Each domain with its mailboxes, whether the server is in step with the file, and DNS problems." },
+    { page: "dns", title: "A domain", shows: "The DNS records a domain needs, which are wrong or missing, and the value to set." },
   ],
   worksWith: [
     { id: "identity", how: "People sign in to the webmail with their company account." },
@@ -52,7 +54,8 @@ export const mail: ProductStory = {
     { id: "alerts", how: "A growing queue or a domain on a blocklist raises an alert." },
   ],
   limits: [
-    "Planned: not built yet.",
+    "In progress: built and tested against a mail server in memory, not yet against a running Stalwart.",
+    "Filters, out-of-office replies, delivery reports and import from the old provider are not built yet.",
     "Calendars and contacts come after the first release.",
     "Delivery depends on your server's address and DNS; on networks that block outgoing mail, a relay is needed.",
   ],
