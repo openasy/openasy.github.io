@@ -2,6 +2,12 @@ import type { ProductId } from "@openasy/ui";
 import { access } from "./access";
 import { alerts } from "./alerts";
 import { analytics } from "./analytics";
+import { audience } from "./audience";
+import { campaigns } from "./campaigns";
+import { consent } from "./consent";
+import { crm } from "./crm";
+import { forms } from "./forms";
+import { messages } from "./messages";
 import { assistant } from "./assistant";
 import { attackSimulation } from "./attack-simulation";
 import { attackSurface } from "./attack-surface";
@@ -48,6 +54,12 @@ export const STORIES: Record<ProductId, ProductStory> = {
   access,
   alerts,
   analytics,
+  audience,
+  campaigns,
+  consent,
+  crm,
+  forms,
+  messages,
   assistant,
   "attack-simulation": attackSimulation,
   "attack-surface": attackSurface,

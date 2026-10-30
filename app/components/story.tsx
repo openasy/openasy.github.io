@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { Check, ExternalLink, Minus } from "lucide-react";
 import { Callout, cn } from "@openasy/ui";
 import { hasScreenshot, screenshot, type ProductStory, type Screen } from "../data/products";
-import { storyUrl } from "../data/storybook";
+import { hasDesign, storyUrl } from "../data/storybook";
 import { product } from "./cards";
 
 /** The sections a story adds, for the bar under the page's heading. */
@@ -318,7 +318,8 @@ export function StorySections({ id, story, planned, building = false }: { id: st
           </Callout>
         ) : (
           <Callout tone="info" title="The plan, open to change">
-            This product is designed but not built yet. This is how it will work.
+            {hasDesign(product(id).name) ? "This product is designed but not built yet." : "This product is planned and not built yet."} This is how it will
+            work.
           </Callout>
         ))}
       <Problem story={story} />

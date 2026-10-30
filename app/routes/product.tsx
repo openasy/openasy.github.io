@@ -253,8 +253,9 @@ export default function ProductPage() {
               Not built yet
             </h2>
             <p className="mt-3 mb-0 max-w-xl text-base text-fg-muted">
-              The screens are designed, so you can click through how it will work today. There is no image to install yet; this page will show what works once
-              there is.
+              {hasDesign(p.name)
+                ? "The screens are designed, so you can click through how it will work today. There is no image to install yet; this page will show what works once there is."
+                : "It is planned: this page says how it will work. There is no image to install yet; this page will show what works once there is."}
             </p>
           </section>
         )}

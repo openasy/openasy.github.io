@@ -27,6 +27,7 @@ export const GROUPS: Array<{ id: ProductGroup; name: string; text: string }> = [
   { id: "operations", name: "Operations", text: "Keep systems running and know why they are slow." },
   { id: "security", name: "Security", text: "Find weaknesses, detect attacks and respond." },
   { id: "identity", name: "Identity", text: "Who people are and what they may do." },
+  { id: "growth", name: "Growth", text: "Know your customers, reach them with their consent, and sell." },
   { id: "platform", name: "Platform", text: "Automate and ask questions across all of it." },
 ];
 
@@ -160,6 +161,7 @@ function Showcase() {
     operations: undefined,
     security: undefined,
     identity: undefined,
+    growth: undefined,
     platform: undefined,
   });
   const id = picked[group] ?? ids[0]!;

@@ -62,7 +62,8 @@ export default function Products() {
         <p className="mt-6 rounded-xl border border-dashed border-line-strong p-6 text-center text-fg-muted">No products in this group have that status yet.</p>
       )}
       <p className="mt-5 mb-0 text-sm text-fg-subtle">
-        Showing {ids.length} of {PRODUCT_IDS.length}. Products without a label are designed: their screens are in Storybook, the code comes later.
+        Showing {ids.length} of {PRODUCT_IDS.length}. Products without a label are not released yet: some are designed, with their screens in Storybook, and
+        some are planned.
       </p>
     </Section>
   );
