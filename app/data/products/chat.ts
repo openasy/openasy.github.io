@@ -80,16 +80,10 @@ export const chat: ProductStory = {
     },
   ],
   screens: [
-    {
-      page: "channel",
-      title: "Channel",
-      shows: "A channel's messages with their threads.",
-    },
-    {
-      page: "search",
-      title: "Search",
-      shows: "Messages and files across channels.",
-    },
+    { page: "channel", title: "Channel", shows: "A channel's messages with an alert's thread open beside them.", story: "channel" },
+    { page: "search", title: "Search", shows: "Messages and files across channels, narrowed by channel, sender and date.", story: "search" },
+    { page: "people", title: "People", shows: "Members and guests with presence, local time and what a guest can see.", story: "people" },
+    { page: "channels", title: "Channels", shows: "Each channel's members, how long its messages are kept, and its guests.", story: "channels" },
   ],
   worksWith: [
     {
@@ -110,7 +104,7 @@ export const chat: ProductStory = {
     },
   ],
   limits: [
-    "Planned: not built yet.",
+    "Designed: the screens are in Storybook; it is not built yet.",
     "Built on an existing open-source messaging server, chosen before work starts.",
     "Federation with other companies' servers comes after the first release.",
   ],

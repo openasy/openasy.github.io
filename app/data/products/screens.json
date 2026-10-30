@@ -37,5 +37,11 @@
   "uptime": ["checks", "outages", "status"],
   "vpn": ["access", "people", "sessions"],
   "vulnerabilities": ["findings", "hosts", "images"],
-  "mail": ["devices", "dns", "domains", "inbox"]
+  "mail": ["devices", "dns", "domains", "inbox"],
+  "calendar": ["contacts", "rooms", "sharing", "week"],
+  "passwords": ["activity", "health", "leavers", "vaults"],
+  "chat": ["channel", "channels", "people", "search"],
+  "meet": ["meeting", "meetings", "recordings", "server"],
+  "files": ["bin", "links", "space", "spaces"],
+  "wiki": ["edit", "page", "policies", "stale"]
 }

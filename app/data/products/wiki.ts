@@ -80,16 +80,10 @@ export const wiki: ProductStory = {
     },
   ],
   screens: [
-    {
-      page: "page",
-      title: "Page",
-      shows: "A page with its history and owner.",
-    },
-    {
-      page: "stale",
-      title: "Stale",
-      shows: "Pages that need a review.",
-    },
+    { page: "page", title: "Page", shows: "A page with the space's tree, its owner, review date and changes.", story: "page" },
+    { page: "edit", title: "Editing", shows: "The editor with its toolbar, a note on what changed, and who else is editing.", story: "edit" },
+    { page: "stale", title: "To review", shows: "Pages past their review period, the most read and longest overdue first.", story: "to-review" },
+    { page: "policies", title: "Policies", shows: "Policies and who has not read their current version yet.", story: "policies" },
   ],
   worksWith: [
     {
@@ -110,7 +104,7 @@ export const wiki: ProductStory = {
     },
   ],
   limits: [
-    "Planned: not built yet.",
+    "Designed: the screens are in Storybook; it is not built yet.",
     "Writing together on the same page at the same time comes after the first release.",
     "It is for the company's own people; customer help lives in the Knowledge Base.",
   ],

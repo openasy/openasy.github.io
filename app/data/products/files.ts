@@ -83,13 +83,12 @@ export const files: ProductStory = {
     {
       page: "space",
       title: "Space",
-      shows: "A team's folders and files.",
+      shows: "A team's folder with its files, one open in the preview with its versions and the link it is in.",
+      story: "space-view",
     },
-    {
-      page: "links",
-      title: "Links",
-      shows: "Every link to someone outside, and when it expires.",
-    },
+    { page: "links", title: "Links", shows: "Every link to someone outside, when it expires, and what was opened through it.", story: "links" },
+    { page: "bin", title: "Recycle bin", shows: "Deleted files and folders, kept 30 days, ready to restore.", story: "recycle-bin" },
+    { page: "spaces", title: "Spaces", shows: "The spaces in the file, their Identity groups, size and quota.", story: "spaces" },
   ],
   worksWith: [
     {
@@ -110,7 +109,7 @@ export const files: ProductStory = {
     },
   ],
   limits: [
-    "Planned: not built yet.",
+    "Designed: the screens are in Storybook; it is not built yet.",
     "Editing documents together in the browser comes after the first release.",
     "Storage is your own disks or an S3-compatible store you run.",
   ],

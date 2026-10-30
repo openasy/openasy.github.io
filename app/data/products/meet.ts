@@ -80,16 +80,10 @@ export const meet: ProductStory = {
     },
   ],
   screens: [
-    {
-      page: "meeting",
-      title: "Meeting",
-      shows: "The call, with its participants and shared screen.",
-    },
-    {
-      page: "meetings",
-      title: "Meetings",
-      shows: "Meetings today and how many joined.",
-    },
+    { page: "meeting", title: "Meeting", shows: "The call, with its shared screen, everyone's tile and a guest waiting in the lobby.", story: "meeting" },
+    { page: "meetings", title: "Meetings", shows: "Meetings today, where each link came from and how many joined.", story: "meetings" },
+    { page: "recordings", title: "Recordings", shows: "The few recorded meetings, who allowed them and when each file is deleted.", story: "recordings" },
+    { page: "server", title: "Server", shows: "Media server and TURN health, and how each person connects.", story: "server" },
   ],
   worksWith: [
     {
@@ -106,7 +100,7 @@ export const meet: ProductStory = {
     },
   ],
   limits: [
-    "Planned: not built yet.",
+    "Designed: the screens are in Storybook; it is not built yet.",
     "Built on an existing open-source media server, chosen before work starts.",
     "Webinars for hundreds of viewers are out of scope.",
   ],

@@ -6,7 +6,7 @@ export const passwords: ProductStory = {
     headline: "Shared passwords end up in a spreadsheet",
     text: "The router's password, the bank's login and the social media accounts are shared by chat, kept in a spreadsheet, and never changed when someone leaves. Passwords gives each person a vault and each team shared ones, on a server compatible with the Bitwarden apps and browser extensions, with sign-in through Identity and access that follows people's groups.",
     example:
-      "Ali leaves the company. HR ends his contract, Identity disables his account, and Passwords removes him from the Finance vault and lists the twelve passwords he could see, so they can be changed that afternoon.",
+      "Ali leaves the company. HR ends Ali's contract, Identity disables the account, and Passwords removes Ali from the Finance vault and lists the twelve passwords Ali could see, so they can be changed that afternoon.",
   },
   who: ["Everyone, who has too many passwords", "IT and security teams, who answer for shared accounts"],
   glance: [
@@ -83,13 +83,12 @@ export const passwords: ProductStory = {
     {
       page: "vaults",
       title: "Vaults",
-      shows: "Shared vaults with their members and items.",
+      shows: "A person's vaults with one open: its items, a login with its two-step code, and members from Identity groups.",
+      story: "vaults",
     },
-    {
-      page: "health",
-      title: "Health",
-      shows: "Weak, reused and leaked passwords by team.",
-    },
+    { page: "health", title: "Health", shows: "Leaked, weak, reused and old passwords in the shared vaults, by team.", story: "health" },
+    { page: "leavers", title: "Leavers", shows: "The shared passwords someone who leaves could see, the recently opened ones first.", story: "leavers" },
+    { page: "activity", title: "Activity", shows: "Who opened, copied or changed which shared item, and from where.", story: "activity" },
   ],
   worksWith: [
     {
@@ -106,7 +105,7 @@ export const passwords: ProductStory = {
     },
   ],
   limits: [
-    "Planned: not built yet.",
+    "Designed: the screens are in Storybook; it is not built yet.",
     "Built on a Bitwarden-compatible open-source server, chosen before work starts.",
     "Passkeys stored in vaults depend on what the apps support.",
   ],

@@ -83,12 +83,16 @@ export const calendar: ProductStory = {
     {
       page: "week",
       title: "Week",
-      shows: "A person's week with their meetings and invitations.",
+      shows: "A person's week across their own and shared calendars, with invitations to answer and the open meeting.",
+      story: "week",
     },
+    { page: "rooms", title: "Rooms", shows: "Each room's bookings for the day, and what a room accepts on its own.", story: "rooms" },
+    { page: "contacts", title: "Contacts", shows: "The company directory from Identity, a person's own contacts and a team's shared ones.", story: "contacts" },
     {
-      page: "rooms",
-      title: "Rooms",
-      shows: "Each room's bookings for the day.",
+      page: "sharing",
+      title: "Sharing",
+      shows: "Who sees which calendar, the addresses for calendar apps, and meetings to hand over when someone leaves.",
+      story: "sharing",
     },
   ],
   worksWith: [
@@ -110,7 +114,7 @@ export const calendar: ProductStory = {
     },
   ],
   limits: [
-    "Planned: not built yet.",
+    "Designed: the screens are in Storybook; it is not built yet.",
     "Mail must be installed; Calendar uses its server.",
     "Exchange ActiveSync is not supported; phones use CalDAV and CardDAV.",
   ],
