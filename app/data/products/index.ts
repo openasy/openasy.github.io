@@ -7,6 +7,7 @@ import { campaigns } from "./campaigns";
 import { consent } from "./consent";
 import { crm } from "./crm";
 import { forms } from "./forms";
+import { mail } from "./mail";
 import { messages } from "./messages";
 import { assistant } from "./assistant";
 import { attackSimulation } from "./attack-simulation";
@@ -59,6 +60,7 @@ export const STORIES: Record<ProductId, ProductStory> = {
   consent,
   crm,
   forms,
+  mail,
   messages,
   assistant,
   "attack-simulation": attackSimulation,
