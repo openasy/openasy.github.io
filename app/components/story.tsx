@@ -307,14 +307,20 @@ function Limits({ story }: { story: ProductStory }) {
 }
 
 /** What the product is for and how it works, in the order a visitor asks. */
-export function StorySections({ id, story, planned }: { id: string; story: ProductStory; planned: boolean }) {
+/** `building`: the product is written and tested but not released, so the story is how it works, not a plan. */
+export function StorySections({ id, story, planned, building = false }: { id: string; story: ProductStory; planned: boolean; building?: boolean }) {
   return (
     <>
-      {planned && (
-        <Callout tone="info" title="The plan, open to change">
-          This product is designed but not built yet. This is how it will work.
-        </Callout>
-      )}
+      {planned &&
+        (building ? (
+          <Callout tone="info" title="Not released yet">
+            This product is built and tested, and has no release to install yet. This is how it works.
+          </Callout>
+        ) : (
+          <Callout tone="info" title="The plan, open to change">
+            This product is designed but not built yet. This is how it will work.
+          </Callout>
+        ))}
       <Problem story={story} />
       <How story={story} />
       <PageSection id="checks" heading={title("checks")}>
@@ -323,7 +329,7 @@ export function StorySections({ id, story, planned }: { id: string; story: Produ
       <Decides story={story} />
       <PageSection id="screens" heading={title("screens")}>
         <p className="mt-2 mb-0 text-fg-muted">
-          {planned ? "Screens from the design, with sample data." : "Screens of the released product, with sample data."}
+          {building ? "The product's screens." : planned ? "Screens from the design, with sample data." : "Screens of the released product, with sample data."}
         </p>
         <ScreenTabs id={id} story={story} />
       </PageSection>

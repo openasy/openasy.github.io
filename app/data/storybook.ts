@@ -44,6 +44,9 @@ const FIRST_STORY: Record<string, string> = {
 
 const slug = (name: string) => name.toLowerCase().replace(/\s+/g, "-");
 
+/** Whether the product's screens are in Storybook; a product built without designing them first has none. */
+export const hasDesign = (name: string) => name in FIRST_STORY;
+
 /** Storybook URL of a product's screens, by its display name: its first story, or the one named. */
 export function storyUrl(name: string, story?: string): string {
   const first = story ?? FIRST_STORY[name];

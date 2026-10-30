@@ -367,6 +367,19 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     ],
     upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "incidents, timeline and tasks" }],
   },
+  analytics: {
+    status: "In progress",
+    signIn: true,
+    features: [
+      { title: "Sites listed in one YAML file, applied whole and read again within a minute", done: true },
+      { title: "One script tag per site: page views, time and scroll, clicks and the site's own events", done: true },
+      { title: "Visitors, pages, sources and campaigns, devices, goals, and every visit in order", done: true },
+      { title: "Consent per site, and a visitor's data exported or deleted", done: true },
+      { title: "Form values, IP addresses and query strings left out before anything is stored", done: true },
+      { title: "Funnels, heatmaps, form analysis and session replays", done: false },
+    ],
+    upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "visits, events and daily totals" }],
+  },
   errors: {
     status: "Preview",
     version: "0.5.0",

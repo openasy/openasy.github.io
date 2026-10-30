@@ -6,7 +6,7 @@ import { apiFor } from "../data/apis";
 import { goalsForProduct } from "../data/goals";
 import { INSTALLABLE } from "../data/install";
 import { deploymentsFor, statusFor, withStatus, type Deployment, type Guide } from "../data/status";
-import { storyUrl } from "../data/storybook";
+import { hasDesign, storyUrl } from "../data/storybook";
 import { ButtonLink, CodeBlock, GITHUB } from "../components/site";
 import { ProductStatusBadge, composeRun, helmFor, product } from "../components/cards";
 import { Glance, STORY_SECTIONS, Screenshot, StorySections, heroScreen } from "../components/story";
@@ -129,7 +129,7 @@ export default function ProductPage() {
   const story = storyFor(id);
   const sections = [
     ...(story ? STORY_SECTIONS : []),
-    released ? { id: "works", title: "What works today" } : null,
+    released ? { id: "works", title: "What works today" } : s.status === "In progress" ? { id: "works", title: "Built, not released yet" } : null,
     released ? { id: "run", title: "Run it" } : null,
   ].filter((x) => x !== null);
   const hero = story && heroScreen(id, story);
@@ -177,9 +177,11 @@ export default function ProductPage() {
                 </>
               ) : (
                 <>
-                  <ButtonLink to={storyUrl(p.name)} variant="primary" size="lg" external>
-                    See the design <ArrowRight aria-hidden />
-                  </ButtonLink>
+                  {hasDesign(p.name) && (
+                    <ButtonLink to={storyUrl(p.name)} variant="primary" size="lg" external>
+                      See the design <ArrowRight aria-hidden />
+                    </ButtonLink>
+                  )}
                   <ButtonLink to={GITHUB} size="lg" external>
                     Follow on GitHub
                   </ButtonLink>
@@ -215,12 +217,15 @@ export default function ProductPage() {
       )}
 
       <div className="mx-auto flex max-w-6xl flex-col gap-16 px-4 pt-14 pb-20">
-        {story && <StorySections id={id} story={story} planned={!released} />}
-        {released ? (
+        {story && <StorySections id={id} story={story} planned={!released} building={s.status === "In progress"} />}
+        {released || s.status === "In progress" ? (
           <section aria-labelledby="works">
             <h2 id="works" className="m-0 scroll-mt-20 text-2xl font-semibold tracking-tight sm:text-3xl">
-              What works today
+              {released ? "What works today" : "Built, not released yet"}
             </h2>
+            {!released && (
+              <p className="mt-2 mb-0 max-w-xl text-fg-muted">There is no image to install yet. This is what the code does today, and what comes next.</p>
+            )}
             <ul aria-label="Features" className="mt-4 flex list-none flex-col overflow-hidden rounded-xl border border-line bg-surface p-0">
               {s.features.map((f) => (
                 <li key={f.title} className={cn("flex items-start gap-3 border-line px-4 py-3 not-first:border-t", !f.done && "bg-canvas text-fg-muted")}>
@@ -245,7 +250,7 @@ export default function ProductPage() {
         ) : (
           <section aria-labelledby="works" className="rounded-2xl border border-dashed border-line-strong bg-surface p-6 sm:p-8">
             <h2 id="works" className="m-0 scroll-mt-20 text-2xl font-semibold tracking-tight sm:text-3xl">
-              {s.status === "In progress" ? "Being built now" : "Not built yet"}
+              Not built yet
             </h2>
             <p className="mt-3 mb-0 max-w-xl text-base text-fg-muted">
               The screens are designed, so you can click through how it will work today. There is no image to install yet; this page will show what works once
