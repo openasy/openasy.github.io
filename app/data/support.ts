@@ -65,7 +65,7 @@ export const FAQ: Array<{ q: string; a: string }> = [
   { q: "Do I need a support plan to use OpenAsy?", a: "No. Every product is free and open source under AGPL-3.0, and works the same with or without support." },
   {
     q: "Can I use OpenAsy in a commercial product or service?",
-    a: "Yes. AGPL-3.0 allows commercial use; if you offer a changed version to others, you share your changes under the same licence. If you cannot, a commercial licence covers the same code without that obligation.",
+    a: "Yes. AGPL-3.0 allows commercial use; if you offer a changed version to others, you share your changes under the same licence.",
   },
   { q: "Does paying unlock features?", a: "No. There is no enterprise edition and no licence key. You pay for people who know the products, not for code." },
   { q: "How much does it cost?", a: "It depends on how many products and hosts you run and the plan you need. Tell us what you run and we will send a quote." },

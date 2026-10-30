@@ -10,7 +10,7 @@ import { STATUS } from "./data/status";
 import { composeFor } from "./components/cards";
 import { SiteFooter, SiteHeader } from "./components/site";
 import { BREACH_STORY, coverage } from "./components/breach";
-import Home from "./routes/home";
+import Home, { heroShotsExist } from "./routes/home";
 import Goals from "./routes/goals";
 import GoalPage from "./routes/goal";
 import Products from "./routes/products";
@@ -62,7 +62,7 @@ describe("data", () => {
   });
 
   it("links each product to its Storybook screens", () => {
-    expect(storyUrl("Network IDS")).toBe("https://openasy.github.io/ui/?path=/story/products-network-ids--alerts");
+    expect(storyUrl("Network IDS")).toBe("https://openasy.com/ui/?path=/story/products-network-ids--alerts");
     expect(storyUrl("SAST")).toContain("--pull-requests");
   });
 
@@ -86,7 +86,19 @@ describe("pages", () => {
     expect(h1()).toHaveTextContent("Run and secure your infrastructure");
     for (const g of GOALS) expect(screen.getAllByRole("link", { name: new RegExp(g.title) }).length).toBeGreaterThan(0);
     for (const id of PRODUCT_IDS) expect(screen.getAllByRole("link", { name: PRODUCTS[id].name }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("list", { name: "Released and in progress products" })).toHaveTextContent("Vulnerabilities");
+  });
+
+  it("home shows the products at work, and every hero screen is on disk", async () => {
+    open("/");
+    expect(heroShotsExist()).toBe(true);
+    const panel = () => screen.getByRole("tabpanel", { name: "SIEM" });
+    expect(panel().querySelector("img")).toHaveAttribute("src", "/screens/siem/signals-light.webp");
+    await userEvent.click(screen.getByRole("tab", { name: "Metrics" }));
+    expect(screen.getByRole("tabpanel", { name: "Metrics" }).querySelector("img")).toHaveAttribute("src", "/screens/metrics/dashboard-light.webp");
+    // The showcase: a group, then a product in it, with its own screen and a way to install it.
+    await userEvent.click(screen.getByRole("tab", { name: /^Security/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^SAST/ }));
+    expect(screen.getByRole("link", { name: "Install SAST" })).toHaveAttribute("href", "/products/sast");
   });
 
   it("goals page links to each guide", () => {
@@ -462,8 +474,10 @@ describe("pages", () => {
     expect(screen.getByRole("table", { name: "Response times by severity and plan" })).toBeInTheDocument();
   });
 
-  it("home leaves support to the footer", () => {
+  it("home says every feature is free and offers the support plans", () => {
     open("/");
-    expect(screen.queryByRole("link", { name: "See support plans" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /We sell help, never features/ })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Support plans" }).children).toHaveLength(PLANS.length);
+    expect(screen.getByRole("link", { name: "Compare plans and response times" })).toHaveAttribute("href", "/support");
   });
 });

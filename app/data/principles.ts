@@ -45,7 +45,7 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
   "0007": { title: "Light and dark", text: "Every colour has a light and a dark value. Follows the system setting unless you pick one." },
   "0008": {
     title: "Open source",
-    text: "Products under AGPL-3.0, the component and sign-in libraries under Apache-2.0, developed in public. No closed enterprise edition: support plans and commercial licences fund the work.",
+    text: "Products under AGPL-3.0, the component and sign-in libraries under Apache-2.0, developed in public. No closed enterprise edition: the products are free, and support plans, bought only by those who want them, fund the work.",
   },
   "0009": {
     title: "Current, supported libraries",
