@@ -1,7 +1,7 @@
 # openasy.github.io
 
 The OpenAsy website: what the products do, install guides by goal, the product catalog and the design principles.
-Published at https://openasy.github.io/. The component library's Storybook stays at https://openasy.github.io/ui/.
+Published at https://openasy.com/ (GitHub Pages; openasy.github.io redirects there). The component library's Storybook stays at https://openasy.com/ui/.
 
 ## Pages
 

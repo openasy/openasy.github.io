@@ -431,7 +431,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const brandMount = choice.logo || choice.favicon ? ["      - ./brand:/config/brand:ro   # your logo and tab icon, in every product"] : [];
   const hardened = ["    read_only: true", "    cap_drop: [ALL]", '    security_opt: ["no-new-privileges:true"]'];
 
-  const lines = [`# OpenAsy for ${d}, made at openasy.github.io/install`, "services:"];
+  const lines = [`# OpenAsy for ${d}, made at openasy.com/install`, "services:"];
   const services: string[] = [];
   const volumes: string[] = [];
   const add = (service: string, body: string[], vols: string[] = []) => {
@@ -933,7 +933,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
       content: authFile(
         shared,
         signIn === "own"
-          ? "Each product signs people in on its own. To use a provider, set it here and give each product its client in its own files (openasy.github.io/sign-in)."
+          ? "Each product signs people in on its own. To use a provider, set it here and give each product its client in its own files (openasy.com/sign-in)."
           : undefined,
       ),
     });

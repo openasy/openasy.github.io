@@ -216,7 +216,7 @@ export const GOALS: Goal[] = [
       {
         title: "Install the Runtime sensor",
         body: "Run the eBPF sensor as a DaemonSet or a systemd service on each host.",
-        code: "kubectl apply -f https://openasy.github.io/install/runtime-sensor.yaml",
+        code: "kubectl apply -f https://openasy.com/install/runtime-sensor.yaml",
       },
       {
         title: "Send events to SIEM",

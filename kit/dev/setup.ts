@@ -2,7 +2,7 @@
 // local CA exists, makes an owner in each, Identity's groups and applications, a VPN server, Infrastructure's and Logs'
 // agents and their two demo servers, then starts everything again with sign-in through Identity. Sample data is
 // seed.ts, run only when asked. Safe to run again: it skips what is done (docker compose up -d setup). It runs
-// from the folder that holds compose.yaml. Written for the dev setup from openasy.github.io/install; not for production.
+// from the folder that holds compose.yaml. Written for the dev setup from openasy.com/install; not for production.
 import { execFileSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";

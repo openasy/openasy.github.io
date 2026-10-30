@@ -121,7 +121,7 @@ export function buildDevKit(secrets: Secrets, network?: string): Install {
 
   const compose = [
     "# OpenAsy on this machine: every released product, wired together, to try. Not for production: the dev account",
-    "# has a fixed password and HTTPS comes from a local CA. Made at openasy.github.io/install.",
+    "# has a fixed password and HTTPS comes from a local CA. Made at openasy.com/install.",
     "#",
     "#   docker compose up -d && docker compose logs -f setup",
     "#",

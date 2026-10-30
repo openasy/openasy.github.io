@@ -1,5 +1,5 @@
 /** First story of each product in the @openasy/ui Storybook, keyed by product name. */
-export const STORYBOOK = "https://openasy.github.io/ui/";
+export const STORYBOOK = "https://openasy.com/ui/";
 
 const FIRST_STORY: Record<string, string> = {
   Access: "requests",

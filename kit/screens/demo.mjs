@@ -1,4 +1,4 @@
-// Writes a demo install for the product screenshots: the dev setup of openasy.github.io/install, under its own compose
+// Writes a demo install for the product screenshots: the dev setup of openasy.com/install, under its own compose
 // project name and port, so it runs next to a dev setup without touching it. It holds only seed.ts's sample data:
 // example.com names, documentation addresses and fake keys. Never take screenshots from an install with real data.
 //   node kit/screens/demo.mjs ../openasy-demo
