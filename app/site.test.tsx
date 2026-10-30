@@ -127,8 +127,8 @@ describe("pages", () => {
     open("/products");
     const list = () => screen.getByRole("list", { name: "Product list" });
     expect(list().children).toHaveLength(PRODUCT_IDS.length);
-    await userEvent.click(screen.getByRole("radio", { name: "Identity" }));
-    expect(list().children).toHaveLength(1);
+    await userEvent.click(screen.getByRole("radio", { name: "Service" }));
+    expect(list().children).toHaveLength(PRODUCT_IDS.filter((id) => PRODUCTS[id].group === "service").length);
     await userEvent.click(screen.getByRole("radio", { name: "All groups" }));
     await userEvent.click(screen.getByRole("radio", { name: /^Ready to try/ }));
     expect(list().children).toHaveLength(withStatus(PRODUCT_IDS, "Preview").length);

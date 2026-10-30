@@ -26,7 +26,6 @@ export function meta() {
 export const GROUPS: Array<{ id: ProductGroup; name: string; text: string }> = [
   { id: "operations", name: "Operations", text: "Keep systems running and know why they are slow." },
   { id: "security", name: "Security", text: "Find weaknesses, detect attacks and respond." },
-  { id: "identity", name: "Identity", text: "Who people are and what they may do." },
   { id: "workplace", name: "Workplace", text: "The tools a company works in every day, on its own servers." },
   { id: "people", name: "People", text: "Hire, look after and pay the people who work here." },
   { id: "service", name: "Service", text: "Answer customers wherever they ask." },
@@ -164,7 +163,6 @@ function Showcase() {
   const [picked, setPicked] = useState<Record<ProductGroup, ProductId | undefined>>({
     operations: undefined,
     security: undefined,
-    identity: undefined,
     growth: undefined,
     workplace: undefined,
     people: undefined,
