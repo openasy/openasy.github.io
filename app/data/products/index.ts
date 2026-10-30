@@ -8,6 +8,25 @@ import { consent } from "./consent";
 import { crm } from "./crm";
 import { forms } from "./forms";
 import { mail } from "./mail";
+import { calendar } from "./calendar";
+import { chat } from "./chat";
+import { meet } from "./meet";
+import { passwords } from "./passwords";
+import { files } from "./files";
+import { wiki } from "./wiki";
+import { hr } from "./hr";
+import { recruiting } from "./recruiting";
+import { time } from "./time";
+import { payroll } from "./payroll";
+import { helpdesk } from "./helpdesk";
+import { liveChat } from "./live-chat";
+import { knowledgeBase } from "./knowledge-base";
+import { invoices } from "./invoices";
+import { expenses } from "./expenses";
+import { purchasing } from "./purchasing";
+import { contracts } from "./contracts";
+import { inventory } from "./inventory";
+import { assets } from "./assets";
 import { messages } from "./messages";
 import { assistant } from "./assistant";
 import { attackSimulation } from "./attack-simulation";
@@ -61,6 +80,25 @@ export const STORIES: Record<ProductId, ProductStory> = {
   crm,
   forms,
   mail,
+  calendar,
+  chat,
+  meet,
+  passwords,
+  files,
+  wiki,
+  hr,
+  recruiting,
+  time,
+  payroll,
+  helpdesk,
+  "live-chat": liveChat,
+  "knowledge-base": knowledgeBase,
+  invoices,
+  expenses,
+  purchasing,
+  contracts,
+  inventory,
+  assets,
   messages,
   assistant,
   "attack-simulation": attackSimulation,
