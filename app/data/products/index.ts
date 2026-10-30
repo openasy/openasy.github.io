@@ -1,6 +1,7 @@
 import type { ProductId } from "@openasy/ui";
 import { access } from "./access";
 import { alerts } from "./alerts";
+import { analytics } from "./analytics";
 import { assistant } from "./assistant";
 import { attackSimulation } from "./attack-simulation";
 import { attackSurface } from "./attack-surface";
@@ -46,6 +47,7 @@ export type { CheckGroup, FlowStep, Input, Link, ProductStory, Screen } from "./
 export const STORIES: Record<ProductId, ProductStory> = {
   access,
   alerts,
+  analytics,
   assistant,
   "attack-simulation": attackSimulation,
   "attack-surface": attackSurface,
