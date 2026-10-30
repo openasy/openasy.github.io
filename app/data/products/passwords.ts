@@ -105,8 +105,8 @@ export const passwords: ProductStory = {
     },
   ],
   limits: [
-    "Designed: the screens are in Storybook; it is not built yet.",
-    "Built on a Bitwarden-compatible open-source server, chosen before work starts.",
+    "In progress: built and tested against a Vaultwarden in memory, not yet against a running one and the Bitwarden apps.",
+    "Items are added and changed in the Bitwarden apps for now, not in these pages.",
     "Passkeys stored in vaults depend on what the apps support.",
   ],
 };

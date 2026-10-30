@@ -109,7 +109,7 @@ export const files: ProductStory = {
     },
   ],
   limits: [
-    "Designed: the screens are in Storybook; it is not built yet.",
+    "In progress: built and tested against a file server in memory, not yet against a running OpenCloud.",
     "Editing documents together in the browser comes after the first release.",
     "Storage is your own disks or an S3-compatible store you run.",
   ],

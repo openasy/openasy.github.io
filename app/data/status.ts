@@ -421,6 +421,32 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     ],
     upstream: [{ name: "Stalwart", url: "https://stalw.art/", role: "the mail server: receiving, sending, storage and spam filtering" }],
   },
+  files: {
+    status: "In progress",
+    signIn: true,
+    features: [
+      { title: "Team and project spaces, their members by Identity group and their quotas in one YAML file", done: true },
+      { title: "Links for people outside that always expire, with a password, and when each was opened", done: true },
+      { title: "A recycle bin emptied after a set number of days, and earlier versions brought back", done: true },
+      { title: "A handover for someone who leaves: their files copied to a space their manager runs", done: true },
+      { title: "Tested against a running OpenCloud", done: false },
+      { title: "Editing documents together in the browser and importing from another drive", done: false },
+    ],
+    upstream: [{ name: "OpenCloud", url: "https://github.com/opencloud-eu/opencloud", role: "the file server: storage, versions and the desktop and phone sync apps" }],
+  },
+  passwords: {
+    status: "In progress",
+    signIn: true,
+    features: [
+      { title: "Shared vaults and which Identity group sees each one in one YAML file", done: true },
+      { title: "Leaked, weak, reused and old passwords by team, checked in the browser", done: true },
+      { title: "Leavers: everything someone could see, the recently opened first, to change that afternoon", done: true },
+      { title: "Who opened, copied or changed which shared item, kept a year", done: true },
+      { title: "Tested against a running Vaultwarden and the Bitwarden apps", done: false },
+      { title: "Adding and changing items in these pages", done: false },
+    ],
+    upstream: [{ name: "Vaultwarden", url: "https://github.com/dani-garcia/vaultwarden", role: "the password server the Bitwarden apps and browser extensions use" }],
+  },
   errors: {
     status: "Preview",
     version: "0.5.0",
