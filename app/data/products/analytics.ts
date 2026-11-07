@@ -124,6 +124,6 @@ export const analytics: ProductStory = {
     "The value of a form field is never read, and query strings are dropped but for utm_* and the site's own list.",
     "The IP address and the user agent are not kept; only the browser, system and kind of device are.",
     "The script is public, so made-up events can still be sent from a copy of a page; the origin check and the rate limit keep that small.",
-    "Funnels, heatmaps, form analysis and session replays are not built yet.",
+    "A heatmap needs the page to let Analytics frame it; replays record only the share of visits the sites file names.",
   ],
 };

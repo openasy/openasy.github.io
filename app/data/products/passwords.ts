@@ -105,8 +105,8 @@ export const passwords: ProductStory = {
     },
   ],
   limits: [
-    "In progress: built and tested against a Vaultwarden in memory, not yet against a running one and the Bitwarden apps.",
-    "Items are added and changed in the Bitwarden apps for now, not in these pages.",
+    "In progress: tested against a running Vaultwarden and the Bitwarden CLI, not yet released.",
+    "Logins, secure notes and cards are written in these pages; identities, SSH keys and imports open Vaultwarden's web vault.",
     "Passkeys stored in vaults depend on what the apps support.",
   ],
 };
