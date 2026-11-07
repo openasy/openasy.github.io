@@ -396,7 +396,8 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "incidents, timeline and tasks" }],
   },
   analytics: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
     signIn: true,
     features: [
       { title: "Sites listed in one YAML file, applied whole and read again within a minute", done: true },
@@ -409,27 +410,29 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "visits, events and daily totals" }],
   },
   mail: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
     signIn: true,
     features: [
       { title: "Domains, mailboxes, aliases and quotas in one YAML file, applied to Stalwart whole", done: true },
       { title: "Webmail: folders, search, reading with outside pictures held back, writing and replying", done: true },
       { title: "A password for each mail app, made and removed by the person", done: true },
       { title: "MX, SPF, DKIM, DMARC and MTA-STS records checked for each domain", done: true },
-      { title: "Tested against a running Stalwart", done: false },
+      { title: "Tested against a running Stalwart, with mail sent, received and read over IMAP", done: true },
       { title: "Filters, out-of-office replies, delivery reports and import over IMAP", done: false },
     ],
     upstream: [{ name: "Stalwart", url: "https://stalw.art/", role: "the mail server: receiving, sending, storage and spam filtering" }],
   },
   files: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
     signIn: true,
     features: [
       { title: "Team and project spaces, their members by Identity group and their quotas in one YAML file", done: true },
       { title: "Links for people outside that always expire, with a password, and when each was opened", done: true },
       { title: "A recycle bin emptied after a set number of days, and earlier versions brought back", done: true },
       { title: "A handover for someone who leaves: their files copied to a space their manager runs", done: true },
-      { title: "Tested against a running OpenCloud", done: false },
+      { title: "Tested against a running OpenCloud", done: true },
       { title: "Editing documents together in the browser and importing from another drive", done: false },
     ],
     upstream: [
@@ -437,7 +440,8 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     ],
   },
   passwords: {
-    status: "In progress",
+    status: "Preview",
+    version: "0.1.0",
     signIn: true,
     features: [
       { title: "Shared vaults and which Identity group sees each one in one YAML file", done: true },

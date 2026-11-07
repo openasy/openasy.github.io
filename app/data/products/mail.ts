@@ -54,7 +54,7 @@ export const mail: ProductStory = {
     { id: "alerts", how: "A growing queue or a domain on a blocklist raises an alert." },
   ],
   limits: [
-    "In progress: built and tested against a mail server in memory, not yet against a running Stalwart.",
+    "Tested against a running Stalwart 0.16: its first start, mailboxes, sending, aliases and app passwords over IMAP.",
     "Filters, out-of-office replies, delivery reports and import from the old provider are not built yet.",
     "Calendars and contacts come after the first release.",
     "Delivery depends on your server's address and DNS; on networks that block outgoing mail, a relay is needed.",

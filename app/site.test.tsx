@@ -349,14 +349,12 @@ describe("pages", () => {
     }
   });
 
-  it("a product that is built but not released says what works, and sends nobody to a design it does not have", () => {
-    open("/products/analytics");
-    expect(screen.getByRole("heading", { name: "Built, not released yet" })).toBeInTheDocument();
-    expect(within(screen.getByRole("list", { name: "Features" })).getByText(/One script tag per site/)).toBeInTheDocument();
-    expect(screen.getByText("Not released yet")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Not built yet" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "See the design" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Run it" })).not.toBeInTheDocument();
+  it("a product that runs next to a server of its own gives the compose file from its repository, at its release", () => {
+    open("/products/mail");
+    expect(screen.getByText("Preview 0.1.0")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Run it" })).toBeInTheDocument();
+    expect(screen.getByText(/raw.githubusercontent.com\/openasy\/mail\/v0.1.0\/compose.yaml/)).toBeInTheDocument();
+    expect(screen.queryByText(/image: ghcr.io\/openasy\/mail:/)).not.toBeInTheDocument();
   });
 
   it("Uptime is released: its compose file and what it builds on", () => {

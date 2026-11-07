@@ -259,6 +259,31 @@ export function composeFor(ids: string[]): string {
 }
 
 /** The compose file, then the commands that start it: the secrets key first, and the owner link afterwards. */
+/**
+ * Products that run next to a server of their own (OpenCloud, Vaultwarden, Stalwart) or with a file of their own:
+ * their page gives the compose file and the example file from the repository at the released tag, tested there end to
+ * end, rather than one written here.
+ */
+export const REPO_COMPOSE: Record<string, { config: string; first: string }> = {
+  analytics: { config: "analytics.yaml", first: "List your sites in config/analytics.yaml, then start it." },
+  files: { config: "files.yaml", first: "OpenCloud starts first; its app token goes in opencloud-token, as the header of compose.yaml says." },
+  passwords: { config: "passwords.yaml", first: "Vaultwarden's organization and its two API keys come first, as the README's Run section says." },
+  mail: { config: "mail.yaml", first: "Stalwart's first start is done through its API by Mail, as the header of compose.yaml says." },
+};
+
+export function repoCompose(id: string): string {
+  const { config, first } = REPO_COMPOSE[id]!;
+  const raw = `https://raw.githubusercontent.com/openasy/${id}/v${statusFor(id).version}`;
+  return [
+    `mkdir ${id} && cd ${id}`,
+    `curl -fsSLO ${raw}/compose.yaml`,
+    `curl -fsSL --create-dirs -o config/${config} ${raw}/config/${config}`,
+    "openssl rand -hex 32 > openasy-kek   # keep it with your backups",
+    `# ${first}`,
+    `# The steps: https://github.com/openasy/${id}/tree/v${statusFor(id).version}#run`,
+  ].join("\n");
+}
+
 export function composeRun(ids: string[]): string {
   const signIn = ids.filter((id) => statusFor(id).signIn);
   return [

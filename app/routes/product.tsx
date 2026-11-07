@@ -8,7 +8,7 @@ import { INSTALLABLE } from "../data/install";
 import { deploymentsFor, statusFor, withStatus, type Deployment, type Guide } from "../data/status";
 import { hasDesign, storyUrl } from "../data/storybook";
 import { ButtonLink, CodeBlock, GITHUB } from "../components/site";
-import { ProductStatusBadge, composeRun, helmFor, product } from "../components/cards";
+import { ProductStatusBadge, REPO_COMPOSE, composeRun, helmFor, product, repoCompose } from "../components/cards";
 import { Glance, STORY_SECTIONS, Screenshot, StorySections, heroScreen } from "../components/story";
 import { GROUPS } from "./home";
 import { storyFor } from "../data/products";
@@ -74,6 +74,7 @@ function RunIt({ id }: { id: string }) {
   const [way, setWay] = useState<InstallWay>("compose");
   const ways = deploymentsFor(s);
   if (ways.length > 1) return <Deployments id={id} ways={ways} />;
+  if (REPO_COMPOSE[id]) return <CodeBlock code={repoCompose(id)} label={`Run ${p.name}`} className="mt-3 p-4" />;
   const compose = <CodeBlock code={composeRun([id])} label={`compose.yaml for ${p.name}`} className="mt-3 p-4" />;
   if (!helm || !s.helm) return compose;
   return (

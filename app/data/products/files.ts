@@ -109,7 +109,7 @@ export const files: ProductStory = {
     },
   ],
   limits: [
-    "In progress: built and tested against a file server in memory, not yet against a running OpenCloud.",
+    "Tested against a running OpenCloud 7.2: spaces, uploads, versions, links and their openings, the recycle bin and handovers.",
     "Editing documents together in the browser comes after the first release.",
     "Storage is your own disks or an S3-compatible store you run.",
   ],
