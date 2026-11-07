@@ -432,7 +432,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
       { title: "Tested against a running OpenCloud", done: false },
       { title: "Editing documents together in the browser and importing from another drive", done: false },
     ],
-    upstream: [{ name: "OpenCloud", url: "https://github.com/opencloud-eu/opencloud", role: "the file server: storage, versions and the desktop and phone sync apps" }],
+    upstream: [
+      { name: "OpenCloud", url: "https://github.com/opencloud-eu/opencloud", role: "the file server: storage, versions and the desktop and phone sync apps" },
+    ],
   },
   passwords: {
     status: "In progress",
@@ -445,7 +447,9 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
       { title: "Tested against a running Vaultwarden and the Bitwarden CLI", done: true },
       { title: "Adding and changing items in these pages", done: true },
     ],
-    upstream: [{ name: "Vaultwarden", url: "https://github.com/dani-garcia/vaultwarden", role: "the password server the Bitwarden apps and browser extensions use" }],
+    upstream: [
+      { name: "Vaultwarden", url: "https://github.com/dani-garcia/vaultwarden", role: "the password server the Bitwarden apps and browser extensions use" },
+    ],
   },
   errors: {
     status: "Preview",
