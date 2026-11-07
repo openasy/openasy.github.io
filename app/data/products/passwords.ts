@@ -83,7 +83,7 @@ export const passwords: ProductStory = {
     {
       page: "vaults",
       title: "Vaults",
-      shows: "A person's vaults with one open: its items, a login with its two-step code, and members from Identity groups.",
+      shows: "A person's vaults with one open: its items, a login with its two-step code, items added and changed in place, and members from Identity groups.",
       story: "vaults",
     },
     { page: "health", title: "Health", shows: "Leaked, weak, reused and old passwords in the shared vaults, by team.", story: "health" },

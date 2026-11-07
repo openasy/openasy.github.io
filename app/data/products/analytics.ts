@@ -4,9 +4,9 @@ export const analytics: ProductStory = {
   problem: {
     title: "How people use your websites, from one script tag, kept in your install",
     headline: "Your visitors' clicks end up on someone else's servers",
-    text: "To learn which pages people read, where they come from and where they give up, most teams add a hosted analytics script. Every visit then goes to another company, often abroad, joined with other sites' visitors. Analytics gives the same picture from one script your install serves: visits with their source, the pages read and for how long, what was clicked, your own events and goals, and every visit in order. Sites are listed in a file, so the list is reviewed like code.",
+    text: "To learn which pages people read, where they come from and where they give up, most teams add a hosted analytics script. Every visit then goes to another company, often abroad, joined with other sites' visitors. Analytics gives the same picture from one script your install serves: visits with their source, the pages read and for how long, what was clicked, your own events and goals, funnels, the form field people give up at, heatmaps, and replays of a share of visits with every form field masked. Sites are listed in a file, so the list is reviewed like code.",
     example:
-      "A campaign email goes out. By noon the overview shows 840 visitors from utm_campaign=fall, most of them reading the pricing page to 40% and leaving. One visit, opened in order, shows the visitor clicking Start trial twice and leaving from the sign-up form. The team moves the plan table up; the next day the Signed up goal goes from 2% to 5% of visits.",
+      "A campaign email goes out. By noon the overview shows 840 visitors from utm_campaign=fall, most of them reading the pricing page to 40% and leaving. The Trial funnel loses most of them between pricing and the form, the Forms page shows the phone field as where people leave, and a replay shows a visitor clicking Start trial three times before giving up. The team moves the plan table up; the next day the Signed up goal goes from 2% to 5% of visits.",
   },
   who: ["Product and marketing teams, who want to know what works on the site", "Developers, who need to see what a visitor did before a problem"],
   glance: [
@@ -20,7 +20,7 @@ export const analytics: ProductStory = {
     },
     {
       label: "Records",
-      value: "Visits, pages, clicks, events",
+      value: "Visits, funnels, forms, heatmaps, replays",
     },
     {
       label: "Never keeps",
@@ -30,7 +30,7 @@ export const analytics: ProductStory = {
   flow: [
     {
       label: "List the site",
-      detail: "Name it and its domains in analytics.yaml, with its goals; the file is read again within a minute.",
+      detail: "Name it and its domains in analytics.yaml, with its goals, funnels, forms and replays; the file is read again within a minute.",
     },
     {
       label: "Add the script",
@@ -42,7 +42,7 @@ export const analytics: ProductStory = {
     },
     {
       label: "Read the reports",
-      detail: "Visitors, pages, sources, devices, goals, and any visit with everything it did, in order.",
+      detail: "Visitors, pages, sources, goals, funnels, forms, heatmaps drawn on the page, and replays of recorded visits.",
     },
   ],
   checks: [
@@ -64,6 +64,15 @@ export const analytics: ProductStory = {
         "Every visit, and a visitor's data exported or deleted for a GDPR or KVKK request",
       ],
     },
+    {
+      title: "How people move through a site",
+      items: [
+        "Funnels: visits that reached each step in order, the time between steps, and conversion by source",
+        "Forms: started and sent, and for each field how many reached it and left there; names only, never values",
+        "Heatmaps of clicks and scroll depth, drawn on the page as it is today, by device",
+        "Replays of a share of visits, every form field masked in the browser, with rage clicks counted",
+      ],
+    },
   ],
   decides: [
     {
@@ -77,6 +86,10 @@ export const analytics: ProductStory = {
     {
       label: "Accepted",
       text: "Events are taken only from the site's domains or with its server key. Crawlers, automated browsers and ignored paths are dropped, and each site has events a minute.",
+    },
+    {
+      label: "Replay",
+      text: "Off unless the sites file sets it. Then the share of visits it names is recorded, decided once a visit; emails, tokens and keys in the page's text are masked again before a replay is kept, for the days the file says.",
     },
   ],
   inputs: [
@@ -105,6 +118,15 @@ export const analytics: ProductStory = {
       title: "Visits",
       shows: "Every visit, and each one in order: what it viewed, clicked and sent.",
     },
+    {
+      page: "funnels",
+      title: "Funnels",
+      shows: "Each funnel of the file, step by step, with where visits drop out and how each source converts.",
+      story: "funnels",
+    },
+    { page: "forms", title: "Forms", shows: "Forms started and sent, and the field people leave at.", story: "forms" },
+    { page: "heatmaps", title: "Heatmaps", shows: "Where people clicked on a page and how far they read it, drawn on the page itself.", story: "heatmaps" },
+    { page: "replays", title: "Replays", shows: "Recorded visits, played back with every form field masked.", story: "replays" },
   ],
   worksWith: [
     {
