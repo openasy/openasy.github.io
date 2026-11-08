@@ -42,8 +42,10 @@ export const crm: ProductStory = {
     { name: "The API", how: "Deals and activities from your own systems." },
   ],
   screens: [
-    { page: "pipeline", title: "Pipeline", shows: "Deals by stage, with their value and owner." },
-    { page: "deal", title: "Deal", shows: "One deal with its contacts, activities and quote." },
+    { page: "pipeline", title: "Pipeline", shows: "Deals by stage, with their value, owner and the ones gone stale.", story: "pipeline" },
+    { page: "deal", title: "Deal", shows: "One deal with its stages, quote, activities and what the contact did on the site.", story: "deal-page" },
+    { page: "companies", title: "Companies", shows: "Companies with their plan, contacts and open deals.", story: "companies" },
+    { page: "meeting", title: "Meeting link", shows: "The booking page with free times, and the meetings booked from it.", story: "meeting-link" },
   ],
   worksWith: [
     { id: "audience", how: "Contacts are kept in step, and a lead's profile shows what they did." },
@@ -51,5 +53,9 @@ export const crm: ProductStory = {
     { id: "messages", how: "Sales sequences send through Messages." },
     { id: "campaigns", how: "Won deals count toward the campaign that brought them." },
   ],
-  limits: ["Planned: not built yet.", "e-signature of quotes comes after the first release.", "It does not do accounting or invoicing."],
+  limits: [
+    "Google and Microsoft calendars are tested against stand-ins for their APIs, not yet with real accounts.",
+    "e-signature of quotes comes after the first release.",
+    "It does not do accounting or invoicing.",
+  ],
 };

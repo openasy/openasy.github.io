@@ -42,8 +42,10 @@ export const messages: ProductStory = {
     { name: "WhatsApp", how: "The WhatsApp Business API, with approved templates." },
   ],
   screens: [
-    { page: "campaigns", title: "Campaigns", shows: "Every campaign with its audience, channel and results." },
-    { page: "journeys", title: "Journeys", shows: "Each journey's steps and how many people are at each." },
+    { page: "campaigns", title: "Campaigns", shows: "Every campaign with its audience, channel, consent held back and results.", story: "campaigns" },
+    { page: "journeys", title: "Journeys", shows: "Each journey's steps and how many people are at each.", story: "journeys" },
+    { page: "templates", title: "Templates", shows: "Templates previewed as a person, and WhatsApp approval.", story: "templates" },
+    { page: "bounces", title: "Bounces", shows: "Addresses that bounced, and sending to them again once fixed.", story: "bounces" },
   ],
   worksWith: [
     { id: "audience", how: "Segments are the audience of campaigns and journeys." },
@@ -52,7 +54,7 @@ export const messages: ProductStory = {
     { id: "campaigns", how: "Sends and results roll up into the marketing calendar." },
   ],
   limits: [
-    "Planned: not built yet.",
+    "Amazon SES, SMTP, Netgsm, İleti Merkezi and WhatsApp are tested against stand-ins for their APIs, not yet with real accounts.",
     "It does not run a mail or SMS server; it sends through your providers.",
     "Push notifications come after email, SMS and WhatsApp.",
   ],

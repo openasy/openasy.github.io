@@ -76,16 +76,10 @@ export const knowledgeBase: ProductStory = {
     },
   ],
   screens: [
-    {
-      page: "articles",
-      title: "Articles",
-      shows: "Topics and articles with their views.",
-    },
-    {
-      page: "gaps",
-      title: "Gaps",
-      shows: "Searches that found nothing.",
-    },
+    { page: "articles", title: "Articles", shows: "Topics and articles with their languages, views and whether they helped.", story: "articles" },
+    { page: "review", title: "To review", shows: "Changed articles waiting for someone other than their writer to approve.", story: "to-review" },
+    { page: "gaps", title: "Gaps", shows: "Searches that found nothing, with a draft started from any of them.", story: "gaps" },
+    { page: "suggestions", title: "Suggestions", shows: "Articles suggested in ticket forms and chat as people type.", story: "suggestions" },
   ],
   worksWith: [
     {
@@ -101,5 +95,9 @@ export const knowledgeBase: ProductStory = {
       how: "Help center visits are measured.",
     },
   ],
-  limits: ["Planned: not built yet.", "It is for customers; the company's own handbook lives in Wiki.", "Community forums are out of scope."],
+  limits: [
+    "Articles for one plan only are opened with a link your own app signs; the plan does not come from CRM yet.",
+    "It is for customers; the company's own handbook lives in Wiki.",
+    "Community forums are out of scope.",
+  ],
 };

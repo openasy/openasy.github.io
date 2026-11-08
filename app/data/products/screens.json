@@ -43,5 +43,12 @@
   "chat": ["channel", "channels", "people", "search"],
   "meet": ["meeting", "meetings", "recordings", "server"],
   "files": ["bin", "links", "space", "spaces"],
-  "wiki": ["edit", "page", "policies", "stale"]
+  "wiki": ["edit", "page", "policies", "stale"],
+  "consent": ["banner", "iys", "people", "purposes"],
+  "knowledge-base": ["articles", "gaps", "review", "suggestions"],
+  "audience": ["deletions", "imports", "people", "segments"],
+  "helpdesk": ["overview", "queue", "reports", "ticket"],
+  "messages": ["bounces", "campaigns", "journeys", "templates"],
+  "live-chat": ["after-hours", "chats", "overview", "window"],
+  "crm": ["companies", "deal", "meeting", "pipeline"]
 }

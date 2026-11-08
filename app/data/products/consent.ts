@@ -46,8 +46,15 @@ export const consent: ProductStory = {
     { name: "The API", how: "Consents from your own forms and applications." },
   ],
   screens: [
-    { page: "people", title: "People", shows: "Each person's consents by purpose and channel, and their history." },
-    { page: "purposes", title: "Purposes", shows: "Every purpose with its text versions and how many agreed." },
+    { page: "people", title: "People", shows: "Each person's latest answer per purpose and channel, its history and İYS state.", story: "people" },
+    { page: "purposes", title: "Purposes", shows: "Every purpose with its text versions and how many agreed to each.", story: "purposes" },
+    { page: "iys", title: "İYS", shows: "Answers sent to and read from İYS, the ones that disagreed and the ones İYS refused.", story: "iys" },
+    {
+      page: "banner",
+      title: "Banner and page",
+      shows: "The banner and preference page of each site, and the script tag that adds them.",
+      story: "banner-and-page",
+    },
   ],
   worksWith: [
     { id: "messages", how: "Nobody is sent a message without consent for that channel." },
@@ -56,7 +63,7 @@ export const consent: ProductStory = {
     { id: "audience", how: "Profiles show what each person agreed to." },
   ],
   limits: [
-    "Planned: not built yet.",
+    "İYS sync is tested against a stand-in for İYS's API, not yet against İYS itself or its test system.",
     "It records and enforces consent; whether a purpose needs consent is a legal question for you.",
     "İYS covers commercial electronic messages in Türkiye; other countries' registries are not included.",
   ],

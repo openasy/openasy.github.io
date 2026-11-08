@@ -80,16 +80,10 @@ export const helpdesk: ProductStory = {
     },
   ],
   screens: [
-    {
-      page: "queue",
-      title: "Queue",
-      shows: "Open tickets with their SLAs.",
-    },
-    {
-      page: "ticket",
-      title: "Ticket",
-      shows: "One ticket with its thread and the customer.",
-    },
+    { page: "queue", title: "Queue", shows: "Open tickets of a queue, the nearest SLA first.", story: "queue" },
+    { page: "ticket", title: "Ticket", shows: "One ticket with its thread, notes, the customer from CRM and suggested articles.", story: "ticket" },
+    { page: "overview", title: "Overview", shows: "SLAs about to run out, tickets opened and solved each day, and queues.", story: "overview" },
+    { page: "reports", title: "Reports", shows: "Tickets by weekday and hour, and SLAs met and missed by queue.", story: "reports" },
   ],
   worksWith: [
     {
@@ -109,5 +103,9 @@ export const helpdesk: ProductStory = {
       how: "Articles are suggested before and while answering.",
     },
   ],
-  limits: ["Planned: not built yet.", "Phone support and call recording are out of scope.", "Internal IT requests are tickets too, in their own queue."],
+  limits: [
+    "Mail is tested end to end against a running Stalwart; replies to plus addresses only in unit tests.",
+    "Phone support and call recording are out of scope.",
+    "Internal IT requests are tickets too, in their own queue.",
+  ],
 };

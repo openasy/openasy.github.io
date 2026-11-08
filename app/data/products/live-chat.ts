@@ -80,16 +80,10 @@ export const liveChat: ProductStory = {
     },
   ],
   screens: [
-    {
-      page: "chats",
-      title: "Chats",
-      shows: "Open chats with the page each visitor is on.",
-    },
-    {
-      page: "chat",
-      title: "Chat",
-      shows: "One conversation with the visitor's pages.",
-    },
+    { page: "chats", title: "Chats", shows: "Open chats, the conversation and the visitor's pages side by side.", story: "chats" },
+    { page: "overview", title: "Overview", shows: "Chats by hour and page, and who in the team is answering now.", story: "overview" },
+    { page: "after-hours", title: "After hours", shows: "Questions left outside working hours, and the tickets they became.", story: "after-hours" },
+    { page: "window", title: "Window", shows: "The window in and outside working hours, page rules and the script tag.", story: "chat-window" },
   ],
   worksWith: [
     {
@@ -110,7 +104,7 @@ export const liveChat: ProductStory = {
     },
   ],
   limits: [
-    "Planned: not built yet.",
+    "One instance per install: live updates are not shared between several copies of the server.",
     "Chatbots that answer on their own are out of scope.",
     "WhatsApp and social messages are out of scope; Messages sends, it does not receive.",
   ],

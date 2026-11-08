@@ -46,8 +46,10 @@ export const audience: ProductStory = {
     { name: "Linked products", how: "Analytics, Forms, CRM and Messages send their events once linked." },
   ],
   screens: [
-    { page: "people", title: "People", shows: "Every profile with its traits and latest activity." },
-    { page: "segments", title: "Segments", shows: "Each segment's rules, size and how it changed." },
+    { page: "people", title: "People", shows: "Every profile with its identifiers, traits, consent and timeline.", story: "people" },
+    { page: "segments", title: "Segments", shows: "Each segment's rules, size and how it changed.", story: "segments" },
+    { page: "imports", title: "Imports", shows: "A CSV with its columns matched to email, phone, user id and traits.", story: "imports" },
+    { page: "deletions", title: "Deletion requests", shows: "Each request and how far it has reached in every linked product.", story: "deletion-requests" },
   ],
   worksWith: [
     { id: "analytics", how: "Visitors identified on the site become profiles, with their visits." },
@@ -56,7 +58,7 @@ export const audience: ProductStory = {
     { id: "consent", how: "Each profile shows what the person agreed to." },
   ],
   limits: [
-    "Planned: not built yet.",
+    "Linked to Analytics and Consent as their APIs describe; not yet tested against them running.",
     "It does not send messages; that is Messages.",
     "People are matched only by email, phone or your user id, never by device fingerprints.",
   ],
