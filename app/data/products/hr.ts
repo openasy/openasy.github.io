@@ -80,16 +80,10 @@ export const hr: ProductStory = {
     },
   ],
   screens: [
-    {
-      page: "people",
-      title: "People",
-      shows: "Everyone, by team, with their manager.",
-    },
-    {
-      page: "leave",
-      title: "Leave",
-      shows: "Requests to approve and who is away.",
-    },
+    { page: "home", title: "Home", shows: "Who joins, leaves and is away, and what waits for you.", story: "home" },
+    { page: "people", title: "People", shows: "Everyone with their department, position and manager.", story: "people" },
+    { page: "record", title: "Record", shows: "One person's record, by the parts you may read, with every look logged.", story: "employee-record" },
+    { page: "leave", title: "Leave", shows: "Requests to approve, with their steps and who else is away.", story: "leave" },
   ],
   worksWith: [
     {
@@ -110,7 +104,7 @@ export const hr: ProductStory = {
     },
   ],
   limits: [
-    "Planned: not built yet.",
+    "Identity is tested against a stand-in for its SCIM endpoint, not a running Identity.",
     "Personal data is kept under KVKK; what you must keep and for how long is a legal question for you.",
     "Performance reviews come after the first release.",
   ],

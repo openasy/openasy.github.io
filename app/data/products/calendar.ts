@@ -114,7 +114,7 @@ export const calendar: ProductStory = {
     },
   ],
   limits: [
-    "Designed: the screens are in Storybook; it is not built yet.",
+    "Tested against Stalwart 0.16.27, the version its compose file pins.",
     "Mail must be installed; Calendar uses its server.",
     "Exchange ActiveSync is not supported; phones use CalDAV and CardDAV.",
   ],

@@ -104,7 +104,6 @@ export const wiki: ProductStory = {
     },
   ],
   limits: [
-    "Designed: the screens are in Storybook; it is not built yet.",
     "Writing together on the same page at the same time comes after the first release.",
     "It is for the company's own people; customer help lives in the Knowledge Base.",
   ],

@@ -44,8 +44,10 @@ export const campaigns: ProductStory = {
     { name: "Spend", how: "Entered by hand or imported per channel." },
   ],
   screens: [
-    { page: "calendar", title: "Calendar", shows: "Every campaign over the months, by channel." },
-    { page: "campaign", title: "Campaign", shows: "One campaign's brief, budget, links and results." },
+    { page: "calendar", title: "Calendar", shows: "Every campaign over the months, by channel.", story: "calendar" },
+    { page: "campaign", title: "Campaign", shows: "One campaign's brief, budget, goals and approvals.", story: "campaign-page" },
+    { page: "links", title: "Links", shows: "Tagged links from the UTM builder, checked against the naming rules.", story: "links" },
+    { page: "results", title: "Results", shows: "Visits, sends and won deals by campaign, by first and last touch.", story: "results" },
   ],
   worksWith: [
     { id: "analytics", how: "Visits and goals arrive under the campaign's tagged links." },
@@ -53,5 +55,9 @@ export const campaigns: ProductStory = {
     { id: "crm", how: "Won deals count toward the campaign that brought them." },
     { id: "automation", how: "A launch step can start other products' work." },
   ],
-  limits: ["Planned: not built yet.", "It does not buy or manage ads; spend from ad platforms is imported.", "Attribution is first and last touch only."],
+  limits: [
+    "Google Ads and Meta, and the other OpenAsy products it reads, are tested against stand-ins for their APIs, not real accounts or running products.",
+    "It does not buy or manage ads; spend from ad platforms is imported.",
+    "Attribution is first and last touch only.",
+  ],
 };

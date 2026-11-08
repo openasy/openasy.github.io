@@ -50,5 +50,8 @@
   "helpdesk": ["overview", "queue", "reports", "ticket"],
   "messages": ["bounces", "campaigns", "journeys", "templates"],
   "live-chat": ["after-hours", "chats", "overview", "window"],
-  "crm": ["companies", "deal", "meeting", "pipeline"]
+  "crm": ["companies", "deal", "meeting", "pipeline"],
+  "campaigns": ["calendar", "campaign", "links", "results"],
+  "forms": ["answers", "builder", "forms", "results"],
+  "hr": ["home", "leave", "people", "record"]
 }

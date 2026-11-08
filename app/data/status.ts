@@ -104,20 +104,7 @@ const DESIGNED: ProductState = { status: "Designed", features: [], upstream: [] 
 const PLANNED_STATE: ProductState = { status: "Planned", features: [], upstream: [] };
 
 /** Products with a page and no screens yet. Move one out once its screens are in Storybook. */
-const PLANNED = new Set([
-  "campaigns",
-  "forms",
-  "hr",
-  "recruiting",
-  "time",
-  "payroll",
-  "invoices",
-  "expenses",
-  "purchasing",
-  "contracts",
-  "inventory",
-  "assets",
-]);
+const PLANNED = new Set(["recruiting", "time", "payroll", "invoices", "expenses", "purchasing", "contracts", "inventory", "assets"]);
 
 // The panel and a vpn-server on their own hosts (ADR 0032). vpn never connects to a server: servers reach it over HTTPS.
 const VPN_PANEL = `openssl rand -hex 32 > openasy-kek   # keep it with your backups
@@ -503,6 +490,61 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
       { title: "Tested with real Google and Microsoft calendars", done: false },
     ],
     upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "companies, contacts, deals and bookings" }],
+  },
+  hr: {
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    features: [
+      { title: "People, departments, positions and the org chart, with every change kept field by field", done: true },
+      { title: "Leave under Turkish labour law by default, with approvals, balances and Türkiye's holidays", done: true },
+      { title: "Joining and leaving checklists, with the Identity account made and turned off on the day", done: true },
+      { title: "Personal and pay data encrypted, and every look at a record logged for KVKK", done: true },
+      { title: "Documents that expire, a CSV import from the old system, and what Payroll reads each month", done: true },
+      { title: "Tested against a running Identity", done: false },
+    ],
+    upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "records, leave, documents and the access log" }],
+  },
+  wiki: {
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    features: [
+      { title: "Spaces and who reads and writes them, set in one YAML file", done: true },
+      { title: "A rich editor, with every change kept and any version restored", done: true },
+      { title: "Two people's changes to one page merged safely", done: true },
+      { title: "An owner and a review period on every page, and the overdue ones listed", done: true },
+      { title: "Policies everyone confirms they have read, version by version", done: true },
+      { title: "Search that handles Turkish", done: true },
+      { title: "Writing together on one page at the same time", done: false },
+    ],
+    upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "pages, their history and search" }],
+  },
+  forms: {
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    features: [
+      { title: "Forms set in files, with logic, prefill and pages", done: true },
+      { title: "A public page and an embed script", done: true },
+      { title: "Spam held without storing addresses, and partial answers kept", done: true },
+      { title: "Answers sent to Consent, Audience, CRM, Helpdesk and signed webhooks", done: true },
+      { title: "Tested against running Consent, Audience, CRM and Helpdesk", done: false },
+    ],
+    upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "forms, answers and the outbox" }],
+  },
+  campaigns: {
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    features: [
+      { title: "A marketing calendar, and campaigns with budget, goals and approvals", done: true },
+      { title: "A UTM builder that keeps to your naming rules", done: true },
+      { title: "Ad spend from CSV, Google Ads and Meta", done: true },
+      { title: "Results from Analytics, Messages and CRM by first and last touch", done: true },
+      { title: "Tested with real Google Ads and Meta accounts", done: false },
+    ],
+    upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "campaigns, links, spend and results" }],
   },
   helpdesk: {
     status: "Preview",

@@ -41,8 +41,10 @@ export const forms: ProductStory = {
     { name: "The API", how: "Answers from your own forms." },
   ],
   screens: [
-    { page: "forms", title: "Forms", shows: "Every form with its answers this week and where they went." },
-    { page: "answers", title: "Answers", shows: "One form's answers, and NPS over time." },
+    { page: "forms", title: "Forms", shows: "Every form with its answers this week and where they went.", story: "forms" },
+    { page: "builder", title: "Builder", shows: "A form's fields, pages and logic, as its file sets them.", story: "builder" },
+    { page: "answers", title: "Answers", shows: "One form's answers, filtered, with partial ones kept apart.", story: "answers" },
+    { page: "results", title: "Results", shows: "Each question's answers summed up, and NPS over time.", story: "results" },
   ],
   worksWith: [
     { id: "audience", how: "Each answer adds or updates a profile." },
@@ -50,5 +52,9 @@ export const forms: ProductStory = {
     { id: "consent", how: "Checkboxes are recorded as consent, with their text." },
     { id: "analytics", how: "Form views and submissions count as events and goals." },
   ],
-  limits: ["Planned: not built yet.", "Long surveys with branching are out of scope; it keeps to forms and short surveys.", "Payments are not taken in forms."],
+  limits: [
+    "Consent, Audience, CRM and Helpdesk are tested against stand-ins for their APIs, not running products.",
+    "Long surveys with branching are out of scope; it keeps to forms and short surveys.",
+    "Payments are not taken in forms.",
+  ],
 };
