@@ -269,7 +269,10 @@ export const REPO_COMPOSE: Record<string, { config: string; first: string }> = {
   files: { config: "files.yaml", first: "OpenCloud starts first; its app token goes in opencloud-token, as the header of compose.yaml says." },
   passwords: { config: "passwords.yaml", first: "Vaultwarden's organization and its two API keys come first, as the README's Run section says." },
   mail: { config: "mail.yaml", first: "Stalwart's first start is done through its API by Mail, as the header of compose.yaml says." },
-  calendar: { config: "calendar.yaml", first: "Mail's first start comes first; then Calendar sets up its account on Stalwart, as the header of compose.yaml says." },
+  calendar: {
+    config: "calendar.yaml",
+    first: "Mail's first start comes first; then Calendar sets up its account on Stalwart, as the header of compose.yaml says.",
+  },
   consent: { config: "consent.yaml", first: "List your purposes and sites in config/consent.yaml, then start it; İYS needs its account in the environment." },
   audience: { config: "audience.yaml", first: "List the linked products in config/audience.yaml, then start it." },
   messages: { config: "messages.yaml", first: "Set your providers in config/messages.yaml and their keys in the environment, then start it." },
