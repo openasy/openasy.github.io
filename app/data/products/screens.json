@@ -53,5 +53,6 @@
   "crm": ["companies", "deal", "meeting", "pipeline"],
   "campaigns": ["calendar", "campaign", "links", "results"],
   "forms": ["answers", "builder", "forms", "results"],
-  "hr": ["home", "leave", "people", "record"]
+  "hr": ["home", "leave", "people", "record"],
+  "invoices": ["bank", "customers", "invoice", "invoices", "overview"]
 }

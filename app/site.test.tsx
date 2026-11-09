@@ -359,8 +359,8 @@ describe("pages", () => {
 
   it("Uptime is released: its compose file and what it builds on", () => {
     open("/products/uptime");
-    expect(screen.getByText("Preview 0.5.0")).toBeInTheDocument();
-    expect(screen.getByText(/image: ghcr.io\/openasy\/uptime:0.5.0/)).toBeInTheDocument();
+    expect(screen.getByText("Preview 0.5.1")).toBeInTheDocument();
+    expect(screen.getByText(/image: ghcr.io\/openasy\/uptime:0.5.1/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Built on" })).toBeInTheDocument();
   });
 

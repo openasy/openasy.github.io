@@ -279,6 +279,7 @@ export const REPO_COMPOSE: Record<string, { config: string; first: string }> = {
   hr: { config: "hr.yaml", first: "Set your leave rules, who reads what and the link to Identity in config/hr.yaml, then start it." },
   wiki: { config: "wiki.yaml", first: "Set your spaces and who reads and writes them in config/wiki.yaml, then start it." },
   forms: { config: "forms.yaml", first: "Write your forms and where their answers go in config/forms.yaml, then start it." },
+  invoices: { config: "invoices.yaml", first: "Set your company, your GİB integrator and your invoice series in config/invoices.yaml, then start it." },
   campaigns: { config: "campaigns.yaml", first: "Set your channels, naming rules and linked products in config/campaigns.yaml, then start it." },
 };
 

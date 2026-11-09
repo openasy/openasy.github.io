@@ -29,6 +29,7 @@ const FIRST_STORY: Record<string, string> = {
   Forms: "forms",
   Helpdesk: "queue",
   HR: "home",
+  Invoices: "invoices",
   Identity: "overview",
   Incidents: "detail",
   Infrastructure: "overview",

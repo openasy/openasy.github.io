@@ -80,16 +80,10 @@ export const invoices: ProductStory = {
     },
   ],
   screens: [
-    {
-      page: "invoices",
-      title: "Invoices",
-      shows: "Invoices with what is due and overdue.",
-    },
-    {
-      page: "invoice",
-      title: "Invoice",
-      shows: "One invoice with its payments.",
-    },
+    { page: "invoices", title: "Invoices", shows: "Invoices and credit notes, from draft to GİB's answer.", story: "invoices" },
+    { page: "invoice", title: "Invoice", shows: "One invoice with its lines, taxes and payments.", story: "invoice-page" },
+    { page: "customers", title: "Customers", shows: "Customers with their tax numbers checked, terms and what they owe.", story: "customers" },
+    { page: "bank", title: "Bank", shows: "Bank statement lines matched to invoices.", story: "bank" },
   ],
   worksWith: [
     {
@@ -109,5 +103,9 @@ export const invoices: ProductStory = {
       how: "Products sold leave the stock.",
     },
   ],
-  limits: ["Planned: not built yet.", "It does not do bookkeeping; your accountant keeps the books.", "Only GİB integrators with an API can be connected."],
+  limits: [
+    "The integrator is tested against a stand-in shaped like Nilvera's API, not a real integrator; the XML has not been through GİB's test portal.",
+    "It does not do bookkeeping; your accountant keeps the books.",
+    "Only GİB integrators with an API can be connected.",
+  ],
 };

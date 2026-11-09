@@ -104,7 +104,7 @@ const DESIGNED: ProductState = { status: "Designed", features: [], upstream: [] 
 const PLANNED_STATE: ProductState = { status: "Planned", features: [], upstream: [] };
 
 /** Products with a page and no screens yet. Move one out once its screens are in Storybook. */
-const PLANNED = new Set(["recruiting", "time", "payroll", "invoices", "expenses", "purchasing", "contracts", "inventory", "assets"]);
+const PLANNED = new Set(["recruiting", "time", "payroll", "expenses", "purchasing", "contracts", "inventory", "assets"]);
 
 // The panel and a vpn-server on their own hosts (ADR 0032). vpn never connects to a server: servers reach it over HTTPS.
 const VPN_PANEL = `openssl rand -hex 32 > openasy-kek   # keep it with your backups
@@ -125,7 +125,7 @@ docker run -d --name vpn-server --restart unless-stopped \\
 export const STATUS: Partial<Record<string, ProductState>> = {
   vulnerabilities: {
     status: "Preview",
-    version: "0.7.0",
+    version: "0.7.1",
     signIn: true,
     note: "Serve it over HTTPS and set VULNS_PUBLIC_URL to that address: cookies and passkeys need it. There is no email yet, so invitations and password resets are links an admin sends.",
     helm: {
@@ -186,7 +186,7 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_API_TOKEN" -H 'content-type: ap
   },
   infrastructure: {
     status: "Preview",
-    version: "0.7.0",
+    version: "0.7.1",
     signIn: true,
     note: "infra-agent holds the SSH certificate authority your hosts trust, sealed with its own key: keep openasy-agent-kek apart from its volume, and run one agent per network. Serve Infrastructure over HTTPS.",
     guides: [
@@ -263,7 +263,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   logs: {
     status: "Preview",
-    version: "0.7.0",
+    version: "0.7.1",
     signIn: true,
     features: [
       { title: "Syslog over TLS, OpenTelemetry, Loki, Elasticsearch bulk and JSON lines, each source with its own token", done: true },
@@ -522,7 +522,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   forms: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Forms set in files, with logic, prefill and pages", done: true },
@@ -545,6 +545,19 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
       { title: "Tested with real Google Ads and Meta accounts", done: false },
     ],
     upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "campaigns, links, spend and results" }],
+  },
+  invoices: {
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    features: [
+      { title: "Invoices and credit notes with KDV and withholding, numbered under GİB's rules", done: true },
+      { title: "e-Fatura and e-Arşiv through a GİB integrator, starting with Nilvera", done: true },
+      { title: "Payments in full or in part, reminders on the days you set, and recurring invoices", done: true },
+      { title: "Bank statements matched to invoices, foreign currencies at TCMB's rate, and exports for your accountant", done: true },
+      { title: "Tested against a real integrator and GİB's test portal", done: false },
+    ],
+    upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "customers, invoices, payments and statements" }],
   },
   helpdesk: {
     status: "Preview",
@@ -678,7 +691,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   uptime: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.5.1",
     signIn: true,
     features: [
       { title: "HTTP, TCP, DNS and TLS checks, run by a runner from a CI cron or any machine", done: true },
@@ -697,7 +710,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   backups: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.5.1",
     signIn: true,
     features: [
       { title: "Runs from restic, Velero or any script, and restore tests, reported per job", done: true },
@@ -747,7 +760,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   cost: {
     status: "Preview",
-    version: "0.4.0",
+    version: "0.4.1",
     signIn: true,
     features: [
       { title: "Daily spend from AWS, GCP, Azure or any CSV, sent by a pipeline", done: true },
