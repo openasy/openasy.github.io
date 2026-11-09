@@ -125,7 +125,7 @@ docker run -d --name vpn-server --restart unless-stopped \\
 export const STATUS: Partial<Record<string, ProductState>> = {
   vulnerabilities: {
     status: "Preview",
-    version: "0.7.1",
+    version: "0.7.3",
     signIn: true,
     note: "Serve it over HTTPS and set VULNS_PUBLIC_URL to that address: cookies and passkeys need it. There is no email yet, so invitations and password resets are links an admin sends.",
     helm: {
@@ -144,7 +144,7 @@ export const STATUS: Partial<Record<string, ProductState>> = {
         code: `docker run -d --name vulns-agent --restart unless-stopped --hostname "$(hostname)" \\
   --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \\
   -v /:/host:ro -e VULNS_URL=https://vulns.example.com -e VULNS_INGEST_TOKEN=... \\
-  ghcr.io/openasy/vulns-agent:0.6.0`,
+  ghcr.io/openasy/vulns-agent:0.7.3`,
       },
       {
         title: "Check images in CI",
@@ -186,7 +186,7 @@ curl -sf -X PUT -H "Authorization: Bearer $VULNS_API_TOKEN" -H 'content-type: ap
   },
   infrastructure: {
     status: "Preview",
-    version: "0.7.1",
+    version: "0.7.3",
     signIn: true,
     note: "infra-agent holds the SSH certificate authority your hosts trust, sealed with its own key: keep openasy-agent-kek apart from its volume, and run one agent per network. Serve Infrastructure over HTTPS.",
     guides: [
@@ -263,7 +263,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   logs: {
     status: "Preview",
-    version: "0.7.1",
+    version: "0.7.3",
     signIn: true,
     features: [
       { title: "Syslog over TLS, OpenTelemetry, Loki, Elasticsearch bulk and JSON lines, each source with its own token", done: true },
@@ -282,7 +282,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   sast: {
     status: "Preview",
-    version: "0.7.0",
+    version: "0.8.0",
     signIn: true,
     features: [
       { title: "Send SARIF from CI and get back whether the check passes", done: true },
@@ -305,7 +305,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   secrets: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     features: [
       { title: "Send gitleaks or TruffleHog reports from CI and get back whether the check passes", done: true },
@@ -324,7 +324,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   malware: {
     status: "Preview",
-    version: "0.7.0",
+    version: "0.7.1",
     signIn: true,
     features: [
       { title: "Send ClamAV or YARA scan reports and get back whether the check passes", done: true },
@@ -344,7 +344,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   siem: {
     status: "Preview",
-    version: "0.6.0",
+    version: "0.6.1",
     signIn: true,
     features: [
       { title: "Events in as JSON, kept with a retention period", done: true },
@@ -363,7 +363,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   incidents: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     features: [
       { title: "Open an incident with severity, commander and the products involved", done: true },
@@ -377,7 +377,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   analytics: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.2.0",
     signIn: true,
     features: [
       { title: "Sites listed in one YAML file, applied whole and read again within a minute", done: true },
@@ -391,7 +391,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   mail: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Domains, mailboxes, aliases and quotas in one YAML file, applied to Stalwart whole", done: true },
@@ -403,9 +403,24 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     ],
     upstream: [{ name: "Stalwart", url: "https://stalw.art/", role: "the mail server: receiving, sending, storage and spam filtering" }],
   },
-  files: {
+  calendar: {
     status: "Preview",
     version: "0.1.0",
+    signIn: true,
+    features: [
+      { title: "Day, week, month and agenda views, in each person's time zone, with repeating events across time zones", done: true },
+      { title: "Invitations inside the company and by email to anyone, free and busy, and a time found for everyone", done: true },
+      { title: "Rooms and team calendars set in one YAML file; rooms accept or decline on their own", done: true },
+      { title: "Sharing, subscription links, import and export, and contacts with the company directory", done: true },
+      { title: "CalDAV and CardDAV for phones, Thunderbird and Outlook, with device passwords", done: true },
+      { title: "Tested against a running Stalwart", done: true },
+      { title: "Exchange ActiveSync", done: false },
+    ],
+    upstream: [{ name: "Stalwart", url: "https://stalw.art/", role: "stores the calendars and contacts and serves them over CalDAV and CardDAV" }],
+  },
+  files: {
+    status: "Preview",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Team and project spaces, their members by Identity group and their quotas in one YAML file", done: true },
@@ -421,7 +436,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   passwords: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Shared vaults and which Identity group sees each one in one YAML file", done: true },
@@ -437,7 +452,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   consent: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Purposes and their versioned texts in one YAML file; a changed text is a new version", done: true },
@@ -451,7 +466,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   audience: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "One profile per person, matched only by email, phone or user id", done: true },
@@ -465,7 +480,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   messages: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Providers in one YAML file: Amazon SES or SMTP, Netgsm or İleti Merkezi, and WhatsApp", done: true },
@@ -479,7 +494,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   crm: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Pipelines, stages, probabilities and stale limits in one YAML file", done: true },
@@ -493,7 +508,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   hr: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "People, departments, positions and the org chart, with every change kept field by field", done: true },
@@ -507,7 +522,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   wiki: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Spaces and who reads and writes them, set in one YAML file", done: true },
@@ -522,7 +537,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   forms: {
     status: "Preview",
-    version: "0.1.1",
+    version: "0.1.2",
     signIn: true,
     features: [
       { title: "Forms set in files, with logic, prefill and pages", done: true },
@@ -535,7 +550,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   campaigns: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "A marketing calendar, and campaigns with budget, goals and approvals", done: true },
@@ -548,7 +563,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   invoices: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Invoices and credit notes with KDV and withholding, numbered under GİB's rules", done: true },
@@ -561,7 +576,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   helpdesk: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Queues, routing rules, SLAs and working hours in one YAML file", done: true },
@@ -575,7 +590,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   "live-chat": {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Sites, hours, teams and page rules in one YAML file", done: true },
@@ -589,7 +604,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   "knowledge-base": {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Topics, languages, review and plans in one YAML file", done: true },
@@ -603,7 +618,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   errors: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     features: [
       { title: "Events from applications with a project key", done: true },
@@ -617,7 +632,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   "supply-chain": {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     features: [
       { title: "Keep the SBOM, signature result and provenance that CI reports for each image", done: true },
@@ -637,7 +652,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   audit: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     features: [
       { title: "Send osv-scanner JSON or SARIF from Trivy and Grype, and get back whether the check passes", done: true },
@@ -656,7 +671,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   posture: {
     status: "Preview",
-    version: "0.6.0",
+    version: "0.6.1",
     signIn: true,
     features: [
       { title: "Send SARIF from Trivy, kubescape, checkov or Prowler for a cloud account, cluster or hosts", done: true },
@@ -674,7 +689,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   certificates: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     features: [
       { title: "Send certificates as PEM from cron, CI or a collector; a private key is refused whole", done: true },
@@ -691,7 +706,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   uptime: {
     status: "Preview",
-    version: "0.5.1",
+    version: "0.5.2",
     signIn: true,
     features: [
       { title: "HTTP, TCP, DNS and TLS checks, run by a runner from a CI cron or any machine", done: true },
@@ -710,7 +725,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   backups: {
     status: "Preview",
-    version: "0.5.1",
+    version: "0.5.2",
     signIn: true,
     features: [
       { title: "Runs from restic, Velero or any script, and restore tests, reported per job", done: true },
@@ -728,7 +743,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   risk: {
     status: "Preview",
-    version: "0.4.0",
+    version: "0.5.0",
     signIn: true,
     features: [
       { title: "A risk register: likelihood, impact, treatment and a residual score", done: true },
@@ -743,7 +758,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   "threat-intel": {
     status: "Preview",
-    version: "0.4.0",
+    version: "0.5.0",
     signIn: true,
     features: [
       { title: "Import STIX 2.1, CSV and text feeds; what cannot be read is named, never dropped", done: true },
@@ -760,7 +775,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   cost: {
     status: "Preview",
-    version: "0.4.1",
+    version: "0.4.2",
     signIn: true,
     features: [
       { title: "Daily spend from AWS, GCP, Azure or any CSV, sent by a pipeline", done: true },
@@ -781,7 +796,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   deception: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Canaries with a token each: links, kubeconfigs, .env files, HTML pages, host names, SSH configs and AWS keys", done: true },
@@ -799,7 +814,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   compliance: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Controls of ISO 27001, SOC 2, GDPR and PCI DSS, each with an owner", done: true },
@@ -821,7 +836,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   alerts: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Prometheus and vmalert use it as their Alertmanager; products and scripts send alerts too", done: true },
@@ -840,7 +855,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   automation: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "Playbooks started by a webhook, a schedule or a person", done: true },
@@ -855,7 +870,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   access: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "SSH access to one account on one server, asked for with a reason and a duration", done: true },
@@ -875,7 +890,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   database: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "The slowest queries, from pg_stat_statements, over 7 days", done: true },
@@ -894,7 +909,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   metrics: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.2",
     signIn: true,
     features: [
       { title: "Every OpenAsy product scraped, and jobs of your own", done: true },
@@ -912,7 +927,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   traces: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.2",
     signIn: true,
     features: [
       { title: "OpenTelemetry traces in over OTLP/HTTP", done: true },
@@ -930,7 +945,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   endpoints: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     features: [
       { title: "osquery on each device, with a fixed pack and no query from the server", done: true },
@@ -948,7 +963,7 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
   },
   runtime: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     guides: [
       {
@@ -975,7 +990,7 @@ RUNTIME_URL=https://runtime.example.com RUNTIME_ENROLL_TOKEN=oie_... docker comp
   },
   "attack-surface": {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.2",
     signIn: true,
     features: [
       { title: "Only domains proven yours by a DNS record, and ranges an admin adds with a reason", done: true },
@@ -994,7 +1009,7 @@ RUNTIME_URL=https://runtime.example.com RUNTIME_ENROLL_TOKEN=oie_... docker comp
   },
   profiling: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.2",
     signIn: true,
     features: [
       { title: "Profiles pushed from Alloy, eBPF included, and the Pyroscope SDKs", done: true },
@@ -1011,7 +1026,7 @@ RUNTIME_URL=https://runtime.example.com RUNTIME_ENROLL_TOKEN=oie_... docker comp
   },
   waf: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.2",
     signIn: true,
     features: [
       { title: "Coraza and the OWASP Core Rule Set in the request path", done: true },
@@ -1029,7 +1044,7 @@ RUNTIME_URL=https://runtime.example.com RUNTIME_ENROLL_TOKEN=oie_... docker comp
   },
   "network-ids": {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.2",
     signIn: true,
     guides: [
       {
@@ -1042,7 +1057,7 @@ docker run -d --name network-ids-agent --restart unless-stopped --read-only \\
   -v /var/log/suricata:/var/log/suricata:ro -v /etc/suricata/openasy:/rules \\
   -v /var/run/suricata:/var/run/suricata --group-add "$(getent group suricata | cut -d: -f3)" \\
   -e NETWORK_IDS_URL=https://network-ids.example.com -e NETWORK_IDS_ENROLL_TOKEN=oie_... \\
-  ghcr.io/openasy/network-ids-agent:0.1.0`,
+  ghcr.io/openasy/network-ids-agent:0.1.2`,
       },
     ],
     features: [
@@ -1061,7 +1076,7 @@ docker run -d --name network-ids-agent --restart unless-stopped --read-only \\
   },
   awareness: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.2",
     signIn: true,
     features: [
       { title: "People from Identity or a CSV, only in domains proven by a TXT record", done: true },
@@ -1079,7 +1094,7 @@ docker run -d --name network-ids-agent --restart unless-stopped --read-only \\
   },
   "attack-simulation": {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.1",
     signIn: true,
     guides: [
       {
@@ -1105,7 +1120,7 @@ ATTACKSIM_URL=https://attack-simulation.example.com ATTACKSIM_ENROLL_TOKEN=aie_.
   },
   assistant: {
     status: "Preview",
-    version: "0.1.0",
+    version: "0.1.2",
     signIn: true,
     features: [
       { title: "A model the install chooses: Ollama, vLLM, llama.cpp or Anthropic", done: true },
@@ -1126,7 +1141,7 @@ ATTACKSIM_URL=https://attack-simulation.example.com ATTACKSIM_ENROLL_TOKEN=aie_.
   },
   dast: {
     status: "Preview",
-    version: "0.8.0",
+    version: "0.9.0",
     signIn: true,
     features: [
       { title: "Targets, with the owner's proof that the address is theirs", done: true },
@@ -1147,7 +1162,7 @@ ATTACKSIM_URL=https://attack-simulation.example.com ATTACKSIM_ENROLL_TOKEN=aie_.
   },
   identity: {
     status: "Preview",
-    version: "0.5.0",
+    version: "0.6.0",
     signIn: true,
     note: "openasy-kek seals the signing keys, client secrets and sign-in secrets (ADR 0021). Keep it apart from the data volume and with your backups: identity does not start without it. Serve it over HTTPS and keep IDENTITY_PUBLIC_URL fixed once applications use it: it is the issuer they trust.",
     features: [
@@ -1174,7 +1189,7 @@ ATTACKSIM_URL=https://attack-simulation.example.com ATTACKSIM_ENROLL_TOKEN=aie_.
   },
   vpn: {
     status: "Preview",
-    version: "0.12.0",
+    version: "0.13.0",
     signIn: true,
     note: "openasy-kek seals the CA key, server keys and sign-in secrets (ADR 0021). Keep it apart from the data volume and with your backups: vpn does not start without it. Serve the UI over HTTPS.",
     features: [

@@ -2,7 +2,7 @@
 
 - **Decision:** Accepted
 - **Implementation:** In progress
-- **Where:** `@openasy/auth` gives every product the same sign-in: local accounts, TOTP, passkeys, recovery codes, OIDC, sessions, members and API tokens, and owners connect identity providers under Settings, Sign-in (ADR 0033). The provider's variables have the same names in every product (`OPENASY_OIDC_ISSUER` and so on; only the client differs), and the sign-in screen can go straight to one provider (`OPENASY_OIDC_AUTO_REDIRECT`), so a session in Identity signs people in to every product without a screen. All 21 products use it. OIDC is tested against a real Keycloak in CI. The other methods are planned.
+- **Where:** `@openasy/auth` gives every product the same sign-in: local accounts, TOTP, passkeys, recovery codes, OIDC, sessions, members and API tokens, and owners connect identity providers under Settings, Sign-in (ADR 0033). The provider's variables have the same names in every product (`OPENASY_OIDC_ISSUER` and so on; only the client differs), and the sign-in screen can go straight to one provider (`OPENASY_OIDC_AUTO_REDIRECT`), so a session in Identity signs people in to every product without a screen. All 55 products with pages use it. OIDC is tested against a real Keycloak in CI. The other methods are planned.
 - **Area:** Security
 
 ## Context
