@@ -76,7 +76,10 @@ const SUMMARIES: Record<string, { title: string; text: string }> = {
     title: "Versions you can trust",
     text: "Each product has its own SemVer and a monthly release. Products declare which versions they work with and refuse to link to an incompatible one.",
   },
-  "0020": { title: "Long-term support", text: "For Enterprise customers: one long-term line per year with 12 months of high and critical security fixes." },
+  "0020": {
+    title: "Long-term support",
+    text: "Planned once products reach 1.0: one long-term line a year with 12 months of high and critical security fixes. None exists yet, and no plan includes one today.",
+  },
   "0021": {
     title: "Secrets and keys",
     text: "Envelope encryption with a key kept outside the database, keys that stay where they are used, rotation and a recovery key.",

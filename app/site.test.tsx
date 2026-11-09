@@ -83,7 +83,9 @@ describe("data", () => {
 describe("pages", () => {
   it("home lists every goal and every product", () => {
     open("/");
-    expect(h1()).toHaveTextContent("Run and secure your infrastructure");
+    expect(h1()).toHaveTextContent("Open-source tools. Built with care. Run on your terms.");
+    // The product count is a catalog, not the pitch.
+    expect(document.body).not.toHaveTextContent(/released and free to run today/);
     for (const g of GOALS) expect(screen.getAllByRole("link", { name: new RegExp(g.title) }).length).toBeGreaterThan(0);
     for (const id of PRODUCT_IDS) expect(screen.getAllByRole("link", { name: PRODUCTS[id].name }).length).toBeGreaterThan(0);
   });
@@ -487,13 +489,39 @@ describe("pages", () => {
     expect(h1()).toHaveTextContent("Support");
     expect(screen.getByRole("list", { name: "Support plans" }).children).toHaveLength(PLANS.length);
     for (const link of screen.getAllByRole("link", { name: /Contact us/ })) expect(link.getAttribute("href")).toMatch(new RegExp(`^mailto:${SUPPORT_EMAIL}`));
-    expect(screen.getByRole("table", { name: "Response times by severity and plan" })).toBeInTheDocument();
+    // No checkout: each paid plan starts with an email naming it, and Community with the install builder.
+    expect(screen.getByRole("link", { name: "Discuss your setup" }).getAttribute("href")).toContain("subject=OpenAsy%20Guided%20Setup");
+    expect(screen.getByRole("link", { name: "Request Standard support" }).getAttribute("href")).toContain("subject=OpenAsy%20Standard%20Support");
+    expect(screen.getByRole("link", { name: "Get started" })).toHaveAttribute("href", "/install");
+    expect(screen.getByRole("table", { name: "What each support plan covers" })).toBeInTheDocument();
+    const standard = screen.getByRole("list", { name: "Standard Support includes" });
+    expect(standard).toHaveTextContent("Support for up to three selected OpenAsy products");
+    expect(standard).toHaveTextContent("Initial response within one business day");
+    expect(screen.getByRole("list", { name: "Standard Support: good to know" })).toHaveTextContent("not guaranteed resolution");
+    // Promises the plans no longer make.
+    for (const old of [/4 business hours/, /24\/7 for critical issues/, /Covers all products you run/, /Help with every upgrade/, /1 hour, 24\/7/])
+      expect(document.body).not.toHaveTextContent(old);
   });
 
   it("home says every feature is free and offers the support plans", () => {
     open("/");
     expect(screen.getByRole("heading", { name: /We sell help, never features/ })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Support plans" }).children).toHaveLength(PLANS.length);
-    expect(screen.getByRole("link", { name: "Compare plans and response times" })).toHaveAttribute("href", "/support");
+    expect(screen.getByRole("link", { name: "Compare plans and what each covers" })).toHaveAttribute("href", "/support");
+    expect(screen.getByText("From $499")).toBeInTheDocument();
+    expect(screen.getByText("$199")).toBeInTheDocument();
+  });
+
+  it("home says how it is built, with Claude Code named, and links to the full account", () => {
+    open("/");
+    expect(screen.getByRole("heading", { name: "How we build" })).toBeInTheDocument();
+    expect(screen.getByText(/We use Claude Code as part of our development workflow/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "How we build, and what is not in place yet" })).toHaveAttribute("href", "/principles#how-we-build");
+  });
+
+  it("principles say how each change is checked, and what is not in place yet", () => {
+    open("/principles");
+    expect(screen.getByRole("heading", { name: "How we build" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Not in place yet" })).toHaveTextContent("No independent security audit");
   });
 });

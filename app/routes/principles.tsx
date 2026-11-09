@@ -1,11 +1,15 @@
 import { Badge } from "@openasy/ui";
 import { ADR_INDEX, PRINCIPLES, adrUrl, type ImplementationStatus, type Principle } from "../data/principles";
 import { PageTitle, Section } from "../components/site";
+import { CLAUDE_CODE, CLAUDE_CODE_DETAIL, NOT_YET, PRACTICES } from "../data/build";
 
 export function meta() {
   return [
     { title: "Principles · OpenAsy" },
-    { name: "description", content: "The design decisions every OpenAsy product follows, and how far each one is built." },
+    {
+      name: "description",
+      content: "How OpenAsy is built, with Claude Code in the workflow and the checks every change passes, and the design decisions every product follows.",
+    },
   ];
 }
 
@@ -77,6 +81,31 @@ export default function Principles() {
         The decisions every product follows, each a public record with its reasons. A decision says how we build; its status says how much of it ships today.
         Change one with a pull request.
       </PageTitle>
+
+      <section aria-labelledby="how-we-build" className="mt-8 rounded-xl border border-line bg-surface p-5 sm:p-6">
+        <h2 id="how-we-build" className="m-0 scroll-mt-20 text-2xl font-semibold">
+          How we build
+        </h2>
+        <p className="mt-3 mb-0 max-w-3xl">{CLAUDE_CODE}</p>
+        <p className="mt-2 mb-0 max-w-3xl text-fg-muted">{CLAUDE_CODE_DETAIL}</p>
+        <ul aria-label="How each change is checked" className="mt-5 mb-0 grid list-none gap-4 p-0 md:grid-cols-2">
+          {PRACTICES.map((x) => (
+            <li key={x.title} className="border-t border-line pt-3">
+              <p className="m-0 font-semibold">{x.title}</p>
+              <p className="mt-1 mb-0 text-sm text-fg-muted">{x.text}</p>
+              <a href={x.source.href} className="mt-1 inline-block text-sm">
+                {x.source.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <h3 className="mt-6 mb-0 text-base font-semibold">Not in place yet</h3>
+        <ul aria-label="Not in place yet" className="mt-2 mb-0 flex list-disc flex-col gap-1 ps-5 text-sm text-fg-muted">
+          {NOT_YET.map((x) => (
+            <li key={x}>{x}</li>
+          ))}
+        </ul>
+      </section>
 
       <Progress />
 

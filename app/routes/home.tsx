@@ -1,25 +1,31 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { ArrowRight, Check, KeyRound, Lock, Scale, Server, WifiOff } from "lucide-react";
+import { ArrowRight, Check, KeyRound, Scale, Server, ShieldCheck, WifiOff } from "lucide-react";
 import { Badge, PRODUCT_IDS, PRODUCTS, cn, type ProductGroup, type ProductId } from "@openasy/ui";
 import { GOALS } from "../data/goals";
 import { PRINCIPLES } from "../data/principles";
 import { CLAIMS, GRADES, GRADE_TONE, JUDGMENT, type Grade } from "../data/evidence";
 import { statusFor, withStatus } from "../data/status";
 import { PLANS } from "../data/support";
+import { CLAUDE_CODE, PRACTICES } from "../data/build";
 import { hasScreenshot, screenshot, storyFor } from "../data/products";
 import { ButtonLink, Section } from "../components/site";
 import { GoalCard, product } from "../components/cards";
 import { BreachToday } from "../components/breach";
 import { Screenshot, heroScreen } from "../components/story";
 
+const TITLE = "OpenAsy · Open-source tools to run and secure your infrastructure";
+const DESCRIPTION =
+  "Open-source tools for running and securing your infrastructure, built with a focus on reliability, maintainability and clear documentation. Start with what you need and run it on your own infrastructure.";
+
 export function meta() {
   return [
-    { title: "OpenAsy · Open-source tools to run and secure your infrastructure" },
-    {
-      name: "description",
-      content: `${PRODUCT_IDS.length} open-source products for operations and security. Run one, or all of them together. Self-hosted, SQLite by default, no telemetry.`,
-    },
+    { title: TITLE },
+    { name: "description", content: DESCRIPTION },
+    { property: "og:type", content: "website" },
+    { property: "og:title", content: "Open-source tools. Built with care. Run on your terms." },
+    { property: "og:description", content: DESCRIPTION },
+    { name: "twitter:card", content: "summary" },
   ];
 }
 
@@ -62,7 +68,7 @@ const PROMISES = [
   { icon: WifiOff, title: "Runs air-gapped", text: "No telemetry, no CDN, nothing leaves your network." },
   { icon: Server, title: "One container each", text: "SQLite by default; back up one volume per product." },
   { icon: KeyRound, title: "One sign-in", text: "Identity, Keycloak or Entra ID, with MFA and passkeys." },
-  { icon: Lock, title: "Secure by default", text: "TLS, least privilege and an audit log of every change." },
+  { icon: ShieldCheck, title: "Signed releases", text: "Images signed with cosign, with an SBOM and SLSA provenance." },
 ];
 
 const TOGETHER = [
@@ -259,6 +265,13 @@ function Showcase() {
   );
 }
 
+/** The support card's button: the plan most people pick stands out. */
+const planButton = (id: string) =>
+  cn(
+    "inline-flex h-10 w-full items-center justify-center rounded-md px-4 font-semibold no-underline",
+    id === "standard" ? "bg-accent text-accent-contrast hover:bg-accent-hover" : "border border-line-strong bg-surface text-fg hover:bg-subtle",
+  );
+
 function Kicker({ children }: { children: string }) {
   return <p className="m-0 font-mono text-xs tracking-wider text-accent-text">{children}</p>;
 }
@@ -272,13 +285,13 @@ export default function Home() {
             <div className="min-w-0">
               <p className="m-0 font-mono text-xs tracking-wider text-accent-text">OPEN SOURCE · SELF-HOSTED · AGPL-3.0</p>
               <h1 id="hero" className="mt-4 mb-0 text-4xl leading-[1.08] font-semibold tracking-tight sm:text-6xl">
-                Run and secure your infrastructure with tools you own.
+                Open-source tools. Built with care. Run on your terms.
               </h1>
             </div>
             <div className="min-w-0">
               <p className="m-0 text-lg leading-relaxed text-fg-muted">
-                {PRODUCT_IDS.length} products for operations and security, {released.length} of them released and free to run today. Start with one container,
-                add the rest when you need them. Your data never leaves your network.
+                We build open-source tools for running and securing your infrastructure, with a focus on reliability, maintainability, and clear documentation.
+                Start with what you need and run it on your own infrastructure.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
@@ -338,7 +351,7 @@ export default function Home() {
       <Section className="pt-24" labelledBy="products">
         <Kicker>EVERY PRODUCT, AT WORK</Kicker>
         <h2 id="products" className="mt-2 mb-0 text-3xl font-semibold tracking-tight sm:text-4xl">
-          {PRODUCT_IDS.length} products, one way of working
+          One way of working, in every product
         </h2>
         <p className="mt-3 max-w-2xl text-base text-fg-muted">
           The same sign-in, the same screens and the same API style in each. These are the real products, with sample data.
@@ -399,6 +412,30 @@ export default function Home() {
             <BreachToday released={released} />
           </div>
         </div>
+      </Section>
+
+      <Section className="pt-24" labelledBy="how-we-build">
+        <Kicker>HOW WE BUILD</Kicker>
+        <h2 id="how-we-build" className="mt-2 mb-0 text-3xl font-semibold tracking-tight sm:text-4xl">
+          How we build
+        </h2>
+        <p className="mt-3 max-w-3xl text-base text-fg-muted">{CLAUDE_CODE}</p>
+        <ul aria-label="How each change is checked" className="mt-8 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
+          {PRACTICES.slice(0, 3).map((x) => (
+            <li key={x.title} className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-5">
+              <p className="m-0 font-semibold">{x.title}</p>
+              <p className="m-0 text-sm text-fg-muted">{x.text}</p>
+              <a href={x.source.href} className="mt-auto pt-1 text-sm">
+                {x.source.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 mb-0">
+          <Link to="/principles#how-we-build" className="inline-flex min-h-11 items-center sm:min-h-0">
+            How we build, and what is not in place yet
+          </Link>
+        </p>
       </Section>
 
       <Section className="pt-24" labelledBy="evidence">
@@ -467,41 +504,43 @@ export default function Home() {
             Every product and every feature is free under AGPL-3.0, with no enterprise edition and no licence key. You never need a plan to use OpenAsy. Teams
             that want support buy a plan from the engineers who build it.
           </p>
-          <ul aria-label="Support plans" className="mt-10 grid list-none gap-4 p-0 md:grid-cols-3">
+          <ul aria-label="Support plans" className="mt-10 grid list-none gap-4 p-0 md:grid-cols-2 xl:grid-cols-4">
             {PLANS.map((plan) => (
               <li
                 key={plan.id}
                 className={cn("flex flex-col rounded-xl border p-6", plan.id === "standard" ? "border-accent bg-accent-soft" : "border-line bg-canvas")}
               >
                 <p className="m-0 text-lg font-semibold">{plan.name}</p>
-                <p className="mt-1 mb-0 text-sm text-accent-text">{plan.price}</p>
+                <p className="mt-1 mb-0 flex flex-wrap items-baseline gap-x-1.5">
+                  <span className="text-2xl font-semibold">{plan.price}</span>
+                  {plan.cadence && <span className="text-sm text-fg-muted">{plan.cadence}</span>}
+                </p>
                 <p className="mt-3 mb-0 text-fg-muted">{plan.pitch}</p>
                 <ul className="mt-4 mb-0 flex list-none flex-col gap-2 p-0 text-sm">
-                  {plan.features.slice(0, 4).map((f) => (
+                  {plan.features.slice(0, 5).map((f) => (
                     <li key={f} className="flex items-start gap-2">
                       <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
                       {f}
                     </li>
                   ))}
                 </ul>
+                {plan.notes && <p className="mt-4 mb-0 text-xs text-fg-muted">{plan.notes[0]}</p>}
                 <div className="mt-auto pt-6">
-                  <a
-                    href={plan.cta.href}
-                    className={cn(
-                      "inline-flex h-10 w-full items-center justify-center rounded-md px-4 font-semibold no-underline",
-                      plan.id === "community"
-                        ? "border border-line-strong bg-surface text-fg hover:bg-subtle"
-                        : "bg-accent text-accent-contrast hover:bg-accent-hover",
-                    )}
-                  >
-                    {plan.cta.label}
-                  </a>
+                  {plan.cta.external ? (
+                    <a href={plan.cta.href} className={planButton(plan.id)}>
+                      {plan.cta.label}
+                    </a>
+                  ) : (
+                    <Link to={plan.cta.href} className={planButton(plan.id)}>
+                      {plan.cta.label}
+                    </Link>
+                  )}
                 </div>
               </li>
             ))}
           </ul>
           <p className="mt-6 mb-0">
-            <Link to="/support">Compare plans and response times</Link>
+            <Link to="/support">Compare plans and what each covers</Link>
           </p>
         </Section>
       </div>
