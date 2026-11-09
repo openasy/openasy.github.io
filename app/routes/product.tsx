@@ -4,11 +4,14 @@ import { ArrowRight, Check, Circle } from "lucide-react";
 import { Callout, PRODUCT_IDS, Tabs, cn, type ProductId } from "@openasy/ui";
 import { apiFor } from "../data/apis";
 import { goalsForProduct } from "../data/goals";
-import { INSTALLABLE } from "../data/install";
+import { INSTALLABLE, type Installable, type VpnLayout } from "../data/install";
+import { ProductSetup } from "../components/product-setup";
+
+const installable = (id: string): id is Installable => (INSTALLABLE as readonly string[]).includes(id);
 import { deploymentsFor, statusFor, withStatus, type Deployment, type Guide } from "../data/status";
 import { hasDesign, storyUrl } from "../data/storybook";
 import { ButtonLink, CodeBlock, GITHUB } from "../components/site";
-import { ProductStatusBadge, REPO_COMPOSE, composeRun, helmFor, product, repoCompose } from "../components/cards";
+import { ProductStatusBadge, composeRun, helmFor, product } from "../components/cards";
 import { Glance, STORY_SECTIONS, Screenshot, StorySections, heroScreen } from "../components/story";
 import { GROUPS } from "./home";
 import { storyFor } from "../data/products";
@@ -58,8 +61,15 @@ function Deployments({ id, ways }: { id: string; ways: Deployment[] }) {
     <>
       <Tabs<string> label="How to deploy" value={d.id} onChange={setWay} className="mt-4" items={ways.map((w) => ({ value: w.id, label: w.label }))} />
       <p className="mt-3 mb-0 text-fg-muted">{d.fits}</p>
-      {d.compose && <CodeBlock code={composeRun([id])} label={`compose.yaml for ${p.name}`} className="mt-3 p-4" />}
-      <Steps items={d.steps} label={`Steps: ${d.label}`} />
+      {installable(id) ? (
+        // One setup per layout, so switching tabs starts from that layout's own servers.
+        <ProductSetup key={d.id} id={id} layout={d.id as VpnLayout} />
+      ) : (
+        <>
+          {d.compose && <CodeBlock code={composeRun([id])} label={`compose.yaml for ${p.name}`} className="mt-3 p-4" />}
+          <Steps items={d.steps} label={`Steps: ${d.label}`} />
+        </>
+      )}
     </>
   );
 }
@@ -74,8 +84,7 @@ function RunIt({ id }: { id: string }) {
   const [way, setWay] = useState<InstallWay>("compose");
   const ways = deploymentsFor(s);
   if (ways.length > 1) return <Deployments id={id} ways={ways} />;
-  if (REPO_COMPOSE[id]) return <CodeBlock code={repoCompose(id)} label={`Run ${p.name}`} className="mt-3 p-4" />;
-  const compose = <CodeBlock code={composeRun([id])} label={`compose.yaml for ${p.name}`} className="mt-3 p-4" />;
+  const compose = installable(id) ? <ProductSetup id={id} /> : <CodeBlock code={composeRun([id])} label={`compose.yaml for ${p.name}`} className="mt-3 p-4" />;
   if (!helm || !s.helm) return compose;
   return (
     <>

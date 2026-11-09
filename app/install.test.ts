@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CHOICE, INSTALLABLE, PARTS, REALM_PRODUCTS, THIRD_PARTY, buildInstall, cleanDomain, makeSecrets, type InstallChoice } from "./data/install";
 import { statusFor } from "./data/status";
+import { CONFIGS } from "./data/configs";
 import { DEV_IMAGES, buildDevKit } from "./data/devkit";
 import SETUP from "../kit/dev/setup.ts?raw";
 import SEED from "../kit/dev/seed.ts?raw";
@@ -346,6 +347,80 @@ describe("install builder", () => {
       for (const [, v] of services!.matchAll(/^ {6}- ([a-z-]+):\//gm)) expect(declared).toContain(v);
     }
     expect(file(out, "products/sast.yaml")).toContain("  openasy-agent-kek:\n    file: ./keys/openasy-agent-kek");
+  });
+
+  it("an Identity or Keycloak that already runs: the issuer is written for each product, and nothing comes along", () => {
+    const out = build({ products: ["vpn"], signIn: "existing", existing: "openasy-identity", issuer: "id.acme.com/" });
+    expect(out.services).not.toContain("identity");
+    expect(file(out, "sign-in.env")).toMatch(/^OPENASY_OIDC_PROVIDER=openasy-identity$/m);
+    expect(file(out, "products/vpn.yaml")).toContain("# OPENASY_OIDC_ISSUER: https://id.acme.com");
+    expect(out.steps.map((x) => x.text).join("\n")).toContain("In your Identity at https://id.acme.com, Applications, add VPN from its template");
+    const kc = build({ products: ["crm"], signIn: "existing", existing: "keycloak", issuer: "https://auth.acme.com/realms/acme" });
+    expect(file(kc, "sign-in.env")).toMatch(/^OPENASY_OIDC_PROVIDER=keycloak$/m);
+    expect(kc.steps.map((x) => x.text).join("\n")).toContain("as clients of the realm");
+  });
+
+  it("VPN's servers run on hosts of their own, each in a folder of its own that reaches the panel over HTTPS", () => {
+    const one = build({ products: ["vpn"], signIn: "own" });
+    expect(one.files.some((x) => x.name.startsWith("servers/"))).toBe(false);
+    const out = build({
+      products: ["vpn"],
+      signIn: "own",
+      vpnLayout: "locations",
+      vpnServers: [
+        { name: "FRA 1", address: "" },
+        { name: "ist-1", address: "vpn.ist.acme.com" },
+      ],
+    });
+    expect(out.services).not.toContain("vpn-server");
+    expect(envOf(out, "vpn")).toMatch(/^VPN_PUBLIC_HOST=fra-1\.example\.com$/m);
+    const fra = file(out, "servers/fra-1/compose.yaml");
+    expect(fra).toContain("image: ghcr.io/openasy/vpn-server:" + statusFor("vpn").version);
+    expect(fra).toContain("VPN_URL: https://vpn.example.com");
+    expect(file(out, "servers/ist-1/compose.yaml")).toContain("clients reach at vpn.ist.acme.com");
+    expect(out.files.find((x) => x.name === "servers/ist-1/.env")?.secret).toBe(true);
+    // At the edge there is one server, whatever the list holds.
+    const edge = build({ products: ["vpn"], signIn: "own", vpnLayout: "edge", vpnServers: [] });
+    expect(edge.files.filter((x) => x.name.endsWith("/compose.yaml")).map((x) => x.name)).toEqual(["servers/edge-1/compose.yaml"]);
+    // With Caddy's own CA, each server trusts its root.
+    const internal = build({ products: ["vpn"], signIn: "own", vpnLayout: "edge", certificates: "internal" });
+    expect(file(internal, "servers/edge-1/compose.yaml")).toContain("NODE_EXTRA_CA_CERTS: /run/caddy-root.crt");
+  });
+
+  it("Mail and Calendar share Stalwart, Calendar brings Mail, and calendar apps reach it through the proxy", () => {
+    const out = build({ products: ["calendar", "identity"], signIn: "identity" });
+    expect(out.services).toEqual(expect.arrayContaining(["stalwart", "mail", "calendar", "identity", "caddy"]));
+    expect(out.services.filter((x) => x === "stalwart")).toHaveLength(1);
+    expect(file(out, "config/Caddyfile")).toContain("dav.example.com {\n  reverse_proxy stalwart:8080\n}");
+    expect(envOf(out, "calendar")).toMatch(/^CALENDAR_DAV_URL=https:\/\/dav\.example\.com$/m);
+    expect(service(all(out), "stalwart")).not.toContain('"443:443"');
+    expect(file(out, "keys/stalwart.env")).toMatch(/^STALWART_RECOVERY_ADMIN=admin:[0-9a-f]{32}$/);
+    expect(file(out, "config/calendar/calendar.yaml")).toBe(CONFIGS.calendar!.content);
+    const text = out.steps.map((x) => `${x.text}\n${x.code ?? ""}`).join("\n");
+    expect(text).toContain("mail node server/stalwart-setup.ts");
+    expect(text).toContain("calendar node server/stalwart-setup.ts");
+  });
+
+  it("Files and Passwords bring OpenCloud and Vaultwarden, signing in through Identity", () => {
+    const out = build({ products: ["files", "passwords", "identity"], signIn: "identity" });
+    expect(envOf(out, "opencloud")).toMatch(/^OC_OIDC_ISSUER=https:\/\/id\.example\.com$/m);
+    expect(envOf(out, "vaultwarden")).toMatch(/^SSO_AUTHORITY=https:\/\/id\.example\.com$/m);
+    expect(file(out, "config/Caddyfile")).toContain("cloud.example.com {\n  reverse_proxy opencloud:9200\n}");
+    expect(file(out, "config/Caddyfile")).toContain("vault.example.com {\n  reverse_proxy vaultwarden:80\n}");
+    for (const k of ["opencloud-token", "vaultwarden-sso-secret", "vaultwarden-org-key", "vaultwarden-service-key", "identity-token"])
+      expect(out.files.map((x) => x.name)).toContain(`keys/${k}`);
+    // Started once their tokens exist, not with everything else.
+    expect(out.steps.find((x) => x.code?.startsWith("docker compose up -d "))?.code).not.toMatch(/ (files|passwords)( |$)/);
+  });
+
+  it("every product with a config file gets its example from its release, at the version it runs", () => {
+    for (const id of INSTALLABLE.filter((x) => PARTS[x].config)) {
+      expect(CONFIGS[id], id).toBeDefined();
+      expect(CONFIGS[id]!.version, id).toBe(statusFor(id).version);
+      const out = build({ products: [id], signIn: "own" });
+      expect(file(out, `config/${PARTS[id].service}/${PARTS[id].service}.yaml`), id).toBe(CONFIGS[id]!.content);
+      expect(envOf(out, PARTS[id].service), id).toMatch(new RegExp(`^${PARTS[id].prefix}CONFIG=/config/${PARTS[id].service}\\.yaml$`, "m"));
+    }
   });
 
   it("an empty choice still writes a valid file", () => {

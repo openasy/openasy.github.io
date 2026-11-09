@@ -186,27 +186,30 @@ describe("pages", () => {
     expect(screen.getByRole("link", { name: "OpenVPN" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Connect a device" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "OpenVPN Connect" }).length).toBeGreaterThanOrEqual(4);
-    expect(screen.getByLabelText("compose.yaml for VPN")).toHaveTextContent("vpn:0.13.0");
+    expect(screen.getByRole("button", { name: "Download vpn.zip" })).toBeInTheDocument();
+    // The keys are made in the browser and go in the zip: no product page asks anyone to run openssl.
+    expect(document.body).not.toHaveTextContent("openssl rand");
   });
 
   it("the VPN product page offers ways to deploy", async () => {
     open("/products/vpn");
     const tabs = within(screen.getByRole("tablist", { name: "How to deploy" })).getAllByRole("tab");
     expect(tabs.map((t) => t.textContent)).toEqual(["One host", "Panel inside, server at the edge", "Several locations"]);
-    const compose = screen.getByLabelText("compose.yaml for VPN");
-    expect(compose).toHaveTextContent("VPN_ENROLL_TOKEN: ${EDGE_1_TOKEN:-}");
-    expect(compose).toHaveTextContent("vpn-server-data:/var/lib/openasy-vpn");
-    expect(compose).not.toHaveTextContent("VPN_SERVER_TOKEN");
+    // One host: the server runs next to the panel, in VPN's own file.
+    await userEvent.click(screen.getByRole("button", { name: "Open products/vpn.yaml" }));
+    expect(screen.getByLabelText("products/vpn.yaml")).toHaveTextContent("ghcr.io/openasy/vpn-server:0.13.0");
+    expect(screen.getByRole("radio", { name: /An Identity or Keycloak you already run/ })).toBeInTheDocument();
 
+    // Several locations: a folder per server, each reaching the panel over HTTPS.
     await userEvent.click(screen.getByRole("tab", { name: "Several locations" }));
-    const steps = screen.getByRole("list", { name: "Steps: Several locations" });
-    expect(
-      within(steps)
-        .getAllByRole("heading")
-        .map((h) => h.textContent),
-    ).toEqual(["Run the panel once", "Add a server per location", "Start vpn-server at each location", "Then add devices"]);
-    expect(screen.getByLabelText("Start vpn-server at each location")).toHaveTextContent("ghcr.io/openasy/vpn-server:0.13.0");
-    expect(screen.queryByLabelText("compose.yaml for VPN")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /A server per location/ })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Steps to start" })).toHaveTextContent(
+      "In VPN, Servers, add fra-1 at fra-1.example.com, ist-1 at ist-1.example.com",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Open servers/fra-1/compose.yaml" }));
+    expect(screen.getByLabelText("servers/fra-1/compose.yaml")).toHaveTextContent("VPN_URL: https://vpn.example.com");
+    await userEvent.click(screen.getByRole("button", { name: "Add a location" }));
+    expect(screen.getByRole("button", { name: "Open servers/site-3/compose.yaml" })).toBeInTheDocument();
   });
 
   it("hides ways to deploy that the released version does not support", () => {
@@ -216,7 +219,7 @@ describe("pages", () => {
     try {
       open("/products/vpn");
       expect(screen.queryByRole("tablist", { name: "How to deploy" })).not.toBeInTheDocument();
-      expect(screen.getByLabelText("compose.yaml for VPN")).toHaveTextContent("VPN_SERVER_TOKEN");
+      expect(screen.getByRole("button", { name: "Download vpn.zip" })).toBeInTheDocument();
     } finally {
       vpn.version = was;
     }
@@ -246,11 +249,14 @@ describe("pages", () => {
     expect(screen.getByRole("link", { name: "OpenAsy Identity" })).toHaveAttribute("href", "/products/identity");
   });
 
-  it("Identity is released: its compose file and what it builds on", () => {
+  it("Identity is released: its setup and what it builds on", async () => {
     open("/products/identity");
     expect(screen.getByText("Preview 0.6.0")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Run it" })).toBeInTheDocument();
-    expect(screen.getByText(/image: ghcr.io\/openasy\/identity:0.6.0/)).toBeInTheDocument();
+    // Identity signs people in itself, or through Keycloak or a provider; never through another Identity.
+    expect(screen.queryByRole("radio", { name: /OpenAsy Identity/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Open products/identity.yaml" }));
+    expect(screen.getByLabelText("products/identity.yaml")).toHaveTextContent("image: ghcr.io/openasy/identity:0.6.0");
     expect(screen.getByRole("link", { name: "samlify" })).toBeInTheDocument();
   });
 
@@ -349,18 +355,30 @@ describe("pages", () => {
     }
   });
 
-  it("a product that runs next to a server of its own gives the compose file from its repository, at its release", () => {
+  it("a product that runs next to a server of its own is set up with that server and its config from its release", async () => {
     open("/products/mail");
     expect(screen.getByText("Preview 0.1.1")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Run it" })).toBeInTheDocument();
-    expect(screen.getByText(/raw.githubusercontent.com\/openasy\/mail\/v0.1.1\/compose.yaml/)).toBeInTheDocument();
-    expect(screen.queryByText(/image: ghcr.io\/openasy\/mail:/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Open products/mail.yaml" }));
+    const mail = screen.getByLabelText("products/mail.yaml");
+    expect(mail).toHaveTextContent("image: stalwartlabs/stalwart:v0.16");
+    expect(mail).toHaveTextContent("image: ghcr.io/openasy/mail:0.1.1");
+    expect(screen.getByRole("button", { name: "Open config/mail/mail.yaml" })).toBeInTheDocument();
+    expect(screen.queryByText(/raw.githubusercontent.com/)).not.toBeInTheDocument();
   });
 
-  it("Uptime is released: its compose file and what it builds on", () => {
+  it("Files and Passwords sign in through Identity only, since OpenCloud and Vaultwarden do", () => {
+    open("/products/files");
+    const ways = within(screen.getByRole("radiogroup", { name: "Sign-in" })).getAllByRole("radio");
+    expect(ways).toHaveLength(2);
+    expect(screen.getByRole("radio", { name: /OpenAsy Identity/ })).toBeChecked();
+  });
+
+  it("Uptime is released: its setup and what it builds on", async () => {
     open("/products/uptime");
     expect(screen.getByText("Preview 0.5.2")).toBeInTheDocument();
-    expect(screen.getByText(/image: ghcr.io\/openasy\/uptime:0.5.2/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Open products/uptime.yaml" }));
+    expect(screen.getByLabelText("products/uptime.yaml")).toHaveTextContent("image: ghcr.io/openasy/uptime:0.5.2");
     expect(screen.getByRole("heading", { name: "Built on" })).toBeInTheDocument();
   });
 

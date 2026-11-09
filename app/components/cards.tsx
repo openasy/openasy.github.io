@@ -259,47 +259,6 @@ export function composeFor(ids: string[]): string {
 }
 
 /** The compose file, then the commands that start it: the secrets key first, and the owner link afterwards. */
-/**
- * Products that run next to a server of their own (OpenCloud, Vaultwarden, Stalwart) or with a file of their own:
- * their page gives the compose file and the example file from the repository at the released tag, tested there end to
- * end, rather than one written here.
- */
-export const REPO_COMPOSE: Record<string, { config: string; first: string }> = {
-  analytics: { config: "analytics.yaml", first: "List your sites in config/analytics.yaml, then start it." },
-  files: { config: "files.yaml", first: "OpenCloud starts first; its app token goes in opencloud-token, as the header of compose.yaml says." },
-  passwords: { config: "passwords.yaml", first: "Vaultwarden's organization and its two API keys come first, as the README's Run section says." },
-  mail: { config: "mail.yaml", first: "Stalwart's first start is done through its API by Mail, as the header of compose.yaml says." },
-  calendar: {
-    config: "calendar.yaml",
-    first: "Mail's first start comes first; then Calendar sets up its account on Stalwart, as the header of compose.yaml says.",
-  },
-  consent: { config: "consent.yaml", first: "List your purposes and sites in config/consent.yaml, then start it; İYS needs its account in the environment." },
-  audience: { config: "audience.yaml", first: "List the linked products in config/audience.yaml, then start it." },
-  messages: { config: "messages.yaml", first: "Set your providers in config/messages.yaml and their keys in the environment, then start it." },
-  crm: { config: "crm.yaml", first: "Set your pipelines in config/crm.yaml, then start it." },
-  helpdesk: { config: "helpdesk.yaml", first: "Set your support mailboxes and queues in config/helpdesk.yaml, then start it." },
-  "live-chat": { config: "live-chat.yaml", first: "List your sites and teams in config/live-chat.yaml, then start it." },
-  "knowledge-base": { config: "knowledge-base.yaml", first: "Set your topics and languages in config/knowledge-base.yaml, then start it." },
-  hr: { config: "hr.yaml", first: "Set your leave rules, who reads what and the link to Identity in config/hr.yaml, then start it." },
-  wiki: { config: "wiki.yaml", first: "Set your spaces and who reads and writes them in config/wiki.yaml, then start it." },
-  forms: { config: "forms.yaml", first: "Write your forms and where their answers go in config/forms.yaml, then start it." },
-  invoices: { config: "invoices.yaml", first: "Set your company, your GİB integrator and your invoice series in config/invoices.yaml, then start it." },
-  campaigns: { config: "campaigns.yaml", first: "Set your channels, naming rules and linked products in config/campaigns.yaml, then start it." },
-};
-
-export function repoCompose(id: string): string {
-  const { config, first } = REPO_COMPOSE[id]!;
-  const raw = `https://raw.githubusercontent.com/openasy/${id}/v${statusFor(id).version}`;
-  return [
-    `mkdir ${id} && cd ${id}`,
-    `curl -fsSLO ${raw}/compose.yaml`,
-    `curl -fsSL --create-dirs -o config/${config} ${raw}/config/${config}`,
-    "openssl rand -hex 32 > openasy-kek   # keep it with your backups",
-    `# ${first}`,
-    `# The steps: https://github.com/openasy/${id}/tree/v${statusFor(id).version}#run`,
-  ].join("\n");
-}
-
 export function composeRun(ids: string[]): string {
   const signIn = ids.filter((id) => statusFor(id).signIn);
   return [
