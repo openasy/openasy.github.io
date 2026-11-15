@@ -587,6 +587,32 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
     ],
     upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "claims, receipts, card purchases and batches" }],
   },
+  chat: {
+    status: "Preview",
+    version: "0.1.1",
+    signIn: true,
+    features: [
+      { title: "Channels set in chat.yaml, kept in step on Synapse with groups from Identity, retention and who posts", done: true },
+      { title: "Messages, threads, reactions, mentions, files and search, from the browser and from Element on the same server", done: true },
+      { title: "Guests limited to one channel with an end date, and leavers taken out of every room", done: true },
+      { title: "Legal holds and signed exports, and apps posting cards through webhooks", done: true },
+      { title: "Federation with other companies' Matrix servers", done: false },
+    ],
+    upstream: [{ name: "Synapse", url: "https://github.com/element-hq/synapse", role: "the Matrix server: messages, files and Element's sign-in" }],
+  },
+  meet: {
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    features: [
+      { title: "Calls in the browser on LiveKit, with screen sharing, raised hands and a chat that is never stored", done: true },
+      { title: "A lobby where guests wait until someone from the company lets them in; nothing of them is kept after the call", done: true },
+      { title: "Recordings by Egress only for the groups meet.yaml allows, each deleted after its group's days", done: true },
+      { title: "The media server's and TURN's health, with each person's media path, round trip and loss", done: true },
+      { title: "Meet links from Calendar invitations and Chat channels", done: false },
+    ],
+    upstream: [{ name: "LiveKit", url: "https://livekit.io", role: "the media server that carries the calls, and Egress, which records them" }],
+  },
   helpdesk: {
     status: "Preview",
     version: "0.1.1",

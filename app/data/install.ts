@@ -63,6 +63,8 @@ export const INSTALLABLE = [
   "hr",
   "invoices",
   "expenses",
+  "chat",
+  "meet",
 ] as const;
 export type Installable = (typeof INSTALLABLE)[number];
 
@@ -158,6 +160,11 @@ export interface Secrets {
   stalwartAdmin: string;
   stalwartPassword: string;
   calendarStalwartPassword: string;
+  /** Chat makes its account on Synapse with the first; Synapse's PostgreSQL password is the second. */
+  synapseSecret: string;
+  synapseDb: string;
+  /** The API secret Meet, LiveKit and Egress share. */
+  livekitSecret: string;
   /** The secret of each product that is a client in the ready Keycloak realm. */
   clients: Record<RealmProduct, string>;
 }
@@ -181,6 +188,9 @@ export function makeSecrets(fill: (bytes: Uint8Array<ArrayBuffer>) => void): Sec
     stalwartAdmin: hex(16),
     stalwartPassword: hex(24),
     calendarStalwartPassword: hex(24),
+    synapseSecret: hex(32),
+    synapseDb: hex(24),
+    livekitSecret: hex(32),
     clients: { identity: hex(24), vpn: hex(24), infrastructure: hex(24), vulnerabilities: hex(24) },
   };
 }
@@ -194,6 +204,10 @@ export const THIRD_PARTY = {
   stalwart: "stalwartlabs/stalwart:v0.16",
   opencloud: "opencloudeu/opencloud:7.2.4",
   vaultwarden: "vaultwarden/server:1.37.4",
+  synapse: "ghcr.io/element-hq/synapse:v1.165.0",
+  livekit: "livekit/livekit-server:v1.13.11",
+  egress: "livekit/egress:v1.15.0",
+  redis: "redis:7.4-alpine",
 };
 const REALM = "https://raw.githubusercontent.com/openasy/auth/v0.4.0/examples/keycloak/openasy-realm.json";
 
@@ -233,7 +247,7 @@ export type RealmProduct = "identity" | "vpn" | "infrastructure" | "vulnerabilit
 
 export const REALM_PRODUCTS: readonly RealmProduct[] = ["identity", "vpn", "infrastructure", "vulnerabilities"];
 /** Products that run next to a server of their own, each written out in buildInstall rather than by the common block. */
-const WITH_SERVER: readonly Installable[] = ["mail", "calendar", "files", "passwords"];
+const WITH_SERVER: readonly Installable[] = ["mail", "calendar", "files", "passwords", "chat", "meet"];
 
 export const PARTS: Record<Installable, Part> = {
   identity: { name: "Identity", service: "identity", prefix: "IDENTITY_", sub: "id", client: "openasy-identity", realmVar: "IDENTITY" },
@@ -373,6 +387,8 @@ export const PARTS: Record<Installable, Part> = {
   hr: { name: "HR", service: "hr", prefix: "HR_", sub: "hr", config: true },
   invoices: { name: "Invoices", service: "invoices", prefix: "INVOICES_", sub: "invoices", config: true },
   expenses: { name: "Expenses", service: "expenses", prefix: "EXPENSES_", sub: "expenses", config: true, userRole: true },
+  chat: { name: "Chat", service: "chat", prefix: "CHAT_", sub: "chat", config: true, userRole: true },
+  meet: { name: "Meet", service: "meet", prefix: "MEET_", sub: "meet", config: true, userRole: true },
 };
 const ROLES = "openasy-admins=admin,openasy-editors=editor,openasy-viewers=viewer";
 const PROVIDER_NAME: Record<Provider, string> = { entra: "Microsoft Entra ID", okta: "Okta", google: "Google" };
@@ -452,7 +468,16 @@ export const cleanAccent = (a: string) => (/^#[0-9a-f]{6}$/i.test(a.trim()) ? a.
 
 /** The product file a container goes in (ADR 0054): a product's agents and servers go with it. */
 export function productFileOf(service: string): string | undefined {
-  const WITH: Record<string, string> = { stalwart: "mail", opencloud: "files", vaultwarden: "passwords" };
+  const WITH: Record<string, string> = {
+    stalwart: "mail",
+    opencloud: "files",
+    vaultwarden: "passwords",
+    synapse: "chat",
+    "synapse-db": "chat",
+    livekit: "meet",
+    "livekit-redis": "meet",
+    "livekit-egress": "meet",
+  };
   if (WITH[service]) return WITH[service];
   const base = service.replace(/-(agent|server|server-tcp)$/, "");
   if (INSTALLABLE.some((id) => PARTS[id].service === base)) return base;
@@ -611,6 +636,8 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const extraSites: Array<{ host: string; upstream: string; port: number }> = [];
   // Files and Passwords sign in through Identity, and so do OpenCloud and Vaultwarden behind them.
   const identityIssuer = signIn === "existing" && choice.existing === "openasy-identity" ? issuer : url("identity");
+  // An OpenAsy Identity to read the company directory from: run here, or one that already runs.
+  const identityDirectory = has("identity") || (signIn === "existing" && choice.existing === "openasy-identity");
   const stalwartSetup = `docker compose exec -e "$(cat keys/stalwart.env)"${internal ? " -e STALWART_REQUEST_CERTIFICATE=false" : ""}`;
 
   const lines = [`# OpenAsy for ${d}, made at openasy.com/install`, "services:"];
@@ -1035,6 +1062,142 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         ["passwords-data"],
       );
     }
+    if (id === "chat") {
+      add(
+        "synapse-db",
+        [
+          `    image: ${THIRD_PARTY.postgres}   # Synapse's database`,
+          "    restart: unless-stopped",
+          "    volumes:",
+          "      - synapse-db:/var/lib/postgresql/data   # every message: keep it in your backups",
+          "    secrets: [synapse-db-password]",
+          "    environment:",
+          env("POSTGRES_USER", "synapse"),
+          env("POSTGRES_DB", "synapse"),
+          env("POSTGRES_PASSWORD_FILE", "/run/secrets/synapse-db-password"),
+          env("POSTGRES_INITDB_ARGS", "--encoding=UTF-8 --lc-collate=C --lc-ctype=C   # Synapse needs the C collation"),
+        ],
+        ["synapse-db"],
+      );
+      add(
+        "synapse",
+        [
+          `    image: ${THIRD_PARTY.synapse}   # the Matrix server: every message and file, and what Element on phones and computers talks to`,
+          "    restart: unless-stopped",
+          "    depends_on: [synapse-db]",
+          "    # generate-keys makes Synapse's signing key once; otherwise Synapse runs with its settings and, from keys/, its database's.",
+          "    entrypoint:",
+          "      - /bin/sh",
+          "      - -c",
+          "      - 'if [ \"$$1\" = generate-keys ]; then python -m synapse.app.homeserver --config-path /config/homeserver.yaml --generate-keys && exec chown -R 991:991 /data; fi; exec /start.py run --config-path /config/homeserver.yaml --config-path /run/secrets/synapse-db'",
+          '      - "--"',
+          ...(caddy ? [] : ["    ports:", `      - "127.0.0.1:8192:8008"   # ${proxyName} serves it at matrix.${d}`]),
+          "    volumes:",
+          "      - synapse-data:/data   # files people share and the signing key: keep it in your backups",
+          "      - ./config/chat/synapse:/config:ro   # homeserver.yaml",
+          "    secrets: [synapse-registration-secret, synapse-db, synapse-oidc-secret]",
+        ],
+        ["synapse-data"],
+      );
+      extraSites.push({ host: `matrix.${d}`, upstream: "synapse:8008", port: 8192 });
+      add(
+        "chat",
+        [
+          `    image: ghcr.io/openasy/chat:${tag(id)}`,
+          "    restart: unless-stopped",
+          "    depends_on: [synapse]",
+          ...hardened,
+          "    tmpfs: [/tmp]",
+          ...ports(i),
+          "    volumes:",
+          "      - chat-data:/data   # sign-in, syncs, guests, holds and exports; the messages are in Synapse",
+          ...configMount(id),
+          ...brandMount,
+          ...caMount,
+          "    secrets: [openasy-kek, synapse-registration-secret, identity-token]   # its key, how it makes its Synapse account, and Identity's directory",
+          ...envFiles(id),
+          "    environment:",
+          env("CHAT_PUBLIC_URL", url(id)),
+          ...caEnv,
+          env("CHAT_CONFIG", "/config/chat.yaml"),
+          env("CHAT_SYNAPSE_URL", "http://synapse:8008"),
+          env("CHAT_HOMESERVER_URL", `https://matrix.${d}   # where Element reaches Synapse`),
+          ...(identityDirectory
+            ? [
+                env("CHAT_IDENTITY_URL", `${identityIssuer}   # the company directory, with an API token of the viewer role in keys/identity-token`),
+                env("CHAT_IDENTITY_TOKEN_FILE", "/run/secrets/identity-token"),
+              ]
+            : []),
+          ...(signIn !== "own" ? [env("OPENASY_OIDC_DEFAULT_ROLE", "user   # everyone in the company signs in as a user")] : []),
+          ...oidc(id),
+        ],
+        ["chat-data"],
+      );
+    }
+    if (id === "meet") {
+      add("livekit", [
+        `    image: ${THIRD_PARTY.livekit}   # the media server that carries every call; Meet never carries media itself`,
+        "    restart: unless-stopped",
+        '    command: ["--config", "/etc/livekit/livekit.yaml"]',
+        "    depends_on: [livekit-redis]",
+        "    environment:",
+        env("LIVEKIT_KEYS", "${LIVEKIT_KEYS}   # meet: and the secret Meet signs its tokens with"),
+        "    volumes:",
+        "      - ./config/meet/livekit.yaml:/etc/livekit/livekit.yaml:ro",
+        "    ports:",
+        ...(caddy ? [] : [`      - "127.0.0.1:8193:7880"   # signalling; ${proxyName} serves it at rtc.${d}`]),
+        '      - "7881:7881"   # media over TCP: open it in the firewall',
+        '      - "50000-50100:50000-50100/udp"   # media over UDP: open them in the firewall',
+        '      - "3478:3478/udp"   # TURN, for networks that block the rest',
+      ]);
+      extraSites.push({ host: `rtc.${d}`, upstream: "livekit:7880", port: 8193 });
+      add("livekit-redis", [
+        `    image: ${THIRD_PARTY.redis}`,
+        "    restart: unless-stopped",
+        '    command: ["redis-server", "--save", "", "--appendonly", "no"]',
+      ]);
+      add(
+        "livekit-egress",
+        [
+          `    image: ${THIRD_PARTY.egress}   # records a room where meet.yaml allows it; leave it out if nobody records`,
+          "    restart: unless-stopped",
+          "    depends_on: [livekit, livekit-redis, meet]",
+          "    cap_add: [SYS_ADMIN]   # the sandbox of the headless Chrome it records with",
+          "    secrets: [livekit-egress]   # its settings, with LiveKit's secret",
+          "    environment:",
+          env("EGRESS_CONFIG_FILE", "/run/secrets/livekit-egress"),
+          "    volumes:",
+          "      - meet-recordings:/recordings",
+        ],
+        ["meet-recordings"],
+      );
+      add(
+        "meet",
+        [
+          `    image: ghcr.io/openasy/meet:${tag(id)}`,
+          "    restart: unless-stopped",
+          ...hardened,
+          "    tmpfs: [/tmp]",
+          ...ports(i),
+          "    volumes:",
+          "      - meet-data:/data   # meetings, who was in each call, the lobby and the recordings' list",
+          "      - meet-recordings:/recordings   # Egress's files, read and deleted on their day",
+          ...configMount(id),
+          ...brandMount,
+          ...caMount,
+          ...kek,
+          ...envFiles(id),
+          "    environment:",
+          env("MEET_PUBLIC_URL", url(id)),
+          ...caEnv,
+          env("MEET_CONFIG", "/config/meet.yaml"),
+          env("MEET_LIVEKIT_SECRET", "${MEET_LIVEKIT_SECRET}"),
+          ...(signIn !== "own" ? [env("OPENASY_OIDC_DEFAULT_ROLE", "user   # everyone from the company signs in as a user and skips the lobby")] : []),
+          ...oidc(id),
+        ],
+        ["meet-data"],
+      );
+    }
     if (id === "dast")
       add(
         "dast-agent",
@@ -1247,10 +1410,22 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
             "    file: ./keys/vaultwarden-org-key",
             "  vaultwarden-service-key:",
             "    file: ./keys/vaultwarden-service-key",
-            "  identity-token:",
-            "    file: ./keys/identity-token",
           ]
         : []),
+      ...(has("chat")
+        ? [
+            "  synapse-registration-secret:",
+            "    file: ./keys/synapse-registration-secret",
+            "  synapse-db-password:",
+            "    file: ./keys/synapse-db-password",
+            "  synapse-db:",
+            "    file: ./keys/synapse-db",
+            "  synapse-oidc-secret:",
+            "    file: ./keys/synapse-oidc-secret",
+          ]
+        : []),
+      ...(has("passwords") || has("chat") ? ["  identity-token:", "    file: ./keys/identity-token"] : []),
+      ...(has("meet") ? ["  livekit-egress:", "    file: ./keys/livekit-egress"] : []),
     );
 
   // The values compose.yaml names as ${NAME}: secrets made here, and what only exists after the first start, commented
@@ -1258,6 +1433,7 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   const e = ["# Keep this file with your backups and out of git."];
   const block = (title: string, rows: string[]) => rows.length && e.push("", `# ${title}`, ...rows);
   if (has("vulnerabilities")) block("Vulnerabilities and its agents", [`VULNS_INGEST_TOKEN=${secrets.ingest}`]);
+  if (has("meet")) block("Meet and LiveKit share it", [`MEET_LIVEKIT_SECRET=${secrets.livekitSecret}`, `LIVEKIT_KEYS=meet: ${secrets.livekitSecret}`]);
   block(
     "For the scripts and CI jobs that send each product data",
     picked.filter((id) => id !== "vulnerabilities" && PARTS[id].ingest).map((id) => `${PARTS[id].prefix}INGEST_TOKEN=${secrets.tokens[id]}`),
@@ -1385,7 +1561,40 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
   // Made after the first start, as the steps say: empty until then.
   const emptyKey = (name: string) => files.push({ name: `keys/${name}`, content: "", secret: true });
   if (has("files")) emptyKey("opencloud-token");
-  if (has("passwords")) ["vaultwarden-sso-secret", "vaultwarden-org-key", "vaultwarden-service-key", "identity-token"].forEach(emptyKey);
+  if (has("passwords")) ["vaultwarden-sso-secret", "vaultwarden-org-key", "vaultwarden-service-key"].forEach(emptyKey);
+  if (has("passwords") || has("chat")) emptyKey("identity-token");
+  if (has("chat")) {
+    files.push({ name: "keys/synapse-registration-secret", content: secrets.synapseSecret, secret: true });
+    files.push({ name: "keys/synapse-db-password", content: secrets.synapseDb, secret: true });
+    // Synapse reads no password from a file: its database settings, with the password, are a second settings file.
+    files.push({
+      name: "keys/synapse-db",
+      content: [
+        "database:",
+        "  name: psycopg2",
+        "  args:",
+        "    user: synapse",
+        `    password: "${secrets.synapseDb}"`,
+        "    database: synapse",
+        "    host: synapse-db",
+        "    cp_min: 5",
+        "    cp_max: 10",
+        "",
+      ].join("\n"),
+      secret: true,
+    });
+    emptyKey("synapse-oidc-secret");
+    files.push({ name: "config/chat/synapse/homeserver.yaml", content: synapseConfig(d, identityDirectory ? identityIssuer : null) });
+    files.push({ name: "config/chat/synapse/log.config", content: SYNAPSE_LOG });
+  }
+  if (has("meet")) {
+    files.push({ name: "config/meet/livekit.yaml", content: livekitConfig(d) });
+    files.push({
+      name: "keys/livekit-egress",
+      content: ["api_key: meet", `api_secret: ${secrets.livekitSecret}`, "ws_url: ws://livekit:7880", "redis:", "  address: livekit-redis:6379", ""].join("\n"),
+      secret: true,
+    });
+  }
   for (const id of picked)
     if (PARTS[id].config && CONFIGS[id]) files.push({ name: `config/${PARTS[id].service}/${PARTS[id].service}.yaml`, content: CONFIGS[id].content });
   // Each server's folder, copied to its host: it reaches the panel over HTTPS and needs nothing open towards it.
@@ -1616,7 +1825,20 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
     } else if (withCaddy || onHost)
       steps.push({ text: `Point ${siteHosts.join(", ")} at this host, so ${withCaddy ? "Caddy" : "certbot"} can get their certificates.` });
     // Agents that enrol with a one-time token start once they have it.
-    const waiting = ["vpn-server", "vpn-server-tcp", "infra-agent", "sast-agent", "dast-agent", "logs-agent", "siem-agent", "calendar", "files", "passwords"];
+    const waiting = [
+      "vpn-server",
+      "vpn-server-tcp",
+      "infra-agent",
+      "sast-agent",
+      "dast-agent",
+      "logs-agent",
+      "siem-agent",
+      "calendar",
+      "files",
+      "passwords",
+      "synapse",
+      "chat",
+    ];
     const first = services.filter((sv) => !waiting.includes(sv));
     steps.push({
       text: first.length < services.length ? "Start everything but the agents that wait for a token:" : "Start everything:",
@@ -1690,6 +1912,19 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
         text: `In Identity at ${identityIssuer}, add Vaultwarden as an application and put its client secret in keys/vaultwarden-sso-secret. At https://vault.${d}, sign in as admin@${d} and make the company's organization and a service account; put their API keys in keys/vaultwarden-org-key and keys/vaultwarden-service-key, an Identity API token of the viewer role in keys/identity-token, and the organization ID and the service account's client_id in products/passwords.yaml. Then:`,
         code: ["docker compose restart vaultwarden", "docker compose up -d passwords", 'docker compose logs passwords | grep "no owner yet"'].join("\n"),
         note: `The steps in full: https://github.com/openasy/passwords/tree/v${tag("passwords")}#run`,
+      });
+    if (has("chat"))
+      steps.push({
+        text: `Chat runs on Synapse, the Matrix server. Make Synapse's signing key once, then start both.${identityDirectory ? ` In Identity at ${identityIssuer}, add Synapse as an application named matrix and put its client secret in keys/synapse-oidc-secret, so Element signs in there; put an Identity API token of the viewer role in keys/identity-token for the company directory.` : ""} Element on phones and computers connects to https://matrix.${d}.`,
+        code: ["docker compose run --rm synapse generate-keys", "docker compose up -d synapse chat", 'docker compose logs chat | grep "no owner yet"'].join(
+          "\n",
+        ),
+        note: `The steps in full: https://github.com/openasy/chat/tree/v${tag("chat")}#run`,
+      });
+    if (has("meet"))
+      steps.push({
+        text: `Calls go straight to LiveKit, not through ${caddy ? "Caddy" : proxyName}: open TCP 7881 and UDP 50000 to 50100 and 3478 in the firewall towards this host. Browsers reach its signalling at wss://rtc.${d}: put that address in livekit.public_url of config/meet/meet.yaml, and rtc.${d} for the TURN checks there (UDP 3478 only).`,
+        note: `The steps in full: https://github.com/openasy/meet/tree/v${tag("meet")}#run`,
       });
     if (keycloak)
       steps.push({ text: `In Keycloak, at ${url("keycloak")}/admin, add people and put them in openasy-admins, openasy-editors or openasy-viewers.` });
@@ -1915,3 +2150,102 @@ export function buildInstall(choice: InstallChoice, secrets: Secrets): Install {
 
   return { files, steps, wiring, addresses: siteHosts, hosts: withCaddy || onHost ? siteHosts : [], services };
 }
+
+/** Synapse's settings for Chat, as chat/config/synapse/homeserver.yaml has them, with this install's names. */
+function synapseConfig(d: string, issuer: string | null): string {
+  return [
+    "# Synapse, the Matrix server Chat runs on: the part of its settings Chat relies on. Chat never edits this file.",
+    `server_name: ${d}   # the part after the colon in every user id: @jane:${d}`,
+    `public_baseurl: https://matrix.${d}/`,
+    "report_stats: false",
+    "pid_file: /data/homeserver.pid",
+    "media_store_path: /data/media_store   # every file people share: keep it in your backups",
+    `signing_key_path: /data/${d}.signing.key`,
+    "log_config: /config/log.config",
+    "listeners:",
+    "  - port: 8008",
+    "    type: http",
+    "    tls: false",
+    "    x_forwarded: true",
+    "    resources:",
+    "      - names: [client]   # no federation in Chat's first release",
+    "# The database, with its password, is in keys/synapse-db, which Synapse reads after this file.",
+    "# Chat makes its own admin account with this secret the first time it starts.",
+    "registration_shared_secret_path: /run/secrets/synapse-registration-secret",
+    "enable_registration: false",
+    ...(issuer
+      ? [
+          "# Element signs people in through Identity, as the same account Chat made for them from the directory.",
+          "oidc_providers:",
+          "  - idp_id: identity",
+          "    idp_name: Identity",
+          `    issuer: ${issuer}`,
+          "    client_id: matrix",
+          "    client_secret_path: /run/secrets/synapse-oidc-secret",
+          "    scopes: [openid, profile, email]",
+          "    allow_existing_users: true",
+          "    user_mapping_provider:",
+          "      config:",
+          "        localpart_template: \"{{ user.email.split('@')[0] | lower }}\"",
+          '        display_name_template: "{{ user.name }}"',
+          '        email_template: "{{ user.email }}"',
+        ]
+      : []),
+    "# Guests sign in to Element with the password they chose on their welcome link.",
+    "password_config:",
+    "  enabled: true",
+    "# Chat sets each channel's retention; Synapse deletes what is older, once a day.",
+    "retention:",
+    "  enabled: true",
+    "  purge_jobs:",
+    "    - interval: 1d",
+    "# Channels are not encrypted by default, so search, retention and exports can read them.",
+    'encryption_enabled_by_default_for_room_type: "off"',
+    "extra_well_known_client_content:",
+    "  io.element.e2ee:",
+    "    default: false",
+    "user_directory:",
+    "  enabled: true",
+    "  search_all_users: false",
+    "room_list_publication_rules:",
+    '  - user_id: "@openasy-chat:*"',
+    "    action: allow",
+    "  - action: deny",
+    "presence:",
+    "  enabled: true",
+    "max_upload_size: 50M",
+    "enable_authenticated_media: true",
+    "",
+  ].join("\n");
+}
+
+/** LiveKit's settings for Meet, as meet/config/livekit.yaml has them, with this install's names. */
+function livekitConfig(d: string): string {
+  return [
+    "# LiveKit's own settings. Its API key and secret come from LIVEKIT_KEYS, never from this file.",
+    "port: 7880",
+    "rtc:",
+    "  tcp_port: 7881",
+    "  port_range_start: 50000",
+    "  port_range_end: 50100",
+    "  use_external_ip: true",
+    "redis:",
+    "  address: livekit-redis:6379",
+    "# LiveKit's own TURN over UDP, for networks that block direct media.",
+    "turn:",
+    "  enabled: true",
+    `  domain: rtc.${d}`,
+    "  udp_port: 3478",
+    "webhook:",
+    "  api_key: meet",
+    "  urls:",
+    "    - http://meet:8080/api/v1/livekit/webhook",
+    "prometheus_port: 6789",
+    "logging:",
+    "  level: info",
+    "",
+  ].join("\n");
+}
+
+const SYNAPSE_LOG =
+  'version: 1\nformatters:\n  precise:\n    format: "%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(request)s - %(message)s"\nhandlers:\n  console:\n    class: logging.StreamHandler\n    formatter: precise\nloggers:\n  synapse.storage.SQL:\n    level: WARNING\nroot:\n  level: INFO\n  handlers: [console]\ndisable_existing_loggers: false\n';

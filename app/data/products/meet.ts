@@ -100,8 +100,8 @@ export const meet: ProductStory = {
     },
   ],
   limits: [
-    "Designed: the screens are in Storybook; it is not built yet.",
-    "Built on an existing open-source media server, chosen before work starts.",
+    "Built on LiveKit, the open-source media server; calls never go through Meet itself.",
+    "Calendar and Chat do not add Meet links to invitations and channels yet; Meet's API for it is ready.",
     "Webinars for hundreds of viewers are out of scope.",
   ],
 };

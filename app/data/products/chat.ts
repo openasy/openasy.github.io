@@ -104,8 +104,8 @@ export const chat: ProductStory = {
     },
   ],
   limits: [
-    "Designed: the screens are in Storybook; it is not built yet.",
-    "Built on an existing open-source messaging server, chosen before work starts.",
+    "Built on Synapse, the Matrix server: Element on phones and computers works with the same server.",
+    "Search finds message text and file names, not the text inside files; a legal hold holds the whole channel.",
     "Federation with other companies' servers comes after the first release.",
   ],
 };

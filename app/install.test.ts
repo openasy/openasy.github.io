@@ -401,6 +401,34 @@ describe("install builder", () => {
     expect(text).toContain("calendar node server/stalwart-setup.ts");
   });
 
+  it("Chat brings Synapse on its own PostgreSQL, and Meet brings LiveKit, Redis and Egress with one shared secret", () => {
+    const out = build({ products: ["chat", "meet", "identity"], signIn: "identity" });
+    const compose = all(out);
+    expect(compose).toContain(`image: ${THIRD_PARTY.synapse}`);
+    expect(compose).toContain(`image: ${THIRD_PARTY.livekit}`);
+    // Synapse reads its database's password from a second settings file in keys/, never from homeserver.yaml.
+    const homeserver = file(out, "config/chat/synapse/homeserver.yaml");
+    expect(homeserver).toContain("server_name: example.com");
+    expect(homeserver).toContain("public_baseurl: https://matrix.example.com/");
+    expect(homeserver).toContain("issuer: https://id.example.com");
+    expect(homeserver).not.toMatch(/^ *password(_file)?:/m);
+    expect(file(out, "keys/synapse-db")).toMatch(/password: "[0-9a-f]{48}"/);
+    expect(file(out, "keys/synapse-db")).toContain(file(out, "keys/synapse-db-password"));
+    expect(envOf(out, "chat")).toMatch(/^CHAT_HOMESERVER_URL=https:\/\/matrix\.example\.com/m);
+    expect(file(out, "config/Caddyfile")).toContain("matrix.example.com {\n  reverse_proxy synapse:8008\n}");
+    expect(file(out, "config/Caddyfile")).toContain("rtc.example.com {\n  reverse_proxy livekit:7880\n}");
+    // LiveKit, Egress and Meet share one secret, written in full where each reads it.
+    const secret = /MEET_LIVEKIT_SECRET: "?([0-9a-f]{64})/.exec(compose)?.[1];
+    expect(secret).toBeDefined();
+    expect(compose).toContain(`LIVEKIT_KEYS: "meet: ${secret}"`);
+    expect(file(out, "keys/livekit-egress")).toContain(`api_secret: ${secret}`);
+    expect(file(out, "config/meet/livekit.yaml")).toContain("domain: rtc.example.com");
+    expect(compose).toContain('"50000-50100:50000-50100/udp"');
+    // Synapse starts once its signing key is made, with Chat after it.
+    expect(out.steps.find((x) => x.code?.startsWith("docker compose up -d "))?.code).not.toMatch(/ (synapse|chat)( |$)/);
+    expect(out.steps.map((x) => x.code ?? "").join("\n")).toContain("docker compose run --rm synapse generate-keys");
+  });
+
   it("Files and Passwords bring OpenCloud and Vaultwarden, signing in through Identity", () => {
     const out = build({ products: ["files", "passwords", "identity"], signIn: "identity" });
     expect(envOf(out, "opencloud")).toMatch(/^OC_OIDC_ISSUER=https:\/\/id\.example\.com$/m);
