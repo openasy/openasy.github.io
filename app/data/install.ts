@@ -62,6 +62,7 @@ export const INSTALLABLE = [
   "wiki",
   "hr",
   "invoices",
+  "expenses",
 ] as const;
 export type Installable = (typeof INSTALLABLE)[number];
 
@@ -371,6 +372,7 @@ export const PARTS: Record<Installable, Part> = {
   wiki: { name: "Wiki", service: "wiki", prefix: "WIKI_", sub: "wiki", config: true },
   hr: { name: "HR", service: "hr", prefix: "HR_", sub: "hr", config: true },
   invoices: { name: "Invoices", service: "invoices", prefix: "INVOICES_", sub: "invoices", config: true },
+  expenses: { name: "Expenses", service: "expenses", prefix: "EXPENSES_", sub: "expenses", config: true, userRole: true },
 };
 const ROLES = "openasy-admins=admin,openasy-editors=editor,openasy-viewers=viewer";
 const PROVIDER_NAME: Record<Provider, string> = { entra: "Microsoft Entra ID", okta: "Okta", google: "Google" };

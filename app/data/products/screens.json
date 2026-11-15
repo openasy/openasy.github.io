@@ -54,5 +54,6 @@
   "campaigns": ["calendar", "campaign", "links", "results"],
   "forms": ["answers", "builder", "forms", "results"],
   "hr": ["home", "leave", "people", "record"],
-  "invoices": ["bank", "customers", "invoice", "invoices", "overview"]
+  "invoices": ["bank", "customers", "invoice", "invoices", "overview"],
+  "expenses": ["approve", "claim", "payback", "spend"]
 }

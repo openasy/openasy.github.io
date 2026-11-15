@@ -104,7 +104,7 @@ const DESIGNED: ProductState = { status: "Designed", features: [], upstream: [] 
 const PLANNED_STATE: ProductState = { status: "Planned", features: [], upstream: [] };
 
 /** Products with a page and no screens yet. Move one out once its screens are in Storybook. */
-const PLANNED = new Set(["recruiting", "time", "payroll", "expenses", "purchasing", "contracts", "inventory", "assets"]);
+const PLANNED = new Set(["recruiting", "time", "payroll", "purchasing", "contracts", "inventory", "assets"]);
 
 // The panel and a vpn-server on their own hosts (ADR 0032). vpn never connects to a server: servers reach it over HTTPS.
 const VPN_PANEL = `openssl rand -hex 32 > openasy-kek   # keep it with your backups
@@ -573,6 +573,19 @@ openssl s_client -connect 10.0.9.6:443 </dev/null 2>/dev/null | openssl x509 -no
       { title: "Tested against a real integrator and GİB's test portal", done: false },
     ],
     upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "customers, invoices, payments and statements" }],
+  },
+  expenses: {
+    status: "Preview",
+    version: "0.1.0",
+    signIn: true,
+    features: [
+      { title: "Receipts photographed and read, mileage and daily allowances, each with a category and a project", done: true },
+      { title: "Limits by category and approval chains by amount and department, set in a file", done: true },
+      { title: "Receipts in other currencies at TCMB's rate, KDV per rate, and company card statements matched to receipts", done: true },
+      { title: "Paid back with pay through Payroll or by a bank transfer list, and exports for your accountant", done: true },
+      { title: "Tested against running HR, Time and Payroll, and a real receipt reader", done: false },
+    ],
+    upstream: [{ name: "SQLite", url: "https://sqlite.org/", role: "claims, receipts, card purchases and batches" }],
   },
   helpdesk: {
     status: "Preview",

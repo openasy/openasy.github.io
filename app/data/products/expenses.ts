@@ -80,16 +80,10 @@ export const expenses: ProductStory = {
     },
   ],
   screens: [
-    {
-      page: "claims",
-      title: "Claims",
-      shows: "Claims to approve and pay.",
-    },
-    {
-      page: "spend",
-      title: "Spend",
-      shows: "Spending by category and team.",
-    },
+    { page: "claim", title: "Claim", shows: "A draft claim with its receipts, mileage and days away, and who will approve it.", story: "draft-claim" },
+    { page: "approve", title: "To approve", shows: "Claims waiting for your approval, with what the policy flagged.", story: "to-approve" },
+    { page: "payback", title: "Pay back", shows: "Approved claims paid back with pay or by bank transfer.", story: "pay-back" },
+    { page: "spend", title: "Spend", shows: "Spending by category, department, project or person, and KDV by rate.", story: "spend" },
   ],
   worksWith: [
     {
@@ -106,7 +100,7 @@ export const expenses: ProductStory = {
     },
   ],
   limits: [
-    "Planned: not built yet.",
+    "HR, Time, Payroll and the receipt reader are tested against stand-ins shaped like their APIs, not running products.",
     "Company cards are not issued; their statements are imported.",
     "Reading receipts works on clear photos; anything unclear is typed in.",
   ],
