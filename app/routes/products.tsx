@@ -4,6 +4,8 @@ import { PageTitle, Section } from "../components/site";
 import { ProductCard } from "../components/cards";
 import { statusFor, type ProductStatus } from "../data/status";
 import { GROUPS } from "./home";
+import { MAC_REQUIRES } from "../data/apps";
+import { MacAppList } from "../components/mac-apps";
 
 export function meta() {
   return [{ title: "Products · OpenAsy" }, { name: "description", content: "Every OpenAsy product for operations, security, identity and automation." }];
@@ -66,6 +68,13 @@ export default function Products() {
         Showing {ids.length} of {PRODUCT_IDS.length}. Products without a label are not released yet: some are designed, with their screens in Storybook, and
         some are planned.
       </p>
+      <h2 id="mac-apps" className="mt-14 mb-0 text-2xl font-semibold tracking-tight">
+        Mac apps
+      </h2>
+      <p className="mt-2 mb-0 max-w-2xl text-fg-muted">
+        Native apps for {MAC_REQUIRES}. They run on your Mac, talk only to the servers you add, and need no OpenAsy server or account.
+      </p>
+      <MacAppList />
     </Section>
   );
 }

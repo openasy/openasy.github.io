@@ -172,6 +172,7 @@ const FOOTER_GROUPS = [
     links: [
       { href: "/goals", label: "Goals" },
       { href: "/products", label: "Products" },
+      { href: "/products#mac-apps", label: "Mac apps" },
       { href: "/principles", label: "Principles" },
       { href: "/evidence", label: "Evidence" },
       { href: "/install", label: "Install" },

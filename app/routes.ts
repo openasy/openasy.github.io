@@ -7,6 +7,7 @@ export default [
   route("products", "routes/products.tsx"),
   route("products/:id", "routes/product.tsx"),
   route("products/:id/api", "routes/product-api.tsx"),
+  route("apps/:id", "routes/mac-app.tsx"),
   route("principles", "routes/principles.tsx"),
   route("evidence", "routes/evidence.tsx"),
   route("install", "routes/install.tsx"),

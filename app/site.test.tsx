@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
@@ -16,6 +17,8 @@ import GoalPage from "./routes/goal";
 import Products from "./routes/products";
 import ProductPage from "./routes/product";
 import ProductApi from "./routes/product-api";
+import MacAppPage from "./routes/mac-app";
+import { MAC_APPS } from "./data/apps";
 import { APIS } from "./data/apis";
 import Principles from "./routes/principles";
 import Evidence from "./routes/evidence";
@@ -34,6 +37,7 @@ const Stub = createRoutesStub([
   { path: "/products", Component: Products },
   { path: "/products/:id", Component: ProductPage },
   { path: "/products/:id/api", Component: ProductApi },
+  { path: "/apps/:id", Component: MacAppPage },
   { path: "/principles", Component: Principles },
   { path: "/evidence", Component: Evidence },
   { path: "/support", Component: Support },
@@ -382,6 +386,38 @@ describe("pages", () => {
     await userEvent.click(screen.getByRole("button", { name: "Open products/uptime.yaml" }));
     expect(screen.getByLabelText("products/uptime.yaml")).toHaveTextContent("image: ghcr.io/openasy/uptime:0.5.2");
     expect(screen.getByRole("heading", { name: "Built on" })).toBeInTheDocument();
+  });
+
+  it("Mac apps are listed apart from the products, each with its own page", () => {
+    open("/products");
+    const apps = screen.getByRole("list", { name: "Mac apps" });
+    expect(apps.children).toHaveLength(MAC_APPS.length);
+    expect(within(apps).getByRole("link", { name: /Database Client/ })).toHaveAttribute("href", "/apps/database-client");
+    expect(screen.getByRole("list", { name: "Product list" })).not.toHaveTextContent("Database Client");
+  });
+
+  it("a Mac app's page says what is built and how to get it before there is a download", () => {
+    open("/apps/database-client");
+    expect(h1()).toHaveTextContent("Query, browse and change your databases from your Mac");
+    expect(screen.getByRole("heading", { name: "Built, not released yet" })).toBeInTheDocument();
+    expect(screen.getByText("No download yet")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Source code" })).toHaveAttribute("href", "https://github.com/openasy/database-client");
+    expect(screen.getByRole("link", { name: "Schema" })).toHaveAttribute("href", "/apps/schema");
+  });
+
+  it("every Mac app screenshot is on disk in both themes", () => {
+    for (const a of MAC_APPS.filter((x) => x.shot))
+      for (const theme of ["light", "dark"]) expect(existsSync(`public/screens/${a.id}/${a.shot!.page}-${theme}.webp`), `${a.id} ${theme}`).toBe(true);
+  });
+
+  it("an unknown Mac app says so", () => {
+    open("/apps/nope");
+    expect(h1()).toHaveTextContent("App not found");
+  });
+
+  it("home lists the Mac apps under the products", () => {
+    open("/");
+    expect(screen.getByRole("list", { name: "All Mac apps" }).children).toHaveLength(MAC_APPS.length);
   });
 
   it("products page lists released products first", () => {

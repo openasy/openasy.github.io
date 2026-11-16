@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { ArrowRight, Check, KeyRound, Scale, Server, ShieldCheck, WifiOff } from "lucide-react";
 import { Badge, PRODUCT_IDS, PRODUCTS, cn, type ProductGroup, type ProductId } from "@openasy/ui";
 import { GOALS } from "../data/goals";
+import { MAC_APPS } from "../data/apps";
 import { PRINCIPLES } from "../data/principles";
 import { CLAIMS, GRADES, GRADE_TONE, JUDGMENT, type Grade } from "../data/evidence";
 import { statusFor, withStatus } from "../data/status";
@@ -581,6 +582,22 @@ export default function Home() {
               </div>
             );
           })}
+        </div>
+        <div className="mt-2 border-t border-line pt-6">
+          <h3 className="m-0 text-base font-semibold">
+            Mac apps <span className="font-normal text-fg-subtle">{MAC_APPS.length}</span>
+          </h3>
+          <p className="mt-1 mb-0 text-sm text-fg-muted">Native apps that run on your Mac, with no server or account.</p>
+          <ul aria-label="All Mac apps" className="mt-3 mb-0 flex list-none flex-wrap gap-x-6 gap-y-1.5 p-0">
+            {MAC_APPS.map((a) => (
+              <li key={a.id}>
+                <Link to={`/apps/${a.id}`} className="text-fg no-underline hover:text-accent-text hover:underline">
+                  {a.name}
+                </Link>
+                {a.status !== "Preview" && <span className="ml-2 text-xs text-fg-subtle">{a.status}</span>}
+              </li>
+            ))}
+          </ul>
         </div>
       </Section>
     </>
